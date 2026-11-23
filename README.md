@@ -1,30 +1,44 @@
-# Laylo AI
+# Laylo so‘rovnoma boti
 
-O‘zbekcha shaxsiy Telegram yordamchisi. Matn bilan suhbatlashadi, ovozli xabarni tushunadi va ayol ovozida javob qaytaradi. Rejalarni yozadi, vaqtli vazifalarni eslatadi va kundalik hisobot yuboradi.
+Telegram orqali xodimlar va rahbarlar fikrini yig‘adi. Xodimlar uchun 57 ta, rahbarlar uchun 40 ta savol bor.
 
-## Mahalliy ishga tushirish
+## Ishtirokchi
 
-1. Node.js 22+ va Opus enkoderli FFmpeg kerak. `ffmpeg -version` buyrug‘i terminalda ishlashi kerak.
-2. `.env.example` asosida `.env` faylini yarating. Telegram bot tokeni, egasining raqamli Telegram foydalanuvchi ID’si va Free tarifdagi Gemini API kalitini kiriting. Laylo shu ID egasining shaxsiy chatiga javob beradi. Egasining ko‘rinadigan ismini `LAYLO_OWNER_NAME` orqali sozlang.
-3. `npm start` ni ishga tushiring. Botga `/voice` yuborib ovozni tinglang. Keyin oddiy ovozli topshiriq yuborib javobni tekshiring. `GEMINI_VOICE=Kore` bilan ikkinchi ovozni solishtirish mumkin. Boshlang‘ich ovoz — Aoede.
+/start rol tanlash tugmalarini ochadi. Variantli savollar tugma bilan, boshqa savollar matn yoki raqam bilan javoblanadi. Ism ixtiyoriy. Har bir javob saqlanadi. Orqaga qaytish, o‘tkazib yuborish va /survey orqali davom etish mumkin.
 
-Ikkala Gemini modeli bitta kalitdan foydalanadi. `/report` bugungi vazifalarni chiqaradi. Ovozli javob qisqa, uzun javobning davomi va manba havolalari matnda keladi. Hisobotning dastlabki vaqti Toshkent vaqti bilan 08:00. Bir bot tokeniga bitta Laylo jarayoni ishlating.
+## Egasi
 
-## Qoidalar va xotira
+/admin menyusida qatnashuvchilar, savollar bo‘yicha son va foizlar, CSV eksport, havolalar, ochish-yopish va yangi so‘rovnoma yaratish tugmalari bor. Yangi savol uchun oddiy matn yuboring. Variantli savol shakli `Tushlik beriladimi? | Ha | Yo‘q`.
 
-- `config/laylo-rules.md` asosiy ish qoidalarini beradi. Egasiga xos qo‘shimcha yo‘riqnoma uchun Git tashqarisidagi matn faylini `LAYLO_PRIVATE_RULES_FILE` orqali ulang.
-- `/about` Layloning kimligi va sozlangan egasini aytadi.
-- `/remember ma’lumot` yoki “eslab qol” degan ovozli topshiriq afzallikni saqlaydi. `/memory` yozuvlarni ko‘rsatadi, `/forget yozuv-raqami` bitta yozuvni o‘chiradi.
-- Xotira qayta ishga tushirilganda saqlanib qolishi uchun `.laylo/state.json` doimiy diskda turishi kerak. Laylo saqlangan yozuvlardan Gemini suhbatida foydalanadi. Shaxsiy hujjatlar, kalit va parollarni botga yubormang.
+Hisobot foizlari savolga javob bergan va so‘rovnomani yakunlaganlar sonidan olinadi. Ko‘p tanlovli foizlar 100 dan oshishi mumkin. CSV faylida tugallanmagan javoblar belgilangan. Yozma javoblar asl holida saqlanadi. Pul summalari valyuta bo‘yicha hisoblanadi. `3,5 mln` kabi javobda valyuta ko‘rsatilmasa, UZS olinadi.
 
-## Google Sheets va qidiruv
+## Bepul Cloudflare va GitHub
 
-- Google Sheet ulanmaganda bot vazifalar va so‘nggi suhbatlarni `.laylo/state.json` ichida saqlaydi. Sheet ulansa, yangi vazifalar va hisobotlar o‘sha jadvaldan ishlaydi.
-- Google Sheets API’ni yoqing va jadvalni xizmat hisobi emailiga tahrirlash huquqi bilan ulashing. `Vazifalar` nomli varaqda A–E ustunlarini **Vazifa**, **Sana**, **Vaqt**, **Holat**, **ID** deb nomlang. Sana va vaqt ustunlarini matn formatida saqlang. `.env`da `GOOGLE_SHEET_ID` va repodan tashqarida saqlanadigan xizmat hisobi JSON fayliga `GOOGLE_SERVICE_ACCOUNT_FILE` yo‘lini ko‘rsating.
-- Ixtiyoriy internet qidiruvi uchun Free tarifdagi Tavily kalitini sozlang. Laylo topilgan manbalarni xulosa qilib, URL’larini yuboradi. Gemini Live orqali Google Search ulanishi keyingi bosqich.
+Cloudflare Workers Free va SQLite-backed Durable Objects ishlatiladi. Javoblar Durable Object ichida saqlanadi. GitHub’da kod va savollar joylashadi. Bot tokeni va javoblar GitHub’ga kiritilmaydi.
 
-## Sinash va joylashtirish
+Cloudflare Workers Builds orqali ushbu repozitoriyni ulang. Worker nomi `laylo-surveys`, production branch `main`, deploy command `npx --yes wrangler@4.166.0 deploy`.
 
-`npm test` tashqi API’larning test javoblari bilan ovozli xabar, Telegram javobi va reja yuborish oqimini tekshiradi. Jonli sinovda haqiqiy kalitlar, bot tokeni va FFmpeg kerak.
+Worker secrets sifatida quyidagilarni sozlang.
 
-Bu dastlabki versiya mahalliy Node.js jarayoni sifatida ishlaydi. Ovoz uchun FFmpeg ishlatiladi. Doimiy bulut muhiti hali tanlanmagan va sozlanmagan. Test uchun maxfiy yoki mijozlarning shaxsiy ma’lumotlarini ishlatmang. Kalitlar, tokenlar va ma’lumotlar fayli Git tarixiga kiritilmaydi.
+- TELEGRAM_BOT_TOKEN
+- TELEGRAM_OWNER_ID
+- TELEGRAM_BOT_USERNAME
+- TELEGRAM_WEBHOOK_SECRET
+
+Webhook secret kamida 32 ta tasodifiy harf, raqam, tire yoki pastki chiziqdan iborat bo‘lsin. `/health` xizmat holatini ko‘rsatadi. Deploydan keyin bir xil secret bilan quyidagini ishga tushiring.
+
+`node --env-file=.env scripts/connect-survey-webhook.mjs https://WORKER.workers.dev/telegram`
+
+Bu webhook va Telegram buyruqlar menyusini ulaydi. Bir bot tokeniga bitta faol qabul qiluvchi ishlaydi.
+
+Free tarifning kunlik chegaralari bor. Worker va Durable Object so‘rovlari kuniga 100 000 tagacha, SQLite yozuvlari 100 000 tagacha, umumiy saqlash 5 GB. Shu hisobdagi boshqa ilovalarning sarfi ham hisoblanadi. Limitga yetganda amallar vaqtincha ishlamaydi.
+
+- https://developers.cloudflare.com/workers/platform/pricing/
+- https://developers.cloudflare.com/durable-objects/platform/pricing/
+- https://developers.cloudflare.com/workers/ci-cd/builds/
+
+## Tekshirish
+
+Node.js 22.12+ kerak. `node --test test/surveys.test.mjs` ikki rol, admin ruxsatlari, takroriy bosish, qayta ishga tushgach davom etish, hisobot va CSV’ni tekshiradi. `LAYLO_TEST_PARTICIPANTS=1000` sun'iy ishtirokchilar sonini oshiradi. Bu haqiqiy bir vaqtdagi yuk sinovi hisoblanmaydi.
+
+Mahalliy polling uchun `.env.example` asosida sozlang va `npm start` bajaring. Doimiy ishlash uchun Cloudflare ulanishini tugating.

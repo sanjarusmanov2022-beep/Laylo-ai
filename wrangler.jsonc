@@ -1,0 +1,10 @@
+{
+  "name": "laylo-surveys",
+  "main": "src/survey-worker.mjs",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [{ "name": "SURVEYS", "class_name": "SurveyStore" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SurveyStore"] }]
+}

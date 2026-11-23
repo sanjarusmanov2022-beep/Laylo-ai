@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.laylo/
+*.pem
+credentials*.json
+*service-account*.json
+node_modules/
+.wrangler/
+.dev.vars

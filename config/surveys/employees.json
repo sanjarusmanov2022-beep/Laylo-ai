@@ -1,0 +1,580 @@
+{
+  "id": "employees",
+  "title": "Xodimlar ish faoliyati va ish joyidan qoniqish bo‘yicha so‘rovnoma",
+  "introduction": "Hurmatli respondent!\n\nIltimos, quyidagi savollarga chin dildan va imkon qadar haqqoniy javob bering. Sizning javoblaringiz biz uchun juda muhim. Ushbu tadqiqotning maqsadi — zamonaviy korxonalarda xodimlar uchun qanday ish sharoitlari muhimligini, ularning motivatsiyasini oshiruvchi omillarni va yaxshi ish muhitini shakllantirish usullarini o‘rganishdir.\n\nJavoblaringiz tadqiqot maqsadida tahlil qilinadi. Ismingizni yozishingiz shart emas.",
+  "thanks": "Sizga vaqt ajratib, savollarga javob berganingiz uchun katta rahmat!\n\nSizning fikrlaringiz kelajakda yanada yaxshi, adolatli va samarali ish muhitini yaratishga yordam beradi.",
+  "sections": [
+    "Ish faoliyati va tajriba",
+    "Maosh va moliyaviy rag‘batlantirish",
+    "Ish muhiti va qulayliklar",
+    "Ish vaqti va dam olish",
+    "Rahbariyat va jamoaviy muhit",
+    "Ishdan ketish va xodimlarni saqlab qolish",
+    "Motivatsiya va qo‘shimcha imkoniyatlar",
+    "Ishga qabul qilish va yangi xodimlar",
+    "Shaxsiy fikr va takliflar"
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "section": 1,
+      "text": "Hozirgi ishlayotgan joyingizda qancha vaqtdan beri ishlaysiz?",
+      "type": "single",
+      "options": [
+        "2 oydan kam",
+        "2–5 oy",
+        "6–11 oy",
+        "1 yil – 1 yil 5 oy",
+        "1 yil 6 oy – 1 yil 11 oy",
+        "2 yil – 2 yil 11 oy",
+        "3 yil – 4 yil 11 oy",
+        "5 yil – 9 yil 11 oy",
+        "10 yil yoki ko‘proq"
+      ]
+    },
+    {
+      "id": 2,
+      "section": 1,
+      "text": "Hozirgi lavozimingiz qanday?",
+      "type": "text"
+    },
+    {
+      "id": 3,
+      "section": 1,
+      "text": "Umumiy mehnat faoliyatingiz davomida nechta korxonada ishlagansiz?",
+      "type": "single",
+      "options": [
+        "1 ta",
+        "2 ta",
+        "3 ta",
+        "4 ta",
+        "5 ta yoki ko‘proq"
+      ]
+    },
+    {
+      "id": 4,
+      "section": 1,
+      "text": "Hozirgi ish joyingizga qanday kelgansiz: tanishlar orqali, internet orqali, ish e'loni orqali yoki boshqa yo‘l bilan?",
+      "type": "single",
+      "options": [
+        "Tanishlar orqali",
+        "Internet orqali",
+        "Ish e'loni orqali",
+        "Boshqa yo‘l bilan"
+      ]
+    },
+    {
+      "id": 5,
+      "section": 1,
+      "text": "Hozirgi ish joyingizni o‘zingiz tanlaganmisiz? Aynan qaysi jihatlari sizni ushbu korxonada ishlashga undagan?",
+      "type": "text"
+    },
+    {
+      "id": 6,
+      "section": 2,
+      "text": "Hozirgi oylik maoshingiz qancha?",
+      "type": "money"
+    },
+    {
+      "id": 7,
+      "section": 2,
+      "text": "Asosiy maoshingizdan tashqari bonus yoki mukofotlar olasizmi? Agar olsangiz, qancha va qanday shartlar asosida?",
+      "type": "text"
+    },
+    {
+      "id": 8,
+      "section": 2,
+      "text": "Maoshingiz har oy belgilangan sanada to‘lanadimi?",
+      "type": "single",
+      "options": [
+        "Har doim",
+        "Ko‘pincha",
+        "Ba'zan",
+        "Deyarli hech qachon"
+      ]
+    },
+    {
+      "id": 9,
+      "section": 2,
+      "text": "Ish joyingizda quyidagi qo‘shimcha imtiyozlardan qaysilari mavjud?",
+      "type": "multi",
+      "options": [
+        "Tushlik bepul beriladi.",
+        "Yo‘l xarajatlari qoplanadi.",
+        "Har oylik bonuslar mavjud.",
+        "Bayramlarda pul mukofoti beriladi.",
+        "Yillik mukofotlar mavjud.",
+        "Tibbiy sug‘urta mavjud.",
+        "Ta'til va dam olish uchun qo‘shimcha imkoniyatlar mavjud.",
+        "Boshqa imtiyozlar."
+      ]
+    },
+    {
+      "id": 10,
+      "section": 2,
+      "text": "Sizningcha, hozirgi ish joyingizdagi maosh bajarayotgan ishingizga mos keladimi? Nima uchun?",
+      "type": "text"
+    },
+    {
+      "id": 11,
+      "section": 2,
+      "text": "Siz uchun qaysi biri muhimroq: yuqori asosiy maoshmi yoki o‘rtacha maosh va qo‘shimcha bonuslarmi?",
+      "type": "single",
+      "options": [
+        "Yuqori asosiy maosh",
+        "O‘rtacha maosh va qo‘shimcha bonuslar",
+        "Bir xil darajada muhim",
+        "Vaziyatga bog‘liq"
+      ]
+    },
+    {
+      "id": 12,
+      "section": 2,
+      "text": "Agar korxonada natijaga qarab oylik bonus berilsa, bu sizning ishlash samaradorligingizga ta'sir qiladimi?",
+      "type": "single",
+      "options": [
+        "Oshiradi",
+        "Ta'sir qilmaydi",
+        "Pasaytirishi mumkin",
+        "Bonus shartlariga bog‘liq"
+      ]
+    },
+    {
+      "id": 13,
+      "section": 3,
+      "text": "Hozirgi ish joyingizda sizga eng ko‘p nima yoqadi? Masalan, ofis sharoiti, jamoa, rahbariyat, qulayliklar yoki boshqa jihatlar.",
+      "type": "text"
+    },
+    {
+      "id": 14,
+      "section": 3,
+      "text": "Ish joyingizdagi qaysi sharoitlarni yaxshilashni xohlardingiz?",
+      "type": "text"
+    },
+    {
+      "id": 15,
+      "section": 3,
+      "text": "Ofisingiz yoki ish joyingiz zamonaviy va qulay tashkil etilganmi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Qisman",
+        "Yo‘q"
+      ]
+    },
+    {
+      "id": 16,
+      "section": 3,
+      "text": "Ish joyingizda tushlik uchun alohida vaqt va sharoit mavjudmi?",
+      "type": "single",
+      "options": [
+        "Vaqt ham, sharoit ham mavjud",
+        "Faqat vaqt mavjud",
+        "Faqat sharoit mavjud",
+        "Ikkalasi ham mavjud emas"
+      ]
+    },
+    {
+      "id": 17,
+      "section": 3,
+      "text": "Tushlik korxona tomonidan taqdim etiladimi yoki o‘z hisobingizdan ovqatlanasizmi?",
+      "type": "single",
+      "options": [
+        "Korxona taqdim etadi",
+        "Xarajatning bir qismini qoplaydi",
+        "O‘z hisobimdan"
+      ]
+    },
+    {
+      "id": 18,
+      "section": 3,
+      "text": "Ish joyingizda bepul choy, qahva, ichimlik suvi yoki boshqa qulayliklar bormi?",
+      "type": "multi",
+      "options": [
+        "Choy",
+        "Qahva",
+        "Ichimlik suvi",
+        "Boshqa qulayliklar"
+      ]
+    },
+    {
+      "id": 19,
+      "section": 3,
+      "text": "Ish joyingizga borib-kelish siz uchun qanchalik qulay?",
+      "type": "single",
+      "options": [
+        "Juda qulay",
+        "Qulay",
+        "O‘rtacha",
+        "Noqulay",
+        "Juda noqulay"
+      ]
+    },
+    {
+      "id": 20,
+      "section": 3,
+      "text": "Siz uchun ideal ish muhiti qanday bo‘lishi kerak?",
+      "type": "text"
+    },
+    {
+      "id": 21,
+      "section": 4,
+      "text": "Har kuni soat nechadan nechagacha ishlaysiz?",
+      "type": "text"
+    },
+    {
+      "id": 22,
+      "section": 4,
+      "text": "Haftada necha kun ishlaysiz?",
+      "type": "single",
+      "options": [
+        "4 kun yoki kamroq",
+        "5 kun",
+        "6 kun",
+        "7 kun",
+        "O‘zgaruvchan jadval"
+      ]
+    },
+    {
+      "id": 23,
+      "section": 4,
+      "text": "Ish kunlari belgilangan vaqtdan kech qolib ishlash holatlari bo‘ladimi?",
+      "type": "single",
+      "options": [
+        "Hech qachon",
+        "Kamdan-kam",
+        "Ba'zan",
+        "Tez-tez",
+        "Har kuni"
+      ]
+    },
+    {
+      "id": 24,
+      "section": 4,
+      "text": "Agar kech qolib ishlasangiz, qo‘shimcha ish vaqti uchun haq to‘lanadimi?",
+      "type": "single",
+      "options": [
+        "Har doim",
+        "Ba'zan",
+        "To‘lanmaydi",
+        "Qo‘shimcha ishlamayman"
+      ]
+    },
+    {
+      "id": 25,
+      "section": 4,
+      "text": "Sizningcha, 5 kunlik ish haftasi samaraliroqmi yoki 6 kunlik ish haftasi?",
+      "type": "single",
+      "options": [
+        "5 kunlik",
+        "6 kunlik",
+        "Ish turiga bog‘liq",
+        "Farqi yo‘q"
+      ]
+    },
+    {
+      "id": 26,
+      "section": 4,
+      "text": "Sizga moslashuvchan ish vaqti, masalan, ishni ertaroq yoki kechroq boshlash imkoniyati berilsa, bundan foydalanarmidingiz?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Yo‘q",
+        "Vaziyatga bog‘liq"
+      ]
+    },
+    {
+      "id": 27,
+      "section": 4,
+      "text": "Masofadan turib ishlash imkoniyati siz uchun qanchalik muhim?",
+      "type": "single",
+      "options": [
+        "Juda muhim",
+        "Muhim",
+        "O‘rtacha",
+        "Uncha muhim emas",
+        "Umuman muhim emas"
+      ]
+    },
+    {
+      "id": 28,
+      "section": 4,
+      "text": "Ish joyingizda dam olish va mehnat ta'tillari yetarli darajada ta'minlanganmi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Qisman",
+        "Yo‘q"
+      ]
+    },
+    {
+      "id": 29,
+      "section": 5,
+      "text": "Rahbaringiz bilan bemalol fikr almasha olasizmi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Qisman",
+        "Yo‘q"
+      ]
+    },
+    {
+      "id": 30,
+      "section": 5,
+      "text": "Rahbariyat xodimlarning taklif va muammolarini tinglaydimi?",
+      "type": "single",
+      "options": [
+        "Har doim",
+        "Ko‘pincha",
+        "Ba'zan",
+        "Deyarli hech qachon"
+      ]
+    },
+    {
+      "id": 31,
+      "section": 5,
+      "text": "Ish joyingizda sizga nisbatan hurmat va adolat mavjud deb hisoblaysizmi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Qisman",
+        "Yo‘q"
+      ]
+    },
+    {
+      "id": 32,
+      "section": 5,
+      "text": "Hamkasblaringiz bilan munosabatlaringiz qanday?",
+      "type": "single",
+      "options": [
+        "Juda yaxshi",
+        "Yaxshi",
+        "O‘rtacha",
+        "Yomon",
+        "Juda yomon"
+      ]
+    },
+    {
+      "id": 33,
+      "section": 5,
+      "text": "Korxonada xodimlarning fikri va takliflari inobatga olinadimi?",
+      "type": "single",
+      "options": [
+        "Har doim",
+        "Ko‘pincha",
+        "Ba'zan",
+        "Deyarli hech qachon"
+      ]
+    },
+    {
+      "id": 34,
+      "section": 5,
+      "text": "Ishingizda yaxshi natijaga erishganingizda rahbariyat tomonidan e'tirof yoki rag‘bat olasizmi?",
+      "type": "single",
+      "options": [
+        "Har doim",
+        "Ko‘pincha",
+        "Ba'zan",
+        "Deyarli hech qachon"
+      ]
+    },
+    {
+      "id": 35,
+      "section": 5,
+      "text": "Ish joyingizda sizni eng ko‘p nima charchatadi yoki bezovta qiladi?",
+      "type": "text"
+    },
+    {
+      "id": 36,
+      "section": 6,
+      "text": "Agar sizga boshqa korxonadan hozirgi maoshingizdan 20–30% yuqori maosh taklif qilinsa, ish joyingizni o‘zgartirarmidingiz? Nima uchun?",
+      "type": "text"
+    },
+    {
+      "id": 37,
+      "section": 6,
+      "text": "Sizni hozirgi ish joyingizda qolishga eng ko‘p nima undaydi?",
+      "type": "text"
+    },
+    {
+      "id": 38,
+      "section": 6,
+      "text": "Qanday holatlarda hozirgi ish joyingizdan ketish haqida o‘ylashingiz mumkin?",
+      "type": "text"
+    },
+    {
+      "id": 39,
+      "section": 6,
+      "text": "Siz uchun ish joyini o‘zgartirishga sabab bo‘ladigan eng muhim 3 ta omil nima?",
+      "type": "text"
+    },
+    {
+      "id": 40,
+      "section": 6,
+      "text": "Agar boshqa korxonada maosh bir xil bo‘lsa, lekin sharoitlar yaxshiroq bo‘lsa, yangi ish joyiga o‘tarmidingiz?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Yo‘q",
+        "Vaziyatga bog‘liq"
+      ]
+    },
+    {
+      "id": 41,
+      "section": 6,
+      "text": "Kelajakda hozirgi korxonangizda lavozim o‘sishi va yuqoriroq maosh olish imkoniyati bor deb hisoblaysizmi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Qisman",
+        "Yo‘q",
+        "Bilmayman"
+      ]
+    },
+    {
+      "id": 42,
+      "section": 7,
+      "text": "Agar ish joyingizda qanday qo‘shimcha imkoniyatlar yaratilsa, yanada ko‘proq va samaraliroq ishlagan bo‘lardingiz?",
+      "type": "text"
+    },
+    {
+      "id": 43,
+      "section": 7,
+      "text": "Quyidagi imtiyozlardan qaysilari siz uchun eng muhim?",
+      "type": "multi",
+      "options": [
+        "Har oylik bonus.",
+        "Bepul tushlik.",
+        "Yo‘l xarajatlarini qoplash.",
+        "Tibbiy sug‘urta.",
+        "Yillik mukofot.",
+        "Qo‘shimcha dam olish kunlari.",
+        "Kasbiy rivojlanish va o‘qitish.",
+        "Lavozimda o‘sish imkoniyati.",
+        "Moslashuvchan ish vaqti.",
+        "Oilaviy yordam va qo‘llab-quvvatlash."
+      ]
+    },
+    {
+      "id": 44,
+      "section": 7,
+      "text": "Korxona tomonidan har yili bir marta xodimlar uchun sayohat yoki jamoaviy dam olish tashkil etilsa, bu sizga yoqarmidi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Yo‘q",
+        "Tashkil etilishiga bog‘liq"
+      ]
+    },
+    {
+      "id": 45,
+      "section": 7,
+      "text": "Korxona sizning kasbiy rivojlanishingiz uchun bepul kurslar va treninglar tashkil qilsa, qatnasharmidingiz?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Yo‘q",
+        "Mavzu va vaqtga bog‘liq"
+      ]
+    },
+    {
+      "id": 46,
+      "section": 7,
+      "text": "Agar yaxshi natija ko‘rsatgan xodimga har oyda alohida mukofot yoki «Eng yaxshi xodim» unvoni berilsa, bu sizni rag‘batlantirarmidi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Yo‘q",
+        "Baholash mezonlariga bog‘liq"
+      ]
+    },
+    {
+      "id": 47,
+      "section": 7,
+      "text": "Sizningcha, xodimlarni uzoq muddat korxonada ushlab qolish uchun qanday tizim joriy qilish kerak deb hisoblaysiz?",
+      "type": "text"
+    },
+    {
+      "id": 48,
+      "section": 8,
+      "text": "Sizningcha, yangi xodimni ishga qabul qilishda eng muhim 3 ta xususiyat qaysilar?",
+      "type": "multi",
+      "choose": 3,
+      "options": [
+        "Bilim va tajriba.",
+        "Mas'uliyat.",
+        "Halollik.",
+        "Intizom.",
+        "Tez o‘rganish qobiliyati.",
+        "Jamoada ishlash.",
+        "Muloqot qobiliyati.",
+        "Tashabbuskorlik."
+      ]
+    },
+    {
+      "id": 49,
+      "section": 8,
+      "text": "Sizningcha, ishga kirishda tajriba muhimroqmi yoki insonning o‘rganishga bo‘lgan ishtiyoqi?",
+      "type": "single",
+      "options": [
+        "Tajriba",
+        "O‘rganishga bo‘lgan ishtiyoq",
+        "Ikkalasi ham birdek muhim",
+        "Lavozimga bog‘liq"
+      ]
+    },
+    {
+      "id": 50,
+      "section": 8,
+      "text": "Yangi xodim ishga qabul qilinganda, unga dastlabki bir oy davomida alohida murabbiy yoki ustoz biriktirilishi kerakmi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Yo‘q",
+        "Lavozimga bog‘liq"
+      ]
+    },
+    {
+      "id": 51,
+      "section": 8,
+      "text": "Ishga kirayotgan insonni sinov muddati davomida qanday mezonlar asosida baholash kerak deb hisoblaysiz?",
+      "type": "text"
+    },
+    {
+      "id": 52,
+      "section": 8,
+      "text": "Sizningcha, yaxshi xodimni boshqa xodimlardan ajratib turadigan eng muhim fazilat nima?",
+      "type": "text"
+    },
+    {
+      "id": 53,
+      "section": 9,
+      "text": "Agar siz korxona rahbari bo‘lganingizda, xodimlar uchun birinchi navbatda qanday sharoit yaratgan bo‘lardingiz?",
+      "type": "text"
+    },
+    {
+      "id": 54,
+      "section": 9,
+      "text": "Hozirgi ish joyingizda o‘zgartirishni istaydigan eng muhim 3 ta jihat qaysilar?",
+      "type": "text"
+    },
+    {
+      "id": 55,
+      "section": 9,
+      "text": "Sizningcha, xodim ishga faqat maosh uchun keladimi yoki uni ishda ushlab turadigan boshqa muhim omillar ham bormi?",
+      "type": "text"
+    },
+    {
+      "id": 56,
+      "section": 9,
+      "text": "Sizni ishga ertalab xursand bo‘lib kelishga nima undaydi?",
+      "type": "text"
+    },
+    {
+      "id": 57,
+      "section": 9,
+      "text": "Bizning tadqiqotimiz uchun qo‘shimcha fikr, taklif yoki tavsiyangiz bormi?",
+      "type": "text"
+    }
+  ]
+}

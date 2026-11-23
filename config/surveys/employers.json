@@ -1,0 +1,350 @@
+{
+  "id": "employers",
+  "title": "Rahbarlar uchun xodimlar va ish sharoitlari bo‘yicha so‘rovnoma",
+  "introduction": "Hurmatli respondent!\n\nMaqsadimiz ish beruvchilar qanday xodimlarni izlashini, qanday maosh, bonus va sharoitlar taklif qilishini o‘rganishdir. Javoblaringiz kelajakda yaxshi ish muhiti yaratish uchun tahlil qilinadi. Ismingiz va korxonangiz nomini yozishingiz shart emas. Amaldagi holat bilan kelajakdagi rejangizni javobda ajratib ko‘rsating.",
+  "thanks": "Vaqt ajratganingiz uchun rahmat! Fikrlaringiz xodimlar va ish beruvchilar ehtiyojlarini yaxshiroq tushunishga yordam beradi.",
+  "sections": [
+    "Korxona va jamoa",
+    "Maosh, KPI va bonuslar",
+    "Tushlik va qo‘shimcha imtiyozlar",
+    "Ish vaqti va dam olish",
+    "Ishga olish va rivojlanish",
+    "Xodimlarni saqlash va tajriba"
+  ],
+  "questions": [
+    {
+      "text": "Korxonangiz qancha vaqtdan beri faoliyat yuritadi? Yil va oy bilan yozing.",
+      "section": 1,
+      "type": "text",
+      "id": 1
+    },
+    {
+      "id": 2,
+      "section": 1,
+      "text": "Korxonangiz qaysi sohada faoliyat yuritadi?",
+      "type": "text"
+    },
+    {
+      "text": "Hozir korxonangizda nechta xodim ishlaydi? Xodimlar sonini raqamda yozing.",
+      "section": 1,
+      "type": "number",
+      "id": 3
+    },
+    {
+      "text": "Qaysi lavozim va vazifalar bo‘yicha xodimlaringiz bor?",
+      "section": 1,
+      "type": "text",
+      "id": 4
+    },
+    {
+      "text": "Korxonangizdagi eng kam oylik asosiy maosh qancha? Oyiga qo‘lga tegadigan summani va valyutani yozing.",
+      "section": 2,
+      "type": "money",
+      "id": 5
+    },
+    {
+      "text": "Korxonangizdagi eng yuqori oylik asosiy maosh qancha? Oyiga qo‘lga tegadigan summani va valyutani yozing.",
+      "section": 2,
+      "type": "money",
+      "id": 6
+    },
+    {
+      "text": "Eng yuqori maosh oladigan xodim qaysi lavozimda va aynan qanday ish hamda natija uchun shu maoshni oladi?",
+      "section": 2,
+      "type": "text",
+      "id": 7
+    },
+    {
+      "text": "Yangi xodimlarga lavozimlar bo‘yicha qancha boshlang‘ich maosh taklif qilasiz? Lavozim — oylik summa — valyuta ko‘rinishida yozing.",
+      "section": 2,
+      "type": "text",
+      "id": 8
+    },
+    {
+      "text": "Shu lavozimda ikki yil yaxshi ishlagan xodimning maoshi qancha bo‘ladi? Lavozim, summa, valyuta va bu amaldagi holatmi yoki rejami, yozing.",
+      "section": 2,
+      "type": "text",
+      "id": 9
+    },
+    {
+      "text": "Shu lavozimda uch yil yaxshi ishlagan xodimning maoshi qancha bo‘ladi? Lavozim, summa, valyuta va bu amaldagi holatmi yoki rejami, yozing.",
+      "section": 2,
+      "type": "text",
+      "id": 10
+    },
+    {
+      "text": "Xodimlar daromadi qanday tuzilgan?",
+      "section": 2,
+      "type": "single",
+      "options": [
+        "Faqat belgilangan maosh",
+        "Belgilangan maosh va KPI bonusi",
+        "Faqat natija yoki foizga bog‘liq",
+        "Lavozimga qarab turlicha"
+      ],
+      "id": 11
+    },
+    {
+      "text": "Belgilangan maosh va o‘zgaruvchan bonusning ulushi qancha? Bitta lavozim misolida summa yoki foiz bilan yozing.",
+      "section": 2,
+      "type": "text",
+      "id": 12
+    },
+    {
+      "text": "KPI yoki bonusni qaysi aniq ko‘rsatkichlarga qarab berasiz? Masalan, savdo, foyda, mijoz qoniqishi yoki ish sifati.",
+      "section": 2,
+      "type": "text",
+      "id": 13
+    },
+    {
+      "text": "KPI maqsadlari kimning natijasiga bog‘langan?",
+      "section": 2,
+      "type": "single",
+      "options": [
+        "Har bir xodimning o‘z natijasiga",
+        "Jamoa natijasiga",
+        "Shaxsiy va jamoaviy natijaga",
+        "KPI tizimi yo‘q"
+      ],
+      "id": 14
+    },
+    {
+      "text": "Bitta xodim misolida bonus qanday hisoblanishini yozing. Maqsad, erishilgan natija va to‘lanadigan bonus summasini ko‘rsating.",
+      "section": 2,
+      "type": "text",
+      "id": 15
+    },
+    {
+      "text": "Bir xodimga bir oyda amalda to‘lagan eng katta bonus summangiz qancha? Bonus bo‘lmagan bo‘lsa, 0 yozing.",
+      "section": 2,
+      "type": "money",
+      "id": 16
+    },
+    {
+      "text": "So‘nggi uch oyda xodimlaringizning taxminan qanchasi belgilangan KPI maqsadiga erishdi?",
+      "section": 2,
+      "type": "single",
+      "options": [
+        "Hech biri",
+        "1–25%",
+        "26–50%",
+        "51–75%",
+        "76–100%",
+        "KPI yo‘q yoki hisoblanmagan"
+      ],
+      "id": 17
+    },
+    {
+      "id": 18,
+      "section": 2,
+      "text": "Maoshni belgilangan sanada to‘lash qanday yo‘lga qo‘yilgan?",
+      "type": "single",
+      "options": [
+        "Har doim vaqtida",
+        "Ba'zan kechikadi",
+        "Doimiy sana belgilanmagan"
+      ]
+    },
+    {
+      "text": "Maoshni oshirishga qanday natija yoki shart asos bo‘ladi va qanchalik tez-tez qayta ko‘rib chiqasiz?",
+      "section": 2,
+      "type": "text",
+      "id": 19
+    },
+    {
+      "id": 20,
+      "section": 3,
+      "text": "Xodimlarning tushligi qanday ta'minlanadi?",
+      "type": "single",
+      "options": [
+        "Korxona taqdim etadi",
+        "Xarajatning bir qismini qoplaydi",
+        "Xodim o‘z hisobidan ovqatlanadi"
+      ]
+    },
+    {
+      "text": "Korxona bir xodimning tushligi uchun bir ish kunida qancha to‘laydi? Xarajat qoplanmasa, 0 yozing.",
+      "section": 3,
+      "type": "money",
+      "id": 21
+    },
+    {
+      "id": 22,
+      "section": 3,
+      "text": "Korxonangizda xodimlarga qaysi imtiyozlar amalda taqdim etiladi?",
+      "type": "multi",
+      "options": [
+        "Tushlik bepul beriladi.",
+        "Yo‘l xarajatlari qoplanadi.",
+        "Har oylik bonuslar mavjud.",
+        "Bayramlarda pul mukofoti beriladi.",
+        "Yillik mukofotlar mavjud.",
+        "Tibbiy sug‘urta mavjud.",
+        "Ta'til va dam olish uchun qo‘shimcha imkoniyatlar mavjud.",
+        "Boshqa imtiyozlar."
+      ]
+    },
+    {
+      "text": "Tushlik, yo‘l va boshqa imtiyozlar uchun bir xodimga oyiga jami qancha mablag‘ sarflaysiz? Asosiy maosh va bonusni qo‘shmang.",
+      "section": 3,
+      "type": "money",
+      "id": 23
+    },
+    {
+      "id": 24,
+      "section": 4,
+      "text": "Xodimlaringiz odatda soat nechadan nechagacha ishlaydi?",
+      "type": "text"
+    },
+    {
+      "id": 25,
+      "section": 4,
+      "text": "Korxonangizda haftada necha kun ishlanadi?",
+      "type": "single",
+      "options": [
+        "4 kun yoki kamroq",
+        "5 kun",
+        "6 kun",
+        "7 kun",
+        "O‘zgaruvchan jadval"
+      ]
+    },
+    {
+      "id": 26,
+      "section": 4,
+      "text": "Xodimlarning belgilangan vaqtdan ortiq ishlashi qanchalik tez-tez uchraydi?",
+      "type": "single",
+      "options": [
+        "Hech qachon",
+        "Kamdan-kam",
+        "Ba'zan",
+        "Tez-tez",
+        "Har kuni"
+      ]
+    },
+    {
+      "id": 27,
+      "section": 4,
+      "text": "Qo‘shimcha ish vaqti qanday qoplanadi?",
+      "type": "multi",
+      "options": [
+        "Qo‘shimcha haq to‘lanadi",
+        "Dam olish vaqti beriladi",
+        "Alohida qoplanmaydi",
+        "Qo‘shimcha ishlanmaydi"
+      ]
+    },
+    {
+      "id": 28,
+      "section": 4,
+      "text": "Xodimlarga ishni ertaroq yoki kechroq boshlash imkoniyati beriladimi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Ayrim lavozimlarda",
+        "Yo‘q",
+        "Joriy etishni rejalashtiryapmiz"
+      ]
+    },
+    {
+      "id": 29,
+      "section": 4,
+      "text": "Masofadan ishlash imkoniyati mavjudmi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Ayrim lavozimlarda",
+        "Yo‘q",
+        "Joriy etishni rejalashtiryapmiz"
+      ]
+    },
+    {
+      "id": 30,
+      "section": 4,
+      "text": "Dam olish va ta'tillarni jamoa ishiga moslab qanday tashkil qilasiz?",
+      "type": "text"
+    },
+    {
+      "id": 31,
+      "section": 5,
+      "text": "Yangi xodimni ishga olishda siz uchun eng muhim uchta xususiyat qaysilar?",
+      "type": "multi",
+      "choose": 3,
+      "options": [
+        "Bilim va tajriba.",
+        "Mas'uliyat.",
+        "Halollik.",
+        "Intizom.",
+        "Tez o‘rganish qobiliyati.",
+        "Jamoada ishlash.",
+        "Muloqot qobiliyati.",
+        "Tashabbuskorlik."
+      ]
+    },
+    {
+      "id": 32,
+      "section": 5,
+      "text": "Nomzod tanlashda tajriba muhimroqmi yoki o‘rganishga ishtiyoqmi?",
+      "type": "single",
+      "options": [
+        "Tajriba",
+        "O‘rganishga bo‘lgan ishtiyoq",
+        "Ikkalasi ham birdek muhim",
+        "Lavozimga bog‘liq"
+      ]
+    },
+    {
+      "text": "Sinov muddati qancha davom etadi va xodimdan qanday o‘lchanadigan natijalarni kutasiz?",
+      "section": 5,
+      "type": "text",
+      "id": 33
+    },
+    {
+      "id": 34,
+      "section": 5,
+      "text": "Yangi xodimga birinchi oyda murabbiy yoki ustoz biriktirasizmi?",
+      "type": "single",
+      "options": [
+        "Ha",
+        "Yo‘q",
+        "Lavozimga bog‘liq"
+      ]
+    },
+    {
+      "text": "Bir xodimning kasbiy rivojlanishi, kurs yoki treningi uchun bir yilda qancha mablag‘ ajratasiz? Mablag‘ ajratilmasa, 0 yozing.",
+      "section": 5,
+      "type": "money",
+      "id": 35
+    },
+    {
+      "text": "So‘nggi 12 oyda nechta xodim ketdi va eng ko‘p uchragan ketish sabablari nima bo‘ldi?",
+      "section": 6,
+      "type": "text",
+      "id": 36
+    },
+    {
+      "id": 37,
+      "section": 6,
+      "text": "Yaxshi xodimga boshqa joydan 20–30% yuqori maosh taklif qilinsa, uni saqlab qolish uchun nima qilardingiz?",
+      "type": "text"
+    },
+    {
+      "text": "Xodimlar fikri va muammolarini qanday yig‘asiz? Shu fikrlar asosida kiritgan bir o‘zgarishingizni yozing.",
+      "section": 6,
+      "type": "text",
+      "id": 38
+    },
+    {
+      "text": "Xodimlarni saqlab qolish uchun amalda eng yaxshi samara bergan uchta chorani yozing.",
+      "section": 6,
+      "type": "text",
+      "id": 39
+    },
+    {
+      "text": "Yangi jamoa tuzayotgan rahbarga maosh, KPI, bonus va ish sharoiti bo‘yicha qanday xato qilmaslikni maslahat berasiz? Qo‘shimcha fikringiz bo‘lsa yozing.",
+      "section": 6,
+      "type": "text",
+      "id": 40
+    }
+  ]
+}
