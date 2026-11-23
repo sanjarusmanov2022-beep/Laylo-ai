@@ -16,7 +16,9 @@ Hisobot foizlari savolga javob bergan va so‘rovnomani yakunlaganlar sonidan ol
 
 Cloudflare Workers Free va SQLite-backed Durable Objects ishlatiladi. Javoblar Durable Object ichida saqlanadi. GitHub’da kod va savollar joylashadi. Bot tokeni va javoblar GitHub’ga kiritilmaydi.
 
-Cloudflare Workers Builds orqali ushbu repozitoriyni ulang. Worker nomi `laylo-surveys`, production branch `main`, deploy command `npx --yes wrangler@4.166.0 deploy`.
+Jonli Worker `laylo-surveys` Cloudflare’ga bevosita joylandi. Keyingi yangilanishlar terminaldan `node --env-file=.env scripts/deploy-surveys.mjs` orqali qilinadi. Ruxsat kaliti `.laylo/cloudflare-surveys.json` ichida maxfiy saqlanadi. GitHub’ga push qilish o‘z-o‘zidan hostingni yangilamaydi.
+
+Jonli xizmat https://laylo-surveys.sanjar-usmanov-2023.workers.dev/health orqali tekshiriladi. Telegram bot https://t.me/Laylo_asistent_bot .
 
 Worker secrets sifatida quyidagilarni sozlang.
 
