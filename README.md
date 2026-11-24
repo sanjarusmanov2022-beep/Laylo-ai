@@ -50,6 +50,14 @@ Rahbar uchun KPI maqsadi, natijaga xodimning ta’siri, bonus byudjeti va hisobn
 
 `789-456-85` kabi foydalanuvchi tanlagan raqam kanal sarlavhasida «789-456-85 raqami hisoboti» deb ko‘rsatiladi. Raqam tanlansa, Telegramdagi ism olinmaydi va kanalda berilmaydi. Oddiy so‘rovnomada bir xil raqam (bo‘shliq va tire hisobga olinmasdan) bir rol ichida ikki kishiga band qilinmaydi; sinov rejimi haqiqiy raqamlarni band qilmaydi. Eski tugallanmagan nomsiz jarayonlar oldingi javoblarini saqlagan holda majburiy belgi kiritishga yo‘naltiriladi. Maxfiy qolishi kerak bo‘lgan ismlarni erkin matnli javoblarga ham kiritmaslik kirish qismida tushuntiriladi.
 
+## Ishxona nomi va sektor
+
+Xodimning shaxsiy nomi/maxfiy raqamidan tashqari uning ishxonasi nomi alohida so‘raladi. Ism yoki raqamdan keyin yosh, keyin ishxona nomi yoki **Ishxonam nomi sir qolsin**, so‘ng sektor tanlanadi. Nomni oshkor qilish ixtiyoriy. Nom kiritilgandan keyin maxfiylik tanlansa, u sessiyadan o‘chadi va kanal hisobotida ham, CSVda ham «Sir saqlangan» chiqadi. Rahbar korxona nomi yoki raqamini avval kiritgani uchun ikkinchi marta so‘ralmaydi.
+
+Sektor ikkala yo‘nalishda ham so‘raladi: davlat, xususiy, davlat-xususiy/aralash, nodavlat notijorat, boshqa/aniq bilmayman yoki ko‘rsatishni istamayman. Ishxona va sektor ma’lumoti kanal sarlavhasi tafsilotlari hamda CSVning alohida ustunlarida beriladi. Ular baholash balliga ta’sir qilmaydi. Ushbu tanishtiruv savollari asosiy 81/64 savoldan oldin keladi.
+
+Eski tugallanmagan jarayonlar avvalgi javoblarini saqlab, yetishmayotgan ishxona/sektor savollaridan keyin o‘sha joydan davom etadi. Eski yakunlangan javoblar qayta ochilmaydi.
+
 ## Hisobotlar kanali yoki guruhi
 
 Admin menyusidagi **📨 Hisobotlar kanali** → **Kanalni ulash** orqali @username, t.me havolasi yoki yopiq kanaldan forward qilingan xabarni yuboring. Egasi ham, Laylo ham shu kanalda administrator bo‘lishi, Layloda xabar joylash huquqi bo‘lishi kerak. Faqat egasi ulanishni o‘zgartira oladi. `/reportchannel @username` ham ishlaydi. Kanal ulanmaguncha odatiy admin hisobotlari va CSV ishlashda davom etadi.

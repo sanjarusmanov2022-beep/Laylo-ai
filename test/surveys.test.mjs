@@ -7,7 +7,7 @@ import worker, { SurveyStore } from '../src/survey-worker.mjs';
 
 const definitions = await Promise.all(['employees', 'employers'].map(async id => JSON.parse(await readFile(new URL(`../config/surveys/${id}.json`, import.meta.url), 'utf8'))));
 
-function harness(defs = definitions, existing, autoScript = true) {
+function harness(defs = definitions, existing, autoScript = true, autoProfile = true) {
   const data = existing ?? new Map();
   const messages = [];
   const storage = {
@@ -33,9 +33,16 @@ function harness(defs = definitions, existing, autoScript = true) {
   const chooseDefaultScript = async user => {
     if (autoScript && messages.findLast(m => m.body.chat_id === user)?.body.reply_markup?.inline_keyboard.flat().some(b => b.callback_data === 'script:latin')) await press(user, 'Lotincha');
   };
+  const chooseDefaultProfile = async user => {
+    if (!autoProfile) return;
+    const lastButtons = messages.findLast(m => m.body.chat_id === user)?.body.reply_markup?.inline_keyboard.flat() ?? [];
+    const option = lastButtons.find(b => b.callback_data?.endsWith(':workplace_private')) ?? lastButtons.find(b => b.callback_data?.endsWith(':sector_private'));
+    if (option) await press(user, option.text);
+  };
   const message = async (user, text) => {
     await bot.handle({ update_id: ++updateId, message: { text, from: { id: user, first_name: 'Telegram name never stored' }, chat: { id: user, type: 'private' } } });
     await chooseDefaultScript(user);
+    await chooseDefaultProfile(user);
   };
   const buttons = user => messages.findLast(m => m.body.chat_id === user && m.body.reply_markup)?.body.reply_markup.inline_keyboard.flat() ?? [];
   const press = async (user, text) => {
@@ -44,6 +51,7 @@ function harness(defs = definitions, existing, autoScript = true) {
     const update = { update_id: ++updateId, callback_query: { id: `cb${updateId}`, from: { id: user }, message: { message_id: messages.length, chat: { id: user, type: 'private' } }, data: button.callback_data } };
     await bot.handle(update);
     await chooseDefaultScript(user);
+    await chooseDefaultProfile(user);
     return update;
   };
   const sessions = () => [...data].filter(([key]) => key.startsWith('session:')).map(([, session]) => session);
@@ -870,4 +878,88 @@ test('An old owner preview resume button always returns to preview, even after o
   assert.match(h.messages.at(-1).body.text, /SINOV/);
   assert.equal(h.sessions().length, 0);
   assert.equal([...h.data].filter(([key]) => key.startsWith('preview-session:')).length, 1);
+});
+
+
+test('Employee workplace name is separate from personal code and sector appears in channel report and CSV', async () => {
+  const mini = { ...definitions[0], questions: [{ id: 1, section: 1, type: 'text', text: 'Lavozimingiz?' }] };
+  const h = harness([mini], undefined, true, false);
+  await h.message(1, '/reportchannel @reports_test');
+  await h.message(101, '/start employees'); await h.press(101, 'Boshlash'); await h.message(101, '789-856-101'); await h.press(101, 'Yoshni o‘tkazib');
+  assert.equal(h.sessions()[0].stage, 'workplace');
+  await h.message(101, 'Namuna tashkilot');
+  assert.equal(h.sessions()[0].stage, 'sector');
+  await h.press(101, 'Davlat tashkiloti');
+  assert.equal(h.sessions()[0].publicIdentity.value, '789-856-101');
+  assert.deepEqual(h.sessions()[0].workplace, { visibility: 'named', name: 'Namuna tashkilot' });
+  assert.equal(h.sessions()[0].sector, 'public');
+  await h.message(101, 'Mutaxassis'); await h.press(101, 'Javoblarni yuborish');
+  const report = h.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456).map(m => m.body.text).join('\n');
+  assert.match(report, /Ishxona: Namuna tashkilot/); assert.match(report, /Sektor: Davlat tashkiloti/);
+  const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
+  assert.match(csv, /Namuna tashkilot/); assert.match(csv, /Davlat tashkiloti/);
+});
+
+test('Choosing private after typing workplace removes its name from channel reports and CSV', async () => {
+  const mini = { ...definitions[0], questions: [{ id: 1, section: 1, type: 'text', text: 'Lavozimingiz?' }] };
+  const h = harness([mini], undefined, true, false);
+  await h.message(1, '/reportchannel @reports_test');
+  await h.message(102, '/start employees'); await h.press(102, 'Boshlash'); await h.message(102, '789-856-102'); await h.press(102, 'Yoshni o‘tkazib');
+  await h.message(102, 'MAXFIY_ISHXONA_102'); await h.press(102, 'Ishxona nomiga qaytish'); await h.press(102, 'Ishxonam nomi sir qolsin'); await h.press(102, 'Ko‘rsatishni istamayman');
+  assert.deepEqual(h.sessions()[0].workplace, { visibility: 'private' });
+  assert.equal(h.sessions()[0].sector, 'undisclosed');
+  await h.message(102, 'Mutaxassis'); await h.press(102, 'Javoblarni yuborish');
+  const report = h.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456).map(m => m.body.text).join('\n');
+  assert.ok(!report.includes('MAXFIY_ISHXONA_102')); assert.match(report, /Ishxona: Sir saqlangan/);
+  const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
+  assert.ok(!csv.includes('MAXFIY_ISHXONA_102')); assert.match(csv, /Sir saqlangan/);
+});
+
+test('Every sector option works for both roles without asking employers for the company name twice', async () => {
+  for (const role of ['employees','employers']) for (const sector of ['public','private','mixed','nonprofit','other','undisclosed']) {
+    const survey = definitions.find(s => s.id === role);
+    const h = harness([{ ...survey, questions: [survey.questions[0]] }], undefined, true, false);
+    await h.message(103, '/start ' + role); await h.press(103, 'Boshlash'); await h.message(103, '789-856-103'); await h.press(103, 'Yoshni o‘tkazib');
+    if (role === 'employees') await h.press(103, 'Ishxonam nomi sir qolsin');
+    assert.equal(h.sessions()[0].stage, 'sector');
+    const option = h.buttons(103).find(b => b.callback_data.endsWith(':sector_' + sector));
+    await h.press(103, option.text);
+    assert.equal(h.sessions()[0].stage, 'questions'); assert.equal(h.sessions()[0].sector, sector);
+  }
+});
+
+test('Workplace and sector resume in Cyrillic after restart without losing the entered name', async () => {
+  const h = harness(definitions, undefined, false, false);
+  await h.message(104, '/start employees'); await h.press(104, 'Кириллча'); await h.press(104, 'Бошлаш'); await h.message(104, '789-856-104'); await h.press(104, 'Ёшни ўтказиб');
+  assert.match(h.messages.at(-1).body.text, /Қайси корхона/);
+  await h.message(104, 'Мактаб намуна');
+  const restarted = harness(definitions, h.data, false, false);
+  await restarted.message(104, '/survey');
+  assert.match(restarted.messages.at(-1).body.text, /қайси секторга/);
+  assert.equal(restarted.sessions()[0].workplace.name, 'Мактаб намуна');
+  await h.press(104, 'Давлат ташкилоти');
+  assert.equal(h.sessions()[0].sector, 'public');
+  assert.match(h.messages.at(-1).body.text, /Савол 1[/]81/);
+});
+
+test('Older in-progress responses add workplace and sector then return to their existing question', async () => {
+  const h = harness(definitions, undefined, true, false);
+  await h.message(105, '/start employees'); await h.press(105, 'Boshlash'); await h.message(105, '789-856-105'); await h.press(105, 'Yoshni o‘tkazib');
+  await h.press(105, 'Ishxonam nomi sir qolsin'); await h.press(105, 'Xususiy sektor'); await h.press(105, '1.');
+  const [key, session] = [...h.data].find(([key]) => key.startsWith('session:'));
+  delete session.workplace; delete session.sector;
+  await h.storage.put(key, session);
+  await h.message(105, '/survey'); assert.equal(h.sessions()[0].stage, 'workplace');
+  await h.press(105, 'Ishxonam nomi sir qolsin'); await h.press(105, 'Xususiy sektor');
+  assert.equal(h.sessions()[0].index, 1); assert.equal(h.sessions()[0].stage, 'questions');
+  assert.equal(h.sessions()[0].answers[1].choices[0], '2 oydan kam');
+});
+
+test('Company disclosure and sector never alter employee or company scores', () => {
+  const session = situationSession(definitions[0], 'high');
+  const base = buildSurveyInsights(definitions[0], session);
+  session.workplace = { visibility: 'named', name: 'Different workplace' }; session.sector = 'public';
+  assert.deepEqual(buildSurveyInsights(definitions[0], session), base);
+  session.workplace = { visibility: 'private' }; session.sector = 'private';
+  assert.deepEqual(buildSurveyInsights(definitions[0], session), base);
 });

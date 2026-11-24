@@ -69,6 +69,26 @@ function identityHeading(survey, session) {
   return identity.kind === 'code' ? '🔢 ' + identity.value + ' raqami hisoboti' : (survey.id === 'employers' ? '🏢 ' : '👤 ') + identity.value + ' hisoboti';
 }
 
+
+const sectorLabels = Object.freeze({ public: 'Davlat tashkiloti', private: 'Xususiy sektor', mixed: 'Davlat-xususiy / aralash', nonprofit: 'Nodavlat notijorat tashkiloti', other: 'Boshqa / aniq bilmayman', undisclosed: 'Ko‘rsatishni istamayman' });
+function missingProfile(survey, session) {
+  if (survey.id === 'employees' && !['named', 'private'].includes(session.workplace?.visibility)) return 'workplace';
+  if (['employees', 'employers'].includes(survey.id) && !Object.hasOwn(sectorLabels, session.sector ?? '')) return 'sector';
+  return null;
+}
+function publicWorkplace(survey, session) {
+  if (survey.id === 'employers') return publicIdentity(session).kind === 'name' ? publicIdentity(session).value : 'Maxfiy raqam bilan';
+  if (session.workplace?.visibility === 'named') return session.workplace.name;
+  return session.workplace?.visibility === 'private' ? 'Sir saqlangan' : 'Ko‘rsatilmagan';
+}
+function profileContinuation(survey, session) {
+  const missing = missingProfile(survey, session);
+  if (missing) return missing;
+  const next = session.profileReturnStage ?? 'questions';
+  delete session.profileReturnStage;
+  return next;
+}
+
 function randomId() { return crypto.randomUUID().replaceAll('-', '').slice(0, 10); }
 function display(answer) {
   if (!answer) return 'O‘tkazib yuborilgan';
@@ -227,7 +247,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     let text;
     let keyboard;
     if (session.stage === 'intro') {
-      text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nHisobotni tanishingiz uchun ism, korxona nomi yoki o‘zingiz tanlagan maxfiy raqam kiritish shart. Yoshingizni ko‘rsatish ixtiyoriy. Tanlagan nom yoki raqam va javoblaringiz so‘rovnoma egasiga hamda hisobotlar kanaliga yuboriladi. Maxfiy qolishini istagan ismlarni boshqa yozma javoblarga ham kiritmang.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
+      text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nHisobotni tanishingiz uchun ism, korxona nomi yoki o‘zingiz tanlagan maxfiy raqam kiritish shart. Yoshingizni ko‘rsatish ixtiyoriy. Xodimdan ishxona nomi alohida so‘raladi: uni yozish yoki sir saqlash mumkin. Tashkilot sektori ham alohida tanlanadi. Oshkor yozgan nomlaringiz va javoblaringiz so‘rovnoma egasiga hamda hisobotlar kanaliga yuboriladi. Maxfiy qolishini istagan ismlarni boshqa yozma javoblarga ham kiritmang.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
       keyboard = [[button('Boshlash ✅', session, 'begin')], [{ text: 'Bosh menyu', callback_data: 'home' }]];
     } else if (session.stage === 'name') {
       text = survey.id === 'employers'
@@ -237,6 +257,13 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     } else if (session.stage === 'age') {
       text = '🎂 Yoshingiz nechada?\n\nYoshingizni raqam bilan yozing. Masalan: 28. Javob berish ixtiyoriy.';
       keyboard = [[button('Yoshni o‘tkazib yuborish', session, 'skip')], [button('⬅️ Nom yoki raqamga qaytish', session, 'back')]];
+    } else if (session.stage === 'workplace') {
+      text = '🏢 Qaysi korxona yoki tashkilotda ishlaysiz?\n\nIshxonangiz nomini yozishingiz mumkin. Ko‘rsatsangiz, hisobotda va kanalda chiqadi.\n\nNomini oshkor qilish ixtiyoriy. Istamasangiz, «Ishxonam nomi sir qolsin»ni bosing.';
+      keyboard = [[button('🔒 Ishxonam nomi sir qolsin', session, 'workplace_private')], [button('⬅️ Yoshga qaytish', session, 'profile_back')]];
+    } else if (session.stage === 'sector') {
+      text = '🏛 ' + (survey.id === 'employers' ? 'Korxonangiz' : 'Ishxonangiz') + ' qaysi sektorga kiradi?\n\nMos variantni tanlang. Oshkor qilishni istamasangiz, oxirgi variantni bosing.';
+      keyboard = Object.entries(sectorLabels).map(([value, label]) => [button(label, session, 'sector_' + value)]);
+      keyboard.push([button(survey.id === 'employees' ? '⬅️ Ishxona nomiga qaytish' : '⬅️ Yoshga qaytish', session, 'profile_back')]);
     } else if (session.stage === 'review') {
       const answered = Object.values(session.answers).filter(Boolean).length;
       text = `Savollar tugadi ✅\n\nJavob berilgan — ${answered}\nO‘tkazilgan — ${survey.questions.length - answered}\n\n«Yuborish»ni bosing. Savollarni ko‘rib chiqish uchun orqaga qaytishingiz mumkin.`;
@@ -245,7 +272,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (session.preview) {
         const analysis = renderSurveyInsights(buildSurveyInsights(survey, session));
         if (analysis) {
-          const text = toScript(identityHeading(survey, session) + '\n\n' + analysis, await getScript(chat) ?? 'latin');
+          const text = toScript(identityHeading(survey, session) + '\nIshxona: ' + publicWorkplace(survey, session) + '\nSektor: ' + (sectorLabels[session.sector] ?? 'Ko‘rsatilmagan') + '\n\n' + analysis, await getScript(chat) ?? 'latin');
           for (const part of splitReportText(text)) await send(chat, part);
         }
         return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')]);
@@ -300,6 +327,10 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (!session) session = { survey: id, token: randomId(), revision: 0, stage: 'intro', index: 0, answers: {}, paused: false };
     if (session.stage === 'review' && session.index < survey.questions.length) { session.stage = 'questions'; session.revision++; }
     if (session.stage !== 'done') session.questionCount = survey.questions.length;
+    const profile = missingProfile(survey, session);
+    if (profile && ['questions', 'review'].includes(session.stage)) {
+      session.profileReturnStage = session.stage; session.stage = profile; session.revision++;
+    }
     if (publicIdentity(session).kind === 'unknown' && !['intro', 'name', 'done'].includes(session.stage)) {
       session.identityReturnStage = session.stage;
       session.stage = 'name';
@@ -351,14 +382,14 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   }
 
   async function exportCsv(chat, id = 'all') {
-    const rows = [['So‘rovnoma', 'Javob raqami', 'Nom yoki maxfiy raqam', 'Yosh (ixtiyoriy)', 'Holat', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
+    const rows = [['So‘rovnoma', 'Javob raqami', 'Nom yoki maxfiy raqam', 'Yosh (ixtiyoriy)', 'Holat', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta', 'Ishxona nomi / maxfiylik', 'Sektor']];
     for (const survey of surveys.values()) {
       if (id !== 'all' && survey.id !== id) continue;
       const sessions = (await sessionList(survey.id)).filter(s => s.stage !== 'intro');
       for (const [i, session] of sessions.entries()) for (const q of survey.questions.slice(0, applicableQuestionCount(survey, session))) rows.push([
         survey.title, i + 1, publicIdentity(session).value, session.age ?? '', session.stage === 'done' ? 'Yakunlangan' : 'Tugallanmagan', q.id, q.text,
         session.stage === 'done' || Object.hasOwn(session.answers, q.id) ? display(session.answers[q.id]) : 'Hali yetib kelmagan',
-        session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '',
+        session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '', publicWorkplace(survey, session), sectorLabels[session.sector] ?? 'Ko‘rsatilmagan',
       ]);
     }
     const bytes = '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
@@ -457,11 +488,11 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       const { survey, session } = job;
       const script = session.script ?? 'latin';
       const insights = job.insights ?? buildSurveyInsights(survey, session);
-      const rows = [['So‘rovnoma', 'Javob raqami', 'Nom yoki maxfiy raqam', 'Yosh (ixtiyoriy)', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
-      for (const q of survey.questions) rows.push([survey.title, session.token, publicIdentity(session).value, session.age ?? '', q.id, q.text, display(session.answers[q.id]), session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '']);
+      const rows = [['So‘rovnoma', 'Javob raqami', 'Nom yoki maxfiy raqam', 'Yosh (ixtiyoriy)', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta', 'Ishxona nomi / maxfiylik', 'Sektor']];
+      for (const q of survey.questions) rows.push([survey.title, session.token, publicIdentity(session).value, session.age ?? '', q.id, q.text, display(session.answers[q.id]), session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '', publicWorkplace(survey, session), sectorLabels[session.sector] ?? 'Ko‘rsatilmagan']);
       const csv = '\uFEFF' + rows.map(row => row.map(value => csvCell(typeof value === 'string' ? toScript(value, script) : value)).join(',')).join('\r\n');
       const date = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tashkent', dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.completedAt));
-      const caption = identityHeading(survey, session) + '\n\n' + survey.title + '\nYosh: ' + (session.age ?? 'Ko‘rsatilmagan') + '\nJavob berilgan: ' + Object.values(session.answers).filter(Boolean).length + '/' + survey.questions.length + '\nSana: ' + date + ' (Toshkent)\nJavob raqami: ' + session.token + '\n\nBarcha savollar va javoblar faylda.';
+      const caption = identityHeading(survey, session) + '\n\n' + survey.title + '\nYosh: ' + (session.age ?? 'Ko‘rsatilmagan') + '\nIshxona: ' + publicWorkplace(survey, session) + '\nSektor: ' + (sectorLabels[session.sector] ?? 'Ko‘rsatilmagan') + '\nJavob berilgan: ' + Object.values(session.answers).filter(Boolean).length + '/' + survey.questions.length + '\nSana: ' + date + ' (Toshkent)\nJavob raqami: ' + session.token + '\n\nBarcha savollar va javoblar faylda.';
       const form = new FormData();
       form.set('chat_id', String(channel.id));
       form.set('caption', toScript(insights ? '📎 ' + publicIdentity(session).value + ' — barcha savol-javoblar\nHisobot ID: ' + session.token : caption, script));
@@ -640,6 +671,11 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       session.stage = 'questions'; session.questionCount = survey.questions.length; session.revision++;
       return persist(chat, actor, survey, session, update.update_id);
     }
+    const profile = missingProfile(survey, session);
+    if (profile && ['questions', 'review'].includes(session.stage)) {
+      session.profileReturnStage = session.stage; session.stage = profile; session.revision++;
+      return persist(chat, actor, survey, session, update.update_id);
+    }
     if (publicIdentity(session).kind === 'unknown' && !['intro', 'name', 'done'].includes(session.stage)) {
       session.identityReturnStage = session.stage; session.stage = 'name'; session.revision++;
       return persist(chat, actor, survey, session, update.update_id);
@@ -654,12 +690,28 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (action === 'skip' && session.stage === 'name') return send(chat, 'Nom yoki maxfiy raqam kiritish shart. Masalan: 789-856-78.');
       if (action === 'skip' && session.stage === 'age') {
         delete session.age;
-        session.stage = 'questions';
+        session.stage = profileContinuation(survey, session);
         session.revision++;
         return persist(chat, actor, survey, session, update.update_id);
       }
       if (action === 'back' && session.stage === 'age') {
         session.stage = 'name'; session.revision++;
+        return persist(chat, actor, survey, session, update.update_id);
+      }
+      if (session.stage === 'workplace' && (action === 'workplace_private' || action === 'skip')) {
+        session.workplace = { visibility: 'private' };
+        session.stage = profileContinuation(survey, session); session.revision++;
+        return persist(chat, actor, survey, session, update.update_id);
+      }
+      if (session.stage === 'sector' && (action.startsWith('sector_') || action === 'skip')) {
+        const sector = action === 'skip' ? 'undisclosed' : action.slice(7);
+        if (!Object.hasOwn(sectorLabels, sector)) return;
+        session.sector = sector; session.stage = profileContinuation(survey, session); session.revision++;
+        return persist(chat, actor, survey, session, update.update_id);
+      }
+      if (action === 'profile_back' && ['workplace', 'sector'].includes(session.stage)) {
+        session.stage = session.stage === 'sector' && survey.id === 'employees' ? 'workplace' : 'age';
+        session.revision++;
         return persist(chat, actor, survey, session, update.update_id);
       }
       if (action === 'submit' && session.stage === 'review') {
@@ -730,7 +782,21 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (!input || input.length > 1000) return send(chat, 'Javobingizni 1000 belgigacha matnda yozing yoki variantni tanlang.');
     if (session.stage === 'age') {
       if (!/^[0-9]{1,3}$/.test(input) || Number(input) < 1 || Number(input) > 120) return send(chat, 'Yoshingizni 1 dan 120 gacha butun son bilan yozing. Masalan: 28. Yoki «Yoshni o‘tkazib yuborish» tugmasini bosing.');
-      session.age = Number(input); session.stage = 'questions'; session.revision++;
+      session.age = Number(input); session.stage = profileContinuation(survey, session); session.revision++;
+      return persist(chat, actor, survey, session, update.update_id);
+    }
+    if (session.stage === 'workplace') {
+      const workplace = input.trim();
+      if (workplace.length > 150 || !/[\p{L}\p{N}]/u.test(workplace) || /[\n\r\x00-\x1f]/.test(workplace)) return send(chat, 'Ishxona nomini 150 belgigacha bir qatorda yozing yoki «Ishxonam nomi sir qolsin»ni bosing.');
+      session.workplace = { visibility: 'named', name: workplace };
+      session.stage = profileContinuation(survey, session); session.revision++;
+      return persist(chat, actor, survey, session, update.update_id);
+    }
+    if (session.stage === 'sector') {
+      const value = toScript(input, 'latin').toLowerCase();
+      const sector = Object.entries(sectorLabels).find(([id, label]) => id === value || label.toLowerCase() === value)?.[0] ?? ({ 'davlat':'public', 'xususiy':'private', 'aralash':'mixed', 'notijorat':'nonprofit', 'boshqa':'other', 'sir qolsin':'undisclosed' })[value];
+      if (!sector) return send(chat, 'Sektorni pastdagi tugmalardan tanlang. Oshkor qilishni istamasangiz «Ko‘rsatishni istamayman»ni bosing.');
+      session.sector = sector; session.stage = profileContinuation(survey, session); session.revision++;
       return persist(chat, actor, survey, session, update.update_id);
     }
     const q = survey.questions[session.index];
