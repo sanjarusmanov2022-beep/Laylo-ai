@@ -13,7 +13,8 @@
     "Motivatsiya va qo‘shimcha imkoniyatlar",
     "Ishga qabul qilish va yangi xodimlar",
     "Shaxsiy fikr va takliflar",
-    "Vaziyatli savollar va amaliy takliflar"
+    "Vaziyatli savollar va amaliy takliflar",
+    "KPI tizimi va natijaviy rag‘bat"
   ],
   "questions": [
     {
@@ -1284,7 +1285,55 @@
         "Hozir baholay olmayman"
       ],
       "decision": "satisfaction"
+    },
+    {
+      "id": 82,
+      "section": 11,
+      "kpi": "employee_current",
+      "type": "single",
+      "text": "Hozir ish joyingizda sizga nisbatan KPI yoki natijaga bog‘langan bonus tizimi qanday qo‘llanadi?",
+      "options": [
+        "Shaxsiy natijamga qarab",
+        "Jamoa natijasiga qarab",
+        "Shaxsiy va jamoa natijasiga birga",
+        "KPI yoki natijaviy bonus yo‘q",
+        "Qanday hisoblanishini aniq bilmayman"
+      ]
+    },
+    {
+      "id": 83,
+      "section": 11,
+      "kpi": "preferred_metrics",
+      "type": "multi",
+      "text": "KPI qaysi natijalarga bog‘lansa, ko‘proq va sifatliroq ishlashga intilardingiz? Sizga mos bir nechta variantni belgilang.",
+      "options": [
+        "Yangi mijozlar va savdo hajmi",
+        "Yig‘ilgan real tushum",
+        "Xizmat sifati va mijoz qoniqishi",
+        "Xatolarni kamaytirish va aniqlik",
+        "Ishni muddatida bajarish",
+        "Bajarilgan ish hajmi",
+        "Foyda va xarajat samaradorligi",
+        "Jamoani o‘qitish va hamkorlik"
+      ]
+    },
+    {
+      "id": 84,
+      "section": 11,
+      "kpi": "preferred_conditions",
+      "type": "multi",
+      "text": "KPI asosida kuchliroq natija qilishingiz uchun qaysi shartlar muhim? Bir nechta variantni tanlang.",
+      "options": [
+        "Mezon va hisoblash formulasi oldindan aniq bo‘lishi",
+        "Natijaga o‘zim ta’sir qila olishim",
+        "Asosiy maosh barqaror saqlanishi",
+        "Bonus miqdori yoki foizi oldindan ma’lum bo‘lishi",
+        "Bonus kelishilgan vaqtda to‘lanishi",
+        "Yetarli vaqt, resurs va o‘qitish berilishi",
+        "Natija soni bilan birga sifati ham baholanishi",
+        "Xato yoki tashqi to‘siq bo‘lsa hisobni qayta ko‘rish imkoni"
+      ]
     }
   ],
-  "version": "situations-v3"
+  "version": "kpi-v4"
 }

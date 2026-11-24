@@ -168,6 +168,42 @@ export function buildDecisionSupport(survey, session, companyScore = null) {
   return { title: direction, conclusion, steps: unique(steps) };
 }
 
+
+const kpiLabels = {
+  employee_current: 'Hozirgi KPI holati', preferred_metrics: 'Kuchliroq ishlashga undaydigan natijalar',
+  preferred_conditions: 'Xodim uchun muhim shartlar', current_types: 'Amalda qo‘llanayotgan KPI turlari',
+  current_basis: 'KPI belgilashdagi amaldagi asoslar', current_example: 'Rahbar yozgan amaldagi misol',
+};
+export function buildKpiInsights(survey, session) {
+  const records = survey.questions.filter(q => q.kpi && answer(session, q.id)).map(q => {
+    const response = answer(session, q.id);
+    return { key: q.kpi, question: q.id, title: kpiLabels[q.kpi], choices: response.choices ?? [], text: excerpt(response.text ?? '', 220) };
+  }).filter(r => r.choices.length || r.text);
+  if (!records.length) return null;
+  const selected = key => records.find(r => r.key === key)?.choices ?? [];
+  const tips = [];
+  if (survey.id === 'employers') {
+    const types = selected('current_types');
+    const basis = selected('current_basis');
+    if (types.includes('KPI hali joriy etilmagan') || basis.includes('Hali KPI belgilash tartibi yo‘q')) tips.push('Avval bitta lavozimda kichik KPI sinovini rejalashtiring: xodim ta’sir qila oladigan natija, boshlang‘ich daraja, formula va bonus byudjetini birga kelishing.');
+    if (basis.includes('Hamma lavozimga bir xil mezon qo‘llanadi') || basis.includes('Asosan rahbar xohlagan raqam olinadi')) tips.push('KPI ni har bir lavozim vazifasiga moslang; maqsadni oldingi haqiqiy natija, mijoz talabi va mavjud resurs bilan asoslang.');
+    if (types.some(t => ['Yangi mijozlar va savdo hajmi','Yig‘ilgan real tushum','Bajarilgan ish hajmi'].includes(t))) tips.push('Savdo, tushum yoki ish hajmi ko‘rsatkichini sifat va qayta ishlash/shikoyat nazorati bilan birga kuzating; faqat sonni oshirishni rag‘batlantirmang.');
+    if (basis.length && !basis.includes('Xodim bilan oldindan muhokama qilingan kelishuv')) tips.push('Hisoblash mezoni va xodimga bog‘liq bo‘lmagan to‘siqlarni xodim bilan oldindan muhokama qilib, yozma kelishing.');
+    if (!types.includes('KPI hali joriy etilmagan') && !basis.includes('Hali KPI belgilash tartibi yo‘q') && records.some(r => r.key === 'current_example' && !/hali yo[‘’']q/i.test(r.text))) tips.push('Yozgan misolingizdagi maqsad, hisob davri, ma’lumot manbasi va bonus shartini xodim ham tekshira oladigan bir varaq qoida bilan mustahkamlang.');
+  } else if (survey.id === 'employees') {
+    const current = selected('employee_current')[0];
+    const metrics = selected('preferred_metrics');
+    const conditions = selected('preferred_conditions');
+    if (current === 'KPI yoki natijaviy bonus yo‘q') tips.push('Tanlagan natijalaringizni yangi rag‘bat tizimi uchun taklif sifatida rahbar bilan muhokama qiling; hozircha amaldagi KPI deb qabul qilmang.');
+    if (current === 'Qanday hisoblanishini aniq bilmayman' || conditions.includes('Mezon va hisoblash formulasi oldindan aniq bo‘lishi')) tips.push('KPI formulasi, hisob davri va bonusni oddiy raqamli misolda tushuntirishni so‘rang; natijani qayerdan tekshirishni aniqlashtiring.');
+    if (conditions.includes('Asosiy maosh barqaror saqlanishi') || conditions.includes('Bonus miqdori yoki foizi oldindan ma’lum bo‘lishi') || conditions.includes('Bonus kelishilgan vaqtda to‘lanishi')) tips.push('Barqaror asosiy maosh, bonus summasi yoki foizi va to‘lash sanasini alohida yozma kelishing.');
+    if (conditions.includes('Yetarli vaqt, resurs va o‘qitish berilishi') || conditions.includes('Natijaga o‘zim ta’sir qila olishim')) tips.push('Maqsadni bajarish uchun siz boshqara oladigan natija, kerakli vaqt, vosita va o‘qitishni rahbar bilan birga belgilang.');
+    if (conditions.includes('Natija soni bilan birga sifati ham baholanishi') || conditions.includes('Xato yoki tashqi to‘siq bo‘lsa hisobni qayta ko‘rish imkoni')) tips.push('Sifat mezoni va tashqi to‘siq yoki hisob xatosida natijani qayta ko‘rib chiqish tartibini oldindan kelishing.');
+    if (metrics.length) tips.push('Siz tanlagan «' + metrics.slice(0, 2).join('; ') + '» uchun o‘lchov, maqsad va tekshirish manbasini aniqlab, kichik sinov natijasini solishtiring.');
+  }
+  return { records, recommendations: unique(tips, 6) };
+}
+
 export function buildSurveyInsights(survey, session) {
   if (!['employees', 'employers'].includes(survey.id)) return null;
   let metrics;
@@ -241,8 +277,8 @@ export function buildSurveyInsights(survey, session) {
   const selectedCompanyTips = unique([companyTips[0], ...(situational?.companyRecommendations ?? []), ...companyTips.slice(1)]);
   const selectedEmployeeTips = unique([...(situational?.employeeRecommendations ?? []), ...employeeTips]);
   return {
-    method: 'laylo-survey-indicators-v3',
-    situational, ideas, satisfaction, decisionSupport,
+    method: 'laylo-survey-indicators-v4',
+    situational, ideas, satisfaction, decisionSupport, kpi: buildKpiInsights(survey, session),
     company: { ...company, conclusion: companySummary(company.score), strengths: unique(strongest.map(m => m.title), 2), recommendations: selectedCompanyTips },
     employee: { ...experience, conclusion: employeeConclusion, recommendations: selectedEmployeeTips },
     priorities: priorities.slice(0, 3),
@@ -263,6 +299,11 @@ export function renderSurveyInsights(insights) {
   if (insights.employee.measured) lines.push('Asos: ' + insights.employee.measured + '/' + insights.employee.total + ' ko‘rsatkich.');
   if (insights.decisionSupport) lines.push('\n🎯 ' + insights.decisionSupport.title, insights.decisionSupport.conclusion, ...insights.decisionSupport.steps.map((v, i) => (i + 1) + '. ' + v));
 
+  if (insights.kpi) {
+    lines.push('\n📈 KPI: amaldagi holat va takliflar');
+    lines.push(...insights.kpi.records.map(r => 'Savol ' + r.question + ' · ' + r.title + ': ' + [...r.choices, r.text].filter(Boolean).join('; ')));
+    if (insights.kpi.recommendations.length) lines.push('KPI bo‘yicha tavsiyalar:', ...insights.kpi.recommendations.map((t, i) => (i + 1) + '. ' + t));
+  }
   if (insights.priorities.length) lines.push('Siz uchun muhim: ' + insights.priorities.join('; ') + '.');
   if (insights.situational) {
     const scenario = insights.situational;

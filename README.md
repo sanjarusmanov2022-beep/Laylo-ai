@@ -1,6 +1,6 @@
 # Laylo so‘rovnoma boti
 
-Telegram orqali xodimlar va rahbarlar fikrini yig‘adi. Xodimlar uchun 81 ta, rahbarlar uchun 64 ta savol bor. Dastlabki 57 va 40 savol saqlangan; har ikki yo‘nalishga 16 ta vaziyatli savol, 4 ta tajriba/taklif savoli va 4 ta qarorlarni aniqlashtiruvchi savol qo‘shilgan.
+Telegram orqali xodimlar va rahbarlar fikrini yig‘adi. Xodimlar uchun 84 ta, rahbarlar uchun 67 ta savol bor. Dastlabki 57 va 40 savol saqlangan; har ikki yo‘nalishga 16 ta vaziyatli savol, 4 ta tajriba/taklif savoli va 4 ta qarorlarni aniqlashtiruvchi savol hamda 3 ta batafsil KPI savoli qo‘shilgan.
 
 ## Ishtirokchi
 
@@ -46,6 +46,14 @@ Qaror bo‘yicha yo‘nalishlar: hozirgi ishda qolib rivojlanish, ko‘nikmaga m
 
 Rahbar uchun KPI maqsadi, natijaga xodimning ta’siri, bonus byudjeti va hisobni qayta tekshirish tartibi so‘raladi. Tavsiyalar tanlangan ish natijasiga mos mezon beradi: muddat, xato ulushi, xizmat sifati, savdo, samaradorlik yoki jamoani rivojlantirish. Tayyor bonus summasi yoki isbotlanmagan maqsad o‘ylab topilmaydi; mezon, ma’lumot manbasi va imkoniyatni oldindan kelishish tavsiya qilinadi.
 
+## KPI holati va xodimni rag‘batlantirish
+
+Rahbardan amaldagi KPI turlari, lavozimga mezon qo‘yish asoslari va bitta haqiqiy hisoblash misoli so‘raladi: lavozim → ko‘rsatkich → maqsad → hisob davri → ma’lumot manbasi → bonus sharti. Avvalgi kelajakdagi maqsadlar savoli amaldagi tizimdan alohida saqlanadi.
+
+Xodimdan hozirgi KPI holati, qaysi natijaga bog‘langan rag‘bat uni kuchliroq ishlashga undashi va kerakli shartlar so‘raladi. Mavjud bonus taklifi savolida uning miqdor va hisoblash taklifi ham yoziladi. Bir nechta KPI mezoni/sharti tanlanadi; «KPI hali yo‘q» varianti boshqa amaldagi variantlar bilan birga tanlanmaydi.
+
+Hisobotda aynan tanlangan KPI javoblari, rahbarning misoli va ularga mos amaliy tavsiyalar ko‘rsatiladi. KPI afzalliklari bahoga ta’sir qilmaydi; bonus foizi yoki maqsad taxmin bilan o‘ylab topilmaydi.
+
 ## Nom yoki maxfiy raqam
 
 `789-456-85` kabi foydalanuvchi tanlagan raqam kanal sarlavhasida «789-456-85 raqami hisoboti» deb ko‘rsatiladi. Raqam tanlansa, Telegramdagi ism olinmaydi va kanalda berilmaydi. Oddiy so‘rovnomada bir xil raqam (bo‘shliq va tire hisobga olinmasdan) bir rol ichida ikki kishiga band qilinmaydi; sinov rejimi haqiqiy raqamlarni band qilmaydi. Eski tugallanmagan nomsiz jarayonlar oldingi javoblarini saqlagan holda majburiy belgi kiritishga yo‘naltiriladi. Maxfiy qolishi kerak bo‘lgan ismlarni erkin matnli javoblarga ham kiritmaslik kirish qismida tushuntiriladi.
@@ -54,7 +62,7 @@ Rahbar uchun KPI maqsadi, natijaga xodimning ta’siri, bonus byudjeti va hisobn
 
 Xodimning shaxsiy nomi/maxfiy raqamidan tashqari uning ishxonasi nomi alohida so‘raladi. Ism yoki raqamdan keyin yosh, keyin ishxona nomi yoki **Ishxonam nomi sir qolsin**, so‘ng sektor tanlanadi. Nomni oshkor qilish ixtiyoriy. Nom kiritilgandan keyin maxfiylik tanlansa, u sessiyadan o‘chadi va kanal hisobotida ham, CSVda ham «Sir saqlangan» chiqadi. Rahbar korxona nomi yoki raqamini avval kiritgani uchun ikkinchi marta so‘ralmaydi.
 
-Sektor ikkala yo‘nalishda ham so‘raladi: davlat, xususiy, davlat-xususiy/aralash, nodavlat notijorat, boshqa/aniq bilmayman yoki ko‘rsatishni istamayman. Ishxona va sektor ma’lumoti kanal sarlavhasi tafsilotlari hamda CSVning alohida ustunlarida beriladi. Ular baholash balliga ta’sir qilmaydi. Ushbu tanishtiruv savollari asosiy 81/64 savoldan oldin keladi.
+Sektor ikkala yo‘nalishda ham so‘raladi: davlat, xususiy, davlat-xususiy/aralash, nodavlat notijorat, boshqa/aniq bilmayman yoki ko‘rsatishni istamayman. Ishxona va sektor ma’lumoti kanal sarlavhasi tafsilotlari hamda CSVning alohida ustunlarida beriladi. Ular baholash balliga ta’sir qilmaydi. Ushbu tanishtiruv savollari asosiy 84/67 savoldan oldin keladi.
 
 Eski tugallanmagan jarayonlar avvalgi javoblarini saqlab, yetishmayotgan ishxona/sektor savollaridan keyin o‘sha joydan davom etadi. Eski yakunlangan javoblar qayta ochilmaydi.
 
@@ -97,7 +105,7 @@ Free tarifning kunlik chegaralari bor. Worker va Durable Object so‘rovlari kun
 
 Tanaffusdan keyin alohida **Davom ettirish** tugmasi bor; tanaffusdagi oddiy matn javob sifatida yutilmaydi. Sinov rejimining qaytish tugmasi admin menyusiga chiqilgandan keyin ham faqat sinovga qaytaradi. Yozuv tanlash oynasida kiritilgan matn savol javobiga aylanmaydi; `/survey` yoki `/cancel` bilan yozuv tanlashni bekor qilish mumkin.
 
-Qo‘shimcha ish umuman bo‘lmasa, unga haq to‘lash haqidagi javob bahoni pasaytirmaydi. Tahlilning bu qoidalari `laylo-survey-indicators-v3` bilan belgilangan. Uzun iqtiboslardagi emoji belgilar Unicode bo‘yicha buzilmaydi.
+Qo‘shimcha ish umuman bo‘lmasa, unga haq to‘lash haqidagi javob bahoni pasaytirmaydi. Tahlilning bu qoidalari `laylo-survey-indicators-v4` bilan belgilangan. Uzun iqtiboslardagi emoji belgilar Unicode bo‘yicha buzilmaydi.
 
 Kanal o‘zgartirilsa, oldingi kanalda qisman yuborilgan hisobot yangi kanalda boshidan to‘liq yuboriladi. Hisobot navbati 100 yozuvli sahifalar orqali ko‘riladi; barchasi birdan xotiraga yig‘ilmaydi. Navbatdagi ishlar oddiy savol tugmalariga javob berishni to‘sib turmaydi; alarm va alohida qayta yuborish yo‘li orqali ishlanadi.
 

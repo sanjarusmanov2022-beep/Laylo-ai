@@ -1,4 +1,4 @@
-import { buildSurveyInsights, renderSurveyInsights, buildSituationalInsights, buildDecisionSupport } from '../src/survey-insights.mjs';
+import { buildSurveyInsights, renderSurveyInsights, buildSituationalInsights, buildDecisionSupport, buildKpiInsights } from '../src/survey-insights.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
@@ -59,8 +59,8 @@ function harness(defs = definitions, existing, autoScript = true, autoProfile = 
 }
 
 test('Both role questionnaires validate and keep all supplied employee questions', () => {
-  assert.equal(validateSurvey(definitions[0]).questions.length, 81);
-  assert.equal(validateSurvey(definitions[1]).questions.length, 64);
+  assert.equal(validateSurvey(definitions[0]).questions.length, 84);
+  assert.equal(validateSurvey(definitions[1]).questions.length, 67);
   assert.equal(definitions[0].questions[5].type, 'money');
   assert.equal(definitions[1].questions[2].type, 'number');
   assert.equal(parseAmount('3,5 mln').amount, 3500000);
@@ -89,7 +89,7 @@ test('Roles, private admin access, duplicate and forged callbacks, and resume af
   await h.press(222, 'Keyinroq');
   const restarted = harness(definitions, h.data);
   await restarted.message(222, '/survey');
-  assert.match(restarted.messages.at(-1).body.text, /Savol 2\/81/);
+  assert.match(restarted.messages.at(-1).body.text, /Savol 2\/84/);
   assert.equal(h.sessions()[0].answers[1].choices[0], '2–5 oy');
   assert.ok(!JSON.stringify([...h.data]).includes('Telegram name never stored'));
   assert.ok(![...h.data.keys()].some(k => k.includes(':222')));
@@ -241,17 +241,17 @@ test('Client preview resets, resumes after restart and leaves real owner respons
   await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim');
   await h.press(1, 'Boshlash'); await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
   await h.press(1, 'Keyinroq'); await h.message(1, '/survey');
-  assert.match(h.messages.at(-1).body.text, /Savol 2[/]81/);
+  assert.match(h.messages.at(-1).body.text, /Savol 2[/]84/);
   const restarted = harness(definitions, h.data);
   await restarted.message(1, '/survey');
   assert.match(restarted.messages.at(-1).body.text, /SINOV/);
-  assert.match(restarted.messages.at(-1).body.text, /Savol 2[/]81/);
+  assert.match(restarted.messages.at(-1).body.text, /Savol 2[/]84/);
   await h.press(1, 'Boshidan boshlash');
   const preview = [...h.data].find(([key]) => key.startsWith('preview-session:'))[1];
   assert.equal(preview.stage, 'intro'); assert.deepEqual(preview.answers, {});
   assert.deepEqual(h.sessions()[0], real);
   await h.message(1, '/admin'); await h.message(1, '/survey employees');
-  assert.match(h.messages.at(-1).body.text, /Savol 2[/]81/);
+  assert.match(h.messages.at(-1).body.text, /Savol 2[/]84/);
   assert.ok(!h.messages.at(-1).body.text.includes('SINOV'));
 });
 
@@ -266,7 +266,7 @@ test('Preview is owner only, clears survey drafts and can inspect closed questio
   assert.equal(await h.storage.get('draft'), null);
   await h.storage.put('open:employees', false);
   await h.press(1, 'Xodim'); await h.press(1, 'Boshlash'); await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib');
-  assert.match(h.messages.at(-1).body.text, /Savol 1[/]81/);
+  assert.match(h.messages.at(-1).body.text, /Savol 1[/]84/);
   await h.message(22, '/start employees');
   assert.match(h.messages.at(-1).body.text, /hozir yopiq/);
 });
@@ -315,7 +315,7 @@ test('Identity is mandatory, can be changed to a private code, and age remains o
   assert.equal(h.sessions()[0].name, undefined);
   await h.press(88, 'Yoshni o‘tkazib');
   assert.equal(h.sessions()[0].age, undefined);
-  assert.match(h.messages.at(-1).body.text, /Savol 1[/]81/);
+  assert.match(h.messages.at(-1).body.text, /Savol 1[/]84/);
 });
 
 test('Benefits allow four or more selections, show a count, and commit all selected options', async () => {
@@ -617,8 +617,9 @@ test('Company code is used in channel report and CSV without disclosing Telegram
 test('Both roles append exactly sixteen scored situations and four proposal questions without renumbering the original questions', () => {
   for (const survey of definitions) {
     const base = survey.id === 'employees' ? 57 : 40;
-    assert.equal(survey.questions.length, base + 24);
+    assert.equal(survey.questions.length, base + 27);
     assert.equal(survey.questions.filter(q => q.decision).length, 4);
+    assert.equal(survey.questions.filter(q => q.kpi).length, 3);
     assert.ok(survey.questions.slice(0, base).every(q => !q.assessment && !q.proposal));
     assert.equal(survey.questions.filter(q => q.assessment).length, 16);
     assert.equal(survey.questions.filter(q => q.proposal).length, 4);
@@ -680,7 +681,7 @@ test('Old review screens continue into added questions and old completed respons
   await h.storage.put(key, session);
   await h.bot.handle({ update_id: 10000, callback_query: { id: 'old-submit', from: { id: 90 }, message: { chat: { id: 90, type: 'private' } }, data: 's:employees:' + session.token + ':' + session.revision + ':submit' } });
   assert.equal(h.sessions()[0].stage, 'questions');
-  assert.match(h.messages.at(-1).body.text, /Savol 58[/]81/);
+  assert.match(h.messages.at(-1).body.text, /Savol 58[/]84/);
   assert.equal(h.sessions()[0].answers[1].choices[0], '2–5 oy');
   const oldDone = { ...session, stage: 'done', completedAt: '2026-11-24T00:00:00Z' };
   delete oldDone.questionCount;
@@ -939,7 +940,7 @@ test('Workplace and sector resume in Cyrillic after restart without losing the e
   assert.equal(restarted.sessions()[0].workplace.name, 'Мактаб намуна');
   await h.press(104, 'Давлат ташкилоти');
   assert.equal(h.sessions()[0].sector, 'public');
-  assert.match(h.messages.at(-1).body.text, /Савол 1[/]81/);
+  assert.match(h.messages.at(-1).body.text, /Савол 1[/]84/);
 });
 
 test('Older in-progress responses add workplace and sector then return to their existing question', async () => {
@@ -962,4 +963,100 @@ test('Company disclosure and sector never alter employee or company scores', () 
   assert.deepEqual(buildSurveyInsights(definitions[0], session), base);
   session.workplace = { visibility: 'private' }; session.sector = 'private';
   assert.deepEqual(buildSurveyInsights(definitions[0], session), base);
+});
+
+function withKpi(survey, session, key, value) {
+  const q = survey.questions.find(q => q.kpi === key);
+  assert.ok(q, key);
+  session.answers[q.id] = q.type === 'text' ? { text: value } : { choices: Array.isArray(value) ? value : [value] };
+  return session;
+}
+
+test('KPI reports distinguish current employer practice from future targets and retain concrete calculation examples', () => {
+  const survey = definitions[1]; const session = { answers: {} };
+  withKpi(survey, session, 'current_types', ['Yig‘ilgan real tushum', 'Bajarilgan ish hajmi']);
+  withKpi(survey, session, 'current_basis', ['Asosan rahbar xohlagan raqam olinadi']);
+  withKpi(survey, session, 'current_example', 'Operator → tasdiqlangan ishlar → 80 → oy → CRM → shartli bonus 5%');
+  withDecision(survey, session, 'kpi_target', ['Xatolarni kamaytirish va aniqlik']);
+  const insights = buildSurveyInsights(survey, session);
+  const text = renderSurveyInsights(insights);
+  assert.match(text, /Amalda qo‘llanayotgan KPI turlari: Yig‘ilgan real tushum; Bajarilgan ish hajmi/);
+  assert.match(text, /Operator → tasdiqlangan ishlar → 80 → oy → CRM → shartli bonus 5%/);
+  assert.ok(insights.kpi.recommendations.some(t => t.includes('har bir lavozim')));
+  assert.ok(insights.kpi.recommendations.some(t => t.includes('sifat')));
+  assert.ok(insights.decisionSupport.steps.some(t => t.includes('Aniqlik uchun')));
+  assert.equal(insights.method, 'laylo-survey-indicators-v4');
+  const absent = { answers: {} };
+  withKpi(survey, absent, 'current_types', 'KPI hali joriy etilmagan');
+  withKpi(survey, absent, 'current_example', 'Hali yo‘q');
+  const result = buildKpiInsights(survey, absent);
+  assert.ok(result.recommendations.some(t => t.includes('kichik KPI sinovini')));
+  assert.ok(!result.recommendations.some(t => t.includes('Yozgan misolingiz')));
+  assert.equal(buildKpiInsights(survey, { answers: {} }), null);
+});
+
+test('Employee preferred KPI outcomes and conditions personalize advice without changing either score', () => {
+  const survey = definitions[0]; const session = situationSession(survey, 'high');
+  const before = buildSurveyInsights(survey, session);
+  withKpi(survey, session, 'employee_current', 'KPI yoki natijaviy bonus yo‘q');
+  withKpi(survey, session, 'preferred_metrics', ['Ishni muddatida bajarish','Xizmat sifati va mijoz qoniqishi','Bajarilgan ish hajmi','Yig‘ilgan real tushum']);
+  withKpi(survey, session, 'preferred_conditions', ['Bonus kelishilgan vaqtda to‘lanishi','Natijaga o‘zim ta’sir qila olishim','Natija soni bilan birga sifati ham baholanishi']);
+  const after = buildSurveyInsights(survey, session);
+  assert.equal(before.company.score, after.company.score);
+  assert.equal(before.employee.score, after.employee.score);
+  assert.equal(before.situational.score, after.situational.score);
+  assert.equal(after.kpi.records.find(r => r.key === 'preferred_metrics').choices.length, 4);
+  assert.ok(after.kpi.recommendations.some(t => t.includes('to‘lash sanasini')));
+  assert.ok(after.kpi.recommendations.some(t => t.includes('Sifat mezoni')));
+  assert.ok(after.kpi.recommendations.some(t => t.includes('hozircha amaldagi KPI')));
+  const cyrillic = toScript(renderSurveyInsights(after), 'cyrillic');
+  assert.match(cyrillic, /KPI: амалдаги ҳолат/);
+  assert.match(cyrillic, /Ишни муддатида бажариш/);
+});
+
+test('Exclusive KPI answers toggle safely, normal metrics allow four choices, and contradictory stored selections cannot submit', async () => {
+  const qs = definitions[1].questions.filter(q => ['current_types','current_basis'].includes(q.kpi));
+  const mini = { id: 'mini', title: 'KPI', sections: ['Savollar'], questions: qs.map((q,i) => ({ ...q, id: i+1, section: 1 })) };
+  const h = harness([mini]);
+  await h.message(220, '/start mini'); await h.press(220, 'Boshlash'); await h.message(220, 'KPI sinov'); await h.press(220, 'Yoshni o‘tkazib');
+  for (const n of [1,2,3,4]) await h.press(220, n + '.');
+  assert.equal(h.sessions()[0].pending.length, 4);
+  await h.press(220, 'KPI hali joriy etilmagan');
+  assert.deepEqual(h.sessions()[0].pending, ['KPI hali joriy etilmagan']);
+  await h.press(220, '1.');
+  assert.deepEqual(h.sessions()[0].pending, [qs[0].options[0]]);
+  const [key, s] = [...h.data].find(([k]) => k.startsWith('session:'));
+  s.pending = [qs[0].options[0], 'KPI hali joriy etilmagan']; await h.storage.put(key, s);
+  await h.press(220, 'Davom etish'); assert.equal(h.sessions()[0].index, 0);
+  assert.match(h.messages.at(-1).body.text, /zid variantlar/);
+  await h.press(220, 'KPI hali joriy etilmagan');
+  for (const n of [2,3,4]) await h.press(220, n + '.');
+  await h.press(220, 'Davom etish');
+  assert.equal(h.sessions()[0].answers[1].choices.length, 4);
+  await h.press(220, '1.'); await h.press(220, 'Hali KPI belgilash tartibi yo‘q');
+  await h.press(220, 'Davom etish');
+  assert.deepEqual(h.sessions()[0].answers[2].choices, ['Hali KPI belgilash tartibi yo‘q']);
+  const bad = structuredClone(mini); bad.questions[0].exclusiveOptions = ['Not an option'];
+  assert.throws(() => validateSurvey(bad), /Alohida/);
+  bad.questions[0].exclusiveOptions = [bad.questions[0].options[0]]; bad.questions[0].kpi = 'unknown';
+  assert.throws(() => validateSurvey(bad), /KPI/);
+});
+
+test('Previous 81 and 64 question review screens continue through appended KPI questions while completed exports stay historical', async () => {
+  for (const [i, survey] of definitions.entries()) {
+    const oldCount = survey.questions.length - 3; const user = 230 + i;
+    const h = harness();
+    await h.message(user, '/start ' + survey.id); await h.press(user, 'Boshlash'); await h.message(user, 'KPI tarixiy'); await h.press(user, 'Yoshni o‘tkazib');
+    const [key, s] = [...h.data].find(([k]) => k.startsWith('session:'));
+    s.stage = 'review'; s.index = oldCount; s.questionCount = oldCount;
+    s.answers = { 1: { text: 'Oldingi javob' } }; await h.storage.put(key, s);
+    await h.bot.handle({ update_id: 20000, callback_query: { id: 'old-kpi-review', from: { id: user }, message: { chat: { id: user, type: 'private' } }, data: 's:' + survey.id + ':' + s.token + ':' + s.revision + ':submit' } });
+    assert.equal(h.sessions()[0].stage, 'questions'); assert.equal(h.sessions()[0].index, oldCount);
+    assert.equal(h.sessions()[0].answers[1].text, 'Oldingi javob');
+    const historical = { ...s, stage: 'done', completedAt: '2026-11-24T12:00:00Z' }; await h.storage.put(key, historical);
+    assert.equal(surveyStats(survey, h.sessions()).questions[oldCount].skipped, 0);
+    await h.message(1, '/export ' + survey.id);
+    const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
+    assert.equal(csv.trim().split('\r\n').length, oldCount + 1);
+  }
 });

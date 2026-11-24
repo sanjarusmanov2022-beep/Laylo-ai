@@ -10,7 +10,8 @@
     "Ish vaqti va dam olish",
     "Ishga olish va rivojlanish",
     "Xodimlarni saqlash va tajriba",
-    "Vaziyatli savollar va amaliy takliflar"
+    "Vaziyatli savollar va amaliy takliflar",
+    "KPI tizimi va natijaviy rag‘bat"
   ],
   "questions": [
     {
@@ -1052,7 +1053,55 @@
         "Hozir KPI yoki bonus qo‘llanmaydi"
       ],
       "decision": "kpi_fairness"
+    },
+    {
+      "id": 65,
+      "section": 8,
+      "kpi": "current_types",
+      "type": "multi",
+      "text": "Korxonangizda hozir amalda qaysi KPI turlari qo‘llanadi? Bir nechta variantni belgilang. Tizim hali yo‘q bo‘lsa, oxirgi variantni tanlang.",
+      "options": [
+        "Yangi mijozlar va savdo hajmi",
+        "Yig‘ilgan real tushum",
+        "Xizmat sifati va mijoz qoniqishi",
+        "Xatolarni kamaytirish va aniqlik",
+        "Ishni muddatida bajarish",
+        "Bajarilgan ish hajmi",
+        "Foyda va xarajat samaradorligi",
+        "Jamoani o‘qitish va hamkorlik",
+        "KPI hali joriy etilmagan"
+      ],
+      "exclusiveOptions": [
+        "KPI hali joriy etilmagan"
+      ]
+    },
+    {
+      "id": 66,
+      "section": 8,
+      "kpi": "current_basis",
+      "type": "multi",
+      "text": "Xodim yoki lavozimga KPI belgilashda nimaga asoslanasiz? Amalda qo‘llayotgan barcha asoslarni belgilang.",
+      "options": [
+        "Lavozim vazifasi va xodim ta’sir qila oladigan natija",
+        "Oldingi davrning haqiqiy natijalari",
+        "Korxona rejasi va mijoz talabi",
+        "Mavjud vaqt, resurs va ish hajmi",
+        "Xodim bilan oldindan muhokama qilingan kelishuv",
+        "Hamma lavozimga bir xil mezon qo‘llanadi",
+        "Asosan rahbar xohlagan raqam olinadi",
+        "Hali KPI belgilash tartibi yo‘q"
+      ],
+      "exclusiveOptions": [
+        "Hali KPI belgilash tartibi yo‘q"
+      ]
+    },
+    {
+      "id": 67,
+      "section": 8,
+      "kpi": "current_example",
+      "type": "text",
+      "text": "Amaldagi bitta KPI ni lavozim misolida yozing: lavozim → ko‘rsatkich → maqsad → hisob davri → ma’lumot manbasi → bonus sharti. Xodimning ismini yozmang. KPI yo‘q bo‘lsa, «Hali yo‘q» deb yozing."
     }
   ],
-  "version": "situations-v3"
+  "version": "kpi-v4"
 }

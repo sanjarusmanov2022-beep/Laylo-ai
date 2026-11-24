@@ -39,6 +39,8 @@ export function validateSurvey(survey) {
     if (['single', 'multi'].includes(q.type) && (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 15 || q.options.some(o => typeof o !== 'string' || !o.trim() || o.length > 150) || new Set(q.options).size !== q.options.length)) throw new Error('Javob variantlari noto‘g‘ri');
     if (q.assessment && (q.type !== 'single' || !['communication','accountability','pressure','collaboration','learning'].includes(q.assessment.dimension) || typeof q.assessment.title !== 'string' || q.assessment.title.length > 100 || !Array.isArray(q.assessment.scale) || q.assessment.scale.length !== q.options.length || q.assessment.scale.some(r => (r.score !== null && (!Number.isFinite(r.score) || r.score < 0 || r.score > 10)) || typeof r.tip !== 'string' || r.tip.length > 300))) throw new Error('Vaziyatli savol mezonlari noto‘g‘ri');
     if (q.decision && !['skill_use','alternatives','resolution','satisfaction','kpi_target','kpi_control','bonus_budget','kpi_fairness'].includes(q.decision)) throw new Error('Qaror uchun savol turi noto‘g‘ri');
+    if (q.kpi && !['employee_current','preferred_metrics','preferred_conditions','current_types','current_basis','current_example'].includes(q.kpi)) throw new Error('KPI savoli turi noto‘g‘ri');
+    if (q.exclusiveOptions && (q.type !== 'multi' || !Array.isArray(q.exclusiveOptions) || !q.exclusiveOptions.length || new Set(q.exclusiveOptions).size !== q.exclusiveOptions.length || q.exclusiveOptions.some(o => !q.options.includes(o)) || (q.choose && q.choose !== 1))) throw new Error('Alohida tanlanadigan variantlar noto‘g‘ri');
     if (q.proposal && (q.type !== 'text' || !['experience','company','reward','development'].includes(q.proposal))) throw new Error('Taklif savoli noto‘g‘ri');
     if (q.choose && (q.type !== 'multi' || !Number.isInteger(q.choose) || q.choose < 1 || q.choose > q.options.length)) throw new Error('Tanlov soni noto‘g‘ri');
   }
@@ -744,6 +746,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (action === 'next' && q.type === 'multi') {
         const choices = session.pending ?? session.answers[q.id]?.choices ?? [];
         if (!choices.length || (q.choose && choices.length !== q.choose)) return send(chat, q.choose ? `${q.choose} ta variantni tanlang yoki savolni o‘tkazing.` : 'Variant tanlang yoki «Hech biri»ni bosing.');
+        if (choices.some(o => q.exclusiveOptions?.includes(o)) && choices.length > 1) return send(chat, 'Bir-biriga zid variantlar tanlangan. Belgilarni tekshirib, qayta tanlang.');
         return accept(chat, actor, survey, session, { choices }, update.update_id);
       }
       if (/^v\d+$/.test(action) && q.options) {
@@ -752,7 +755,9 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         if (q.type === 'single') return accept(chat, actor, survey, session, { choices: [option] }, update.update_id);
         const selected = session.pending ?? session.answers[q.id]?.choices ?? [];
         if (!selected.includes(option) && q.choose && selected.length >= q.choose) return send(chat, `Ko‘pi bilan ${q.choose} ta tanlang. Belgini olib tashlash uchun qayta bosing.`);
-        session.pending = selected.includes(option) ? selected.filter(o => o !== option) : [...selected, option];
+        session.pending = selected.includes(option) ? selected.filter(o => o !== option)
+          : q.exclusiveOptions?.includes(option) ? [option]
+          : [...selected.filter(o => !q.exclusiveOptions?.includes(o)), option];
         return persist(chat, actor, survey, session, update.update_id, message.message_id);
       }
       return;
