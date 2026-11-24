@@ -188,7 +188,6 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     await storage.put(`script-next:${await actorKey(chat)}`, target);
     return api.call('sendMessage', { chat_id: chat, text: 'Qaysi yozuv sizga qulay?\nҚайси ёзув сизга қулай?', reply_markup: { inline_keyboard: [
       [{ text: 'Lotincha', callback_data: 'script:latin' }, { text: 'Кириллча', callback_data: 'script:cyrillic' }],
-      [{ text: '📨 Hisobotni qayta yuborish / Ҳисоботни қайта юбориш', callback_data: 'myreports' }],
     ] } });
   }
   async function scriptAction(chat, data, owner) {
@@ -247,7 +246,6 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const rows = [];
     for (const survey of surveys.values()) if (preview || await isOpen(survey.id)) rows.push([{ text: survey.id === 'employees' ? '👤 Xodim' : survey.id === 'employers' ? '👔 Rahbar / ish beruvchi' : survey.title.slice(0, 60), callback_data: preview ? `a:trypreview:${survey.id}` : `role:${survey.id}` }]);
     const hasSurveys = rows.length > 0;
-    rows.push([{ text: '📨 Hisobotni qayta yuborish', callback_data: preview ? 'a:previewreports' : 'myreports' }]);
     rows.push(scriptButton('menu'));
     if (preview) {
       rows.push([{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }]);
@@ -263,35 +261,11 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       [{text:'👥 Sinov rollariga qaytish',callback_data:'a:preview'}],
     ]);
   }
-  async function resendCustomerReport(chat,actor,survey,session,updateId) {
-    const channel = await storage.get('report-channel'), channelLink = reportChannelLink(channel);
-    if (!channel) return send(chat,'Hisobotlar kanali hozircha ulanmagan. Javoblaringiz saqlangan.');
-    if ((!Number.isSafeInteger(session.lastUpdate) || updateId>session.lastUpdate) && (!session.lastChannelResendAt || Date.now()-session.lastChannelResendAt>=60_000)) {
-      const deliveryKey = 'participant:'+session.token+':'+updateId;
-      session.lastChannelResendAt=Date.now(); session.lastUpdate=updateId; session.revision++;
-      await storage.put({[sessionKey(survey.id,actor)]:session,['channel-report:'+deliveryKey]:{survey,session:structuredClone(session),insights:buildSurveyInsights(survey,session),deliveryKey,deliveryChatId:channel.id,attempts:0,nextAttemptAt:0}});
-      await scheduleChannelReports();await flushChannelReports(true);
-    }
-    return send(chat,'📊 Hisobotingizni kanalda ko‘rasiz. Hisobotdagi belgingiz: '+publicIdentity(session).value+(channelLink?'\n\n'+channelLink.username+'\n'+channelLink.url:''),[
-      ...(channelLink?[[{text:'📊 Hisobotni kanalda ko‘rish',url:channelLink.url}]]:[]),
-      [{text:'Bosh menyu',callback_data:'home'}],
-    ]);
+  async function resendCustomerReport(chat) {
+    const link=reportChannelLink(await storage.get('report-channel'));
+    return send(chat,link?'📊 Hisobotni ushbu kanalda ko‘rasiz:\n'+link.username+'\n'+link.url:'Hisobotlar kanali hozircha ulanmagan.',link?[[{text:'📊 Hisobotlar kanalini ochish',url:link.url}]]:undefined);
   }
-  async function customerReports(chat,actor,updateId,id,token) {
-    const entries=[];
-    for (const survey of surveys.values()) {
-      const session=await storage.get(sessionKey(survey.id,actor));
-      if (session?.stage==='done' && !session.preview) entries.push({survey,session});
-    }
-    if (!entries.length) return send(chat,'Hali yakunlangan so‘rovnomangiz yo‘q. Avval Xodim yoki Rahbar savollarini tugatib, «Javoblarni yuborish»ni bosing. Shundan keyin hisobotni kanalga qayta yubora olasiz.',[[{text:'👥 So‘rovnomani tanlash',callback_data:'home'}]]);
-    if (id) {
-      const entry=entries.find(e=>e.survey.id===id && e.session.token===token);
-      if (!entry) return send(chat,'Bu hisobot topilmadi. Bosh menyudagi «Hisobotni qayta yuborish» tugmasini bosing.');
-      return resendCustomerReport(chat,actor,entry.survey,entry.session,updateId);
-    }
-    if (entries.length===1) return resendCustomerReport(chat,actor,entries[0].survey,entries[0].session,updateId);
-    return send(chat,'📨 Qaysi hisobotingizni kanalga qayta yuboramiz?',entries.map(({survey,session})=>[{text:(survey.id==='employees'?'👤 Xodim':survey.id==='employers'?'👔 Rahbar':survey.title.slice(0,30))+' · '+publicIdentity(session).value.slice(0,35),callback_data:'myreport:'+survey.id+':'+session.token}]));
-  }
+  async function customerReports(chat) { return resendCustomerReport(chat); }
 
   async function prompt(chat, survey, session, editMessageId) {
     let text;
@@ -329,13 +303,14 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), reportPdfName(channel, session.token, true));
         form.set('caption', toScript('🧪 SINOV · PDF tahlil. Asosiy hisobot va kanalga qo‘shilmaydi.', script));
         await api.call('sendDocument', form);
-        return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [[{text:'📨 Hisobotni qayta yuborish',callback_data:'a:previewreports'}], ...previewNavigation(survey.id), scriptButton('menu')]);
+        return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')]);
       }
       const channel = await storage.get('report-channel');
-      const thanks = survey.thanks ?? 'Rahmat! Javoblaringiz saqlandi ✅';
-      const channelUrl = channel?.username ? `https://t.me/${channel.username}` : null;
-      return send(chat, thanks + '\n\nHisobotdagi belgingiz: ' + publicIdentity(session).value + (channelUrl ? `\n\n📊 Hisobotni shu kanalda olasiz:\n@${channel.username}\n${channelUrl}` : ''), [
-        ...(channelUrl ? [[{ text: '📊 Hisobotlar kanalini ochish', url: channelUrl }], [button('📨 Hisobotni qayta yuborish', session, 'resendreport')]] : []),
+      const channelUrl = reportChannelLink(channel)?.url;
+      const delivered = await storage.get('report-sent:' + session.token);
+      const status = delivered ? '✅ Hisobotingiz kanalga joylandi.\n\n📥 PDFni kanaldan yuklab oling.' : '✅ Javoblaringiz saqlandi. Hisobot tayyorlanmoqda.\n\n📥 Tayyor bo‘lgach, PDFni shu kanaldan olasiz.';
+      return send(chat,status+'\n\nHisobotdagi belgingiz: '+publicIdentity(session).value+(channelUrl?'\n\n📊 Hisobotni shu kanalda olasiz:\n@'+channel.username+'\n'+channelUrl:''),[
+        ...(channelUrl?[[{text:'📥 Hisobotni kanalda olish',url:channelUrl}]]:[]),
         scriptButton('menu'),
       ]);
     } else {
@@ -531,6 +506,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (!channel) return;
     const { jobs } = await scanChannelReports(force);
     for (const [key, job] of jobs) {
+      if (job.deliveryKey?.startsWith('participant:') || key.startsWith('channel-report:participant:')) { await storage.delete(key); continue; }
       if (!force && (job.nextAttemptAt ?? 0) > Date.now()) continue;
       if (await storage.get('report-sent:' + (job.deliveryKey ?? job.session.token))) { await storage.delete(key); continue; }
       if (job.deliveryChatId !== undefined && job.deliveryChatId !== channel.id) {
@@ -852,9 +828,9 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         if (reportChannel) record[`channel-report:${id}:${session.token}`] = { survey, session: structuredClone(session), insights: session.insights, deliveryChatId: reportChannel.id, attempts: 0, nextAttemptAt: Date.now() };
         await storage.put(record);
         await scheduleChannelReports();
-        await prompt(chat, survey, session);
-        if (session.preview) return;
+        if (session.preview) { await prompt(chat, survey, session); return; }
         await flushChannelReports();
+        await prompt(chat, survey, session);
         const stats = surveyStats(survey, await sessionList(id));
         await send(ownerId, `Yangi so‘rovnoma yakunlandi ✅\n${survey.title}\n\nJami yakunlagan — ${stats.completed}\nDavom etayotgan — ${stats.unfinished}`, adminKeyboard()).catch(() => {});
         return;

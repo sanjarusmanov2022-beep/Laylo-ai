@@ -126,15 +126,15 @@ Foiz = 10 ballik indeks × 10; u ishga yaroqlilik ehtimoli yoki xodimlar ichidag
 
 Admin menyusidagi PDF hisobotlar yoki /pdf saqlangan haqiqiy yakunlangan javoblarni ko‘rsatadi. /pdf HISOBOT_ID shu hisobotni egasiga yuboradi. PDFdan keyingi Kanalga qayta yuborish tugmasi yangi uslubdagi post va PDFni faqat ulangan kanalga qayta yuboradi. Hisobot qayta hisoblanadi, ammo ishtirokchi yoki javoblar soni oshmaydi. Sinovlar ro‘yxatga kirmaydi; ro‘yxat sahifalanadi.
 
-Oddiy qatnashuvchi yakunda Hisobotni qayta yuborish tugmasini bosishi mumkin. Faqat o‘zining yakunlangan javobi kanalga qayta yuboriladi; shaxsiy chatiga PDF berilmaydi, kanal havolasi ko‘rsatiladi. Takroriy bosishlar 60 soniya ichida yangi post yaratmaydi. Kanalni ko‘rish uchun obuna bo‘lishni Telegram orqali majburiy tekshirish yo‘q.
 
 Qayta yuborish vazifalari ham saqlanadigan navbatdan o‘tadi. Bir xil Telegram yangilanishi takrorlansa yangi nusxa yaratmaydi; muvaffaqiyatli yuborilgan post fayl xatosida takrorlanmaydi. Kanal almashtirilsa yangi kanal havolasi bilan post qayta tayyorlanadi.
 
 
-Mijozning bosh menyusida ham Hisobotni qayta yuborish tugmasi bor. Bitta tugallangan haqiqiy javob bo‘lsa o‘sha hisobot kanalga qayta yuboriladi; ikki rol tugallangan bo‘lsa tanlash so‘raladi. Faqat shu mijozning javoblari olinadi. So‘rovnoma keyin yopilgan bo‘lsa ham eski tugallangan hisobotni olish mumkin. Hali tugallanmagan bo‘lsa, avval yakunlash tushuntiriladi. Sinov menyusida shu tugma sinovlar kanalga chiqmasligini tushuntiradi va egaga haqiqiy hisobotlar ro‘yxatini ochadi.
 
 
-Hisobotni qayta yuborish tugmasi /start dagi yozuv tanlash oynasida ham ko‘rinadi. /menu bosh menyuni ochadi; /reports oddiy mijozning o‘z hisoboti bo‘yicha qayta yuborishni, egaga esa haqiqiy PDF hisobotlar ro‘yxatini ochadi. Telegramning umumiy Menu buyruqlariga menu va reports qo‘shilgan; admin buyruqlari faqat egaga tegishli chat scope ichida ko‘rsatiladi.
 
 
 PDF fayl nomi ulangan kanal nomi va hisobot IDsi bilan tayyorlanadi: HR_hisobot_23fc2559e2.pdf. Sinov fayliga SINOV belgisi qo‘shiladi. Bu nom avtomatik kanal hisobotida, qayta yuborishda va egasining PDF eksportida bir xil qo‘llanadi.
+
+
+Mijozlarda hisobotni qayta yuborish tugmasi olib tashlangan. Eski tugmalar va /reports faqat kanal havolasini ko‘rsatadi; yangi post yaratmaydi. Avval navbatga tushgan participant qayta-yuborish vazifalari ham bekor qilinadi. Har bir yangi yakunlangan so‘rovnoma avtomatik bir marta yuboriladi. Faqat egasi admin PDF menyusidan ongli ravishda qayta yuborishi mumkin.
