@@ -1,4 +1,6 @@
 import { buildSurveyInsights, renderSurveyInsights } from './survey-insights.mjs';
+import { createSurveyPdf } from './survey-pdf.mjs';
+import { renderChannelReport, reportChannelLink } from './report-format.mjs';
 const encoder = new TextEncoder();
 
 const latinLetters = { a:'а', b:'б', d:'д', f:'ф', g:'г', h:'ҳ', i:'и', j:'ж', k:'к', l:'л', m:'м', n:'н', o:'о', p:'п', q:'қ', r:'р', s:'с', t:'т', u:'у', v:'в', x:'х', y:'й', z:'з', c:'с', w:'в' };
@@ -10,8 +12,8 @@ function letterCase(value, original, word) {
 }
 export function toScript(text, script = 'latin') {
   // Keep links, email addresses, bot handles, commands and technical identifiers intact.
-  return String(text).replace(/\b[a-f0-9]{10}\b|https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[a-z]{2,}|@[\w]+|\/[a-z][a-z0-9_]*|\b(?:CSV|KPI|UZS|USD|EUR|ID|API|SHA)\b|[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ'’‘ʻʼ]+/gu, word => {
-    if (/^[a-f0-9]{10}$/.test(word) || /^(?:https?:|@|\/)|@/.test(word) || /^(CSV|KPI|UZS|USD|EUR|ID|API|SHA)$/.test(word)) return word;
+  return String(text).replace(/\b[a-f0-9]{10}\b|https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[a-z]{2,}|@[\w]+|\/[a-z][a-z0-9_]*|\b(?:CSV|PDF|KPI|UZS|USD|EUR|ID|API|SHA)\b|[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ'’‘ʻʼ]+/gu, word => {
+    if (/^[a-f0-9]{10}$/.test(word) || /^(?:https?:|@|\/)|@/.test(word) || /^(CSV|PDF|KPI|UZS|USD|EUR|ID|API|SHA)$/.test(word)) return word;
     if (script === 'latin') return word.replace(/[А-Яа-яЁёЎўҚқҒғҲҳ]/gu, (char, offset) => {
       const lower = char.toLowerCase();
       const value = lower === 'е' ? (offset === 0 || /[аеиоуэюяёъь]/i.test(word[offset - 1]) ? 'ye' : 'e') : (cyrillicLetters[lower] ?? char);
@@ -132,6 +134,12 @@ function applicableQuestionCount(survey, session) {
   return Math.min(survey.questions.length, session.questionCount ?? (session.stage === 'done' && original ? original : survey.questions.length));
 }
 
+
+function surveyReportModel(survey, session, insights, channel) {
+  const date = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tashkent', dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.completedAt));
+  return { survey, session, insights, channel, date, questionCount: applicableQuestionCount(survey, session), identity: publicIdentity(session).value, workplace: publicWorkplace(survey, session), sector: sectorLabels[session.sector] ?? 'Ko‘rsatilmagan' };
+}
+
 export function surveyStats(survey, sessions) {
   sessions = sessions.filter(s => !s.preview);
   const completed = sessions.filter(s => s.stage === 'done');
@@ -217,6 +225,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   const button = (text, session, action) => ({ text, callback_data: `s:${session.survey}:${session.token}:${session.revision}:${action}` });
   const adminKeyboard = () => [
     [{ text: '📊 Qatnashuvchilar va hisobot', callback_data: 'a:report:all' }],
+    [{ text: '📑 PDF hisobotlar', callback_data: 'a:pdfs:all' }],
     [{ text: '📥 Barcha javoblar · CSV', callback_data: 'a:export:all' }],
     [{ text: '📋 So‘rovnomalar va havolalar', callback_data: 'a:list' }],
     [{ text: '📨 Hisobotlar kanali', callback_data: 'a:channel' }],
@@ -272,18 +281,22 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       keyboard = [[button('Javoblarni yuborish ✅', session, 'submit')], [button('⬅️ Oldingi savol', session, 'back')]];
     } else if (session.stage === 'done') {
       if (session.preview) {
-        const analysis = renderSurveyInsights(buildSurveyInsights(survey, session));
-        if (analysis) {
-          const text = toScript(identityHeading(survey, session) + '\nIshxona: ' + publicWorkplace(survey, session) + '\nSektor: ' + (sectorLabels[session.sector] ?? 'Ko‘rsatilmagan') + '\n\n' + analysis, await getScript(chat) ?? 'latin');
-          for (const part of splitReportText(text)) await send(chat, part);
-        }
+        const channel = await storage.get('report-channel');
+        const model = surveyReportModel(survey, session, buildSurveyInsights(survey, session), channel);
+        const script = await getScript(chat) ?? 'latin';
+        await api.call('sendMessage', { chat_id: chat, text: '🧪 ' + toScript('SINOV', script) + '\n\n' + renderChannelReport(model, text => toScript(text, script)), parse_mode: 'HTML', link_preview_options: { is_disabled: true } });
+        const pdf = createSurveyPdf(model, text => toScript(text, script));
+        const form = new FormData(); form.set('chat_id', String(chat));
+        form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), 'laylo-preview-' + survey.id + '-' + session.token + '.pdf');
+        form.set('caption', toScript('🧪 SINOV · PDF tahlil. Asosiy hisobot va kanalga qo‘shilmaydi.', script));
+        await api.call('sendDocument', form);
         return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')]);
       }
       const channel = await storage.get('report-channel');
       const thanks = survey.thanks ?? 'Rahmat! Javoblaringiz saqlandi ✅';
       const channelUrl = channel?.username ? `https://t.me/${channel.username}` : null;
       return send(chat, thanks + '\n\nHisobotdagi belgingiz: ' + publicIdentity(session).value + (channelUrl ? `\n\n📊 Hisobotni shu kanalda olasiz:\n@${channel.username}\n${channelUrl}` : ''), [
-        ...(channelUrl ? [[{ text: '📊 Hisobotlar kanalini ochish', url: channelUrl }]] : []),
+        ...(channelUrl ? [[{ text: '📊 Hisobotlar kanalini ochish', url: channelUrl }], [button('📨 Hisobotni qayta yuborish', session, 'resendreport')]] : []),
         scriptButton('menu'),
       ]);
     } else {
@@ -439,7 +452,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   async function channelSettings(chat) {
     const channel = await storage.get('report-channel');
     const pending = (await scanChannelReports(false, 0)).count;
-    return send(chat, '📨 Hisobotlar kanali\n\n' + (channel ? 'Ulangan: ' + channel.title + (channel.username ? '\n@' + channel.username : '') : 'Hozircha kanal ulanmagan.') + '\n\nSo‘rovnoma tugaganda nom yoki maxfiy raqam, xulosa, 10 ballik baho, tavsiyalar va barcha javoblar yozilgan fayl shu kanalga yuboriladi. Sinov javoblari yuborilmaydi.\nYuborishni kutayotgan hisobotlar: ' + pending, [
+    return send(chat, '📨 Hisobotlar kanali\n\n' + (channel ? 'Ulangan: ' + channel.title + (channel.username ? '\n@' + channel.username : '') : 'Hozircha kanal ulanmagan.') + '\n\nSo‘rovnoma tugaganda nom yoki maxfiy raqam, xulosa, foizli diagrammalar, profil statusi va tavsiyali PDF hisobot shu kanalga yuboriladi. Sinov javoblari yuborilmaydi.\nYuborishni kutayotgan hisobotlar: ' + pending, [
       [{ text: channel ? 'Kanalni almashtirish' : 'Kanalni ulash', callback_data: 'a:channelsetup' }],
       ...(channel ? [[{ text: 'Qayta yuborishga urinish', callback_data: 'a:channelretry' }, { text: 'Kanalni uzish', callback_data: 'a:channeloff' }]] : []),
       [{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }],
@@ -458,7 +471,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       const ownerMember = await api.call('getChatMember', { chat_id: channel.id, user_id: ownerId });
       if (!['creator', 'administrator'].includes(ownerMember.status)) return send(chat, 'Bu kanal yoki guruhda siz administrator bo‘lishingiz kerak. Oldingi ulanish o‘zgarmadi.');
       if (!['creator', 'administrator'].includes(botMember.status) || (channel.type === 'channel' && botMember.can_post_messages === false)) return send(chat, 'Layloni shu kanalga administrator qiling va xabar joylash huquqini bering, keyin qayta yuboring.');
-      await api.call('sendMessage', { chat_id: channel.id, text: '✅ Laylo so‘rovnoma hisobotlari shu yerga keladi. Har bir yakunlangan so‘rovnoma qisqa ma’lumot va to‘liq javoblar fayli bilan yuboriladi.' });
+      await api.call('sendMessage', { chat_id: channel.id, text: '✅ Laylo so‘rovnoma hisobotlari shu yerga keladi. Har bir yakunlangan so‘rovnoma qisqa tahlil va diagrammali PDF hisobot bilan yuboriladi.' });
     } catch {
       return send(chat, 'Kanalga ulana olmadim. Laylo kanalda administrator ekanini va xabar joylash huquqi borligini tekshiring. Yopiq kanal bo‘lsa, undan xabar forward qiling. Oldingi ulanish o‘zgarmadi.');
     }
@@ -480,42 +493,45 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const { jobs } = await scanChannelReports(force);
     for (const [key, job] of jobs) {
       if (!force && (job.nextAttemptAt ?? 0) > Date.now()) continue;
-      if (await storage.get('report-sent:' + job.session.token)) { await storage.delete(key); continue; }
+      if (await storage.get('report-sent:' + (job.deliveryKey ?? job.session.token))) { await storage.delete(key); continue; }
       if (job.deliveryChatId !== undefined && job.deliveryChatId !== channel.id) {
         job.summaryMessageIds = [];
         delete job.summaryMessageId;
+        delete job.summaryChunks;
+        delete job.summaryFormat;
       }
       job.deliveryChatId = channel.id;
       await storage.put(key, job);
       const { survey, session } = job;
       const script = session.script ?? 'latin';
       const insights = job.insights ?? buildSurveyInsights(survey, session);
-      const rows = [['So‘rovnoma', 'Javob raqami', 'Nom yoki maxfiy raqam', 'Yosh (ixtiyoriy)', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta', 'Ishxona nomi / maxfiylik', 'Sektor']];
-      for (const q of survey.questions) rows.push([survey.title, session.token, publicIdentity(session).value, session.age ?? '', q.id, q.text, display(session.answers[q.id]), session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '', publicWorkplace(survey, session), sectorLabels[session.sector] ?? 'Ko‘rsatilmagan']);
-      const csv = '\uFEFF' + rows.map(row => row.map(value => csvCell(typeof value === 'string' ? toScript(value, script) : value)).join(',')).join('\r\n');
-      const date = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tashkent', dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.completedAt));
-      const caption = identityHeading(survey, session) + '\n\n' + survey.title + '\nYosh: ' + (session.age ?? 'Ko‘rsatilmagan') + '\nIshxona: ' + publicWorkplace(survey, session) + '\nSektor: ' + (sectorLabels[session.sector] ?? 'Ko‘rsatilmagan') + '\nJavob berilgan: ' + Object.values(session.answers).filter(Boolean).length + '/' + survey.questions.length + '\nSana: ' + date + ' (Toshkent)\nJavob raqami: ' + session.token + '\n\nBarcha savollar va javoblar faylda.';
-      const form = new FormData();
-      form.set('chat_id', String(channel.id));
-      form.set('caption', toScript(insights ? '📎 ' + publicIdentity(session).value + ' — barcha savol-javoblar\nHisobot ID: ' + session.token : caption, script));
-      form.set('document', new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'laylo-' + survey.id + '-' + session.token + '.csv');
+      const model = surveyReportModel(survey, session, insights, channel);
+      const channelLink = reportChannelLink(channel);
       try {
-        if (insights) {
-          if (!job.summaryChunks) {
-            const report = caption.replace('\n\nBarcha savollar va javoblar faylda.', '') + '\n\n' + renderSurveyInsights(insights);
-            job.summaryChunks = splitReportText(toScript(report, script));
-            job.summaryMessageIds = job.summaryMessageId ? [job.summaryMessageId] : [];
-            await storage.put(key, job);
-          }
-          for (let i = job.summaryMessageIds.length; i < job.summaryChunks.length; i++) {
-            const summary = await api.call('sendMessage', { chat_id: channel.id, text: job.summaryChunks[i], link_preview_options: { is_disabled: true } });
-            job.summaryMessageIds.push(summary.message_id);
-            job.summaryMessageId ??= summary.message_id;
-            await storage.put(key, job);
-          }
+        if (!job.summaryChunks) {
+          job.summaryChunks = [renderChannelReport(model, text => toScript(text, script))];
+          job.summaryFormat = 'HTML';
+          job.summaryMessageIds = job.summaryMessageId ? [job.summaryMessageId] : [];
+          await storage.put(key, job);
         }
+        job.summaryMessageIds ??= [];
+        for (let i = job.summaryMessageIds.length; i < job.summaryChunks.length; i++) {
+          const summary = await api.call('sendMessage', {
+            chat_id: channel.id, text: job.summaryChunks[i],
+            ...(job.summaryFormat === 'HTML' ? { parse_mode: 'HTML' } : {}),
+            ...(channelLink ? { reply_markup: { inline_keyboard: [[{ text: toScript('📊 Kanalga obuna bo‘lish', script), url: channelLink.url }]] } } : {}),
+            link_preview_options: { is_disabled: true },
+          });
+          job.summaryMessageIds.push(summary.message_id);
+          job.summaryMessageId ??= summary.message_id;
+          await storage.put(key, job);
+        }
+        const pdf = createSurveyPdf(model, text => toScript(text, script));
+        const form = new FormData(); form.set('chat_id', String(channel.id));
+        form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), 'laylo-' + survey.id + '-' + session.token + '.pdf');
+        form.set('caption', toScript('📑 ' + model.identity + ' — diagrammali PDF tahlil\nHisobot ID: ' + session.token + (channelLink ? '\n\n📊 Yangi tahlillar uchun obuna bo‘ling: ' + channelLink.username + '\n' + channelLink.url : ''), script));
         const sent = await api.call('sendDocument', form);
-        await storage.put('report-sent:' + session.token, { chatId: channel.id, messageId: sent.message_id, sentAt: new Date().toISOString() });
+        await storage.put('report-sent:' + (job.deliveryKey ?? session.token), { chatId: channel.id, messageId: sent.message_id, sentAt: new Date().toISOString() });
         await storage.delete(key);
       } catch {
         job.attempts = (job.attempts ?? 0) + 1;
@@ -527,7 +543,54 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     await scheduleChannelReports();
   }
 
-  async function adminAction(chat, action, id) {
+
+  async function completedPdfEntries() {
+    const entries = [];
+    for (const survey of surveys.values()) for (const session of await sessionList(survey.id)) {
+      if (session.stage === 'done') entries.push({ survey, session });
+    }
+    return entries.sort((a,b) => String(b.session.completedAt).localeCompare(String(a.session.completedAt)));
+  }
+  async function pdfList(chat, offset = 0) {
+    offset = Number.isSafeInteger(Number(offset)) && Number(offset) >= 0 ? Number(offset) : 0;
+    const entries = await completedPdfEntries();
+    const rows = entries.slice(offset,offset+10).map(({survey,session}) => [{ text: '📑 ' + publicIdentity(session).value.slice(0,35) + ' · ' + (survey.id === 'employers' ? 'Rahbar' : 'Xodim'), callback_data: 'a:pdf:' + survey.id + ':' + session.token }]);
+    if (offset+10<entries.length) rows.push([{text:'Keyingi hisobotlar ➡️',callback_data:'a:pdfs:all:'+(offset+10)}]);
+    rows.push([{text:'⬅️ Admin menyusi',callback_data:'a:exitpreview'}]);
+    return send(chat, entries.length ? '📑 Saqlangan PDF hisobotlar\n\nIshtirokchini tanlang. PDF shaxsiy chatingizga keladi. Kanalga qayta yuborish uchun keyingi tugmani bosing.\nJami: ' + entries.length : 'Hozircha yakunlangan haqiqiy so‘rovnoma yo‘q. Sinov hisobotlari bu ro‘yxatga kirmaydi.',rows);
+  }
+  async function savedPdf(chat, id, token, toChannel = false, requestId) {
+    const survey = surveys.get(id);
+    if (!survey || !/^[a-f0-9]{10}$/.test(token ?? '')) return send(chat,'Hisobot topilmadi. /pdf orqali ro‘yxatni oching.');
+    const session = (await sessionList(id)).find(s=>s.stage==='done' && s.token===token);
+    if (!session) return send(chat,'Hisobot topilmadi. /pdf orqali ro‘yxatni oching.');
+    const channel = await storage.get('report-channel');
+    const insights = buildSurveyInsights(survey,session);
+    if (toChannel) {
+      if (!channel) return send(chat,'Avval «Hisobotlar kanali» menyusidan kanalni ulang.');
+      if (!Number.isSafeInteger(requestId)) return;
+      const deliveryKey = 'manual:' + token + ':' + requestId;
+      const key = 'channel-report:' + deliveryKey;
+      if (!await storage.get('report-sent:' + deliveryKey) && !await storage.get(key)) await storage.put(key,{ survey,session:structuredClone(session),insights,deliveryKey,deliveryChatId:channel.id,attempts:0,nextAttemptAt:0 });
+      await scheduleChannelReports();
+      await flushChannelReports(true);
+      return send(chat,await storage.get('report-sent:' + deliveryKey) ? '✅ PDF hisobot va yangi uslubdagi post kanalga qayta yuborildi. Ishtirokchilar soni o‘zgarmadi.' : 'Hisobot qayta yuborish navbatiga saqlandi. Vaqtinchalik xatoda avtomatik yana uriniladi.',adminKeyboard());
+    }
+    const model = surveyReportModel(survey,session,insights,channel), script = session.script ?? 'latin';
+    const pdf = createSurveyPdf(model,text=>toScript(text,script));
+    const form = new FormData();form.set('chat_id',String(chat));
+    form.set('document',new Blob([pdf.bytes],{type:'application/pdf'}),'laylo-'+id+'-'+token+'.pdf');
+    form.set('caption',toScript('📑 '+model.identity+' — PDF tahlil\nHisobot ID: '+token,script));
+    await api.call('sendDocument',form);
+    return send(chat,'PDF tayyor. Kanalga ham qayta yuborish kerak bo‘lsa, quyidagi tugmani bosing.',[
+      ...(channel?[[{text:'📨 Kanalga qayta yuborish',callback_data:'a:pdfchannel:'+id+':'+token}]]:[]),
+      [{text:'📑 PDF hisobotlar',callback_data:'a:pdfs:all'},{text:'⬅️ Admin menyusi',callback_data:'a:exitpreview'}],
+    ]);
+  }
+
+  async function adminAction(chat, action, id, token, requestId) {
+    if (action === 'pdfs') return pdfList(chat,token);
+    if (action === 'pdf' || action === 'pdfchannel') return savedPdf(chat,id,token,action==='pdfchannel',requestId);
     if (action === 'channel') return channelSettings(chat);
     if (action === 'channelsetup') {
       await storage.put('draft', null);
@@ -606,9 +669,9 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (data.startsWith('script:')) return scriptAction(chat, data, owner);
     if (data.startsWith('a:')) {
       if (!owner) return;
-      const [, action, id] = data.split(':');
+      const [, action, id, token] = data.split(':');
       await storage.delete(`script-next:${await actorKey(user.id)}`);
-      return adminAction(chat, action, id);
+      return adminAction(chat, action, id, token, update.update_id);
     }
     const baseActor = await actorKey(user.id);
     const preview = owner && (await storage.get(`preview-mode:${baseActor}`)) === true;
@@ -620,6 +683,12 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const [commandWithBot, arg] = input.split(/\s+/);
     const command = commandWithBot?.split('@')[0];
     if (!callback) {
+      if (owner && command === '/pdf') {
+        if (!arg) return pdfList(chat);
+        const entries = (await completedPdfEntries()).filter(e=>e.session.token===arg);
+        return entries.length===1 ? savedPdf(chat,entries[0].survey.id,arg) : send(chat,'Hisobot ID topilmadi. /pdf orqali ro‘yxatni oching.');
+      }
+      if (owner && /^(hisobot(?:ni|lar(?:ni)?)?\s+qayta\s+yubor(?:ing)?|pdf\s+hisobot(?:lar)?)$/iu.test(toScript(input,'latin'))) return pdfList(chat);
       if (owner && command === '/reportchannel') return arg ? configureReportChannel(chat, arg) : channelSettings(chat);
       if (owner && await storage.get('channel-setup') && !input.startsWith('/')) {
         const forwarded = message.forward_origin?.type === 'channel' ? message.forward_origin.chat : message.forward_from_chat;
@@ -668,7 +737,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const survey = surveys.get(id);
     const session = survey && await storage.get(sessionKey(id, actor));
     if (!session) return menu(chat, owner);
-    if (!preview && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
+    if (!preview && session.stage !== 'done' && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
     if (session.stage === 'review' && session.index < survey.questions.length) {
       session.stage = 'questions'; session.questionCount = survey.questions.length; session.revision++;
       return persist(chat, actor, survey, session, update.update_id);
@@ -686,6 +755,17 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (callback) {
       const [prefix, , token, revision, action] = data.split(':');
       if (prefix !== 's' || token !== session.token || Number(revision) !== session.revision) return;
+      if (action === 'resendreport' && session.stage === 'done' && !preview) {
+        const channel = await storage.get('report-channel'), channelLink = reportChannelLink(channel);
+        if (!channel) return send(chat,'Hisobotlar kanali hozircha ulanmagan. Javoblaringiz saqlangan.');
+        if (!session.lastChannelResendAt || Date.now() - session.lastChannelResendAt >= 60_000) {
+          const deliveryKey = 'participant:' + session.token + ':' + update.update_id;
+          session.lastChannelResendAt = Date.now(); session.lastUpdate = update.update_id; session.revision++;
+          await storage.put({ [sessionKey(id,actor)]:session, ['channel-report:' + deliveryKey]:{survey,session:structuredClone(session),insights:buildSurveyInsights(survey,session),deliveryKey,deliveryChatId:channel.id,attempts:0,nextAttemptAt:0} });
+          await scheduleChannelReports(); await flushChannelReports(true);
+        }
+        return send(chat,'📊 Hisobotingizni kanalda ko‘rasiz. Hisobotdagi belgingiz: '+publicIdentity(session).value+(channelLink?'\n\n'+channelLink.username+'\n'+channelLink.url:''),channelLink?[[{text:'📊 Hisobotni kanalda ko‘rish',url:channelLink.url}]]:undefined);
+      }
       if (session.paused || session.stage === 'done') return;
       if (action === 'pause') { session.paused = true; await storage.put(sessionKey(id, actor), session); return send(chat, 'Javoblaringiz saqlandi. Tayyor bo‘lganda davom ettirish tugmasini bosing.', pausedKeyboard(id, preview, owner)); }
       if (action === 'begin' && session.stage === 'intro') { session.stage = 'name'; session.revision++; return persist(chat, actor, survey, session, update.update_id); }

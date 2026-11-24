@@ -279,8 +279,8 @@ export function buildSurveyInsights(survey, session) {
   return {
     method: 'laylo-survey-indicators-v4',
     situational, ideas, satisfaction, decisionSupport, kpi: buildKpiInsights(survey, session),
-    company: { ...company, conclusion: companySummary(company.score), strengths: unique(strongest.map(m => m.title), 2), recommendations: selectedCompanyTips },
-    employee: { ...experience, conclusion: employeeConclusion, recommendations: selectedEmployeeTips },
+    company: { ...company, indicators: metrics.map(m => ({ id: m.id, title: m.title, score: m.score })), conclusion: companySummary(company.score), strengths: unique(strongest.map(m => m.title), 2), recommendations: selectedCompanyTips },
+    employee: { ...experience, indicators: employeeMetrics.map(m => ({ id: m.id, title: m.title, score: m.score })), conclusion: employeeConclusion, recommendations: selectedEmployeeTips },
     priorities: priorities.slice(0, 3),
   };
 }

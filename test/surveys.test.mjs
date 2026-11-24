@@ -1,3 +1,5 @@
+import { createSurveyPdf } from '../src/survey-pdf.mjs';
+import { renderChannelReport, reportProfile, reportPercent } from '../src/report-format.mjs';
 import { buildSurveyInsights, renderSurveyInsights, buildSituationalInsights, buildDecisionSupport, buildKpiInsights } from '../src/survey-insights.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -56,6 +58,15 @@ function harness(defs = definitions, existing, autoScript = true, autoProfile = 
   };
   const sessions = () => [...data].filter(([key]) => key.startsWith('session:')).map(([, session]) => session);
   return { data, storage, messages, api, bot, message, press, buttons, sessions };
+}
+
+
+function pdfText(bytes) {
+  return [...Buffer.from(bytes).toString('latin1').matchAll(/<([A-F0-9]+)> Tj/g)].map(m=>m[1].match(/.{4}/g).map(h=>String.fromCharCode(parseInt(h,16))).join('')).join('\n');
+}
+async function assertPdfAttachment(body) {
+  const file=body.get('document'); assert.equal(file.type,'application/pdf'); assert.match(file.name,/\.pdf$/);
+  const bytes=new Uint8Array(await file.arrayBuffer()); assert.equal(Buffer.from(bytes.subarray(0,8)).toString(),'%PDF-1.7'); return pdfText(bytes);
 }
 
 test('Both role questionnaires validate and keep all supplied employee questions', () => {
@@ -432,15 +443,17 @@ test('Configured channel receives one complete response file after submit, not w
   assert.ok(h.buttons(55).some(b => b.url === 'https://t.me/reports_test'));
   const reports = h.messages.filter(m => m.method === 'sendDocument' && m.body.get('chat_id') === '-100123456');
   assert.equal(reports.length, 1);
-  const summary = h.messages.findLast(m => m.method === 'sendMessage' && m.body.chat_id === -100123456 && m.body.text?.includes('Xulosa, baho va tavsiyalar'));
+  const summary = h.messages.findLast(m => m.method === 'sendMessage' && m.body.chat_id === -100123456 && m.body.text?.includes('PDFda'));
   assert.match(summary.body.text, /Aziza/);
   assert.match(summary.body.text, /Yosh: 28/);
-  const csv = await reports[0].body.get('document').text();
+  const pdf = await assertPdfAttachment(reports[0].body); assert.match(pdf,/Aziza/);
+  await h.message(1,'/export employees');
+  const csv = await h.messages.findLast(m=>m.method==='sendDocument').body.get('document').text();
   assert.match(csv, /Tushlik bepul beriladi/);
   assert.match(csv, /Yo‘l xarajatlari qoplanadi/);
   assert.ok(!csv.includes('Telegram name never stored'));
   await h.bot.handle(submitted);
-  assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 1);
+  assert.equal(h.messages.filter(m => m.method === 'sendDocument' && m.body.get('chat_id')==='-100123456').length, 1);
   assert.equal([...h.data].filter(([key]) => key.startsWith('channel-report:')).length, 0);
   assert.equal(h.sessions()[0].stage, 'done');
 });
@@ -452,7 +465,8 @@ test('Client preview never sends respondent data to the reports channel', async 
   await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim'); await h.press(1, 'Boshlash');
   await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
   await h.press(1, 'Davom etish'); await h.press(1, 'Javoblarni yuborish');
-  assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 0);
+  assert.equal(h.messages.filter(m => m.method === 'sendDocument' && m.body.get('chat_id')==='-100123456').length, 0);
+  const privatePdf=h.messages.find(m=>m.method==='sendDocument' && m.body.get('chat_id')==='1'); assert.ok(privatePdf); await assertPdfAttachment(privatePdf.body);
   assert.ok(!h.messages.at(-1).body.text.includes('@reports_test'));
   assert.equal([...h.data].filter(([key]) => key.startsWith('channel-report:')).length, 0);
 });
@@ -548,7 +562,7 @@ test('Cyrillic respondent reports retain their own script through delayed delive
   await h.press(78, 'Жавобларни юбориш');
   const session = h.sessions()[0];
   assert.equal(session.script, 'cyrillic');
-  const summary = h.messages.findLast(m => m.method === 'sendMessage' && m.body.chat_id === -100123456 && m.body.text?.includes('Хулоса, баҳо'));
+  const summary = h.messages.findLast(m => m.method === 'sendMessage' && m.body.chat_id === -100123456 && m.body.text?.includes('диаграммалар'));
   assert.ok(summary);
   const parts = h.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456);
   const fullReport = parts.map(m => m.body.text).join('\n');
@@ -559,10 +573,10 @@ test('Cyrillic respondent reports retain their own script through delayed delive
   await restarted.bot.flushChannelReports(true);
   assert.equal(restarted.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456).length, 0);
   const sent = restarted.messages.find(m => m.method === 'sendDocument').body;
-  assert.match(sent.get('caption'), /барча савол-жавоблар/iu);
-  const csv = await sent.get('document').text();
-  assert.match(csv, /Сўровнома/); assert.match(csv, /Тушлик бепул берилади/); assert.match(csv, /Яхши/);
-  assert.ok(csv.includes(session.token));
+  assert.match(sent.get('caption'), /диаграммали PDF таҳлил/iu);
+  const pdf = await assertPdfAttachment(sent);
+  assert.match(pdf, /Ишдаги ёндашув/); assert.match(pdf, /Яхши/);
+  assert.ok(pdf.includes(session.token));
 });
 
 
@@ -605,9 +619,11 @@ test('Company code is used in channel report and CSV without disclosing Telegram
   await h.message(84, '/start employers'); await h.press(84, 'Boshlash');
   assert.match(h.messages.at(-1).body.text, /Korxona nomini/);
   await h.message(84, '789-456-85'); await h.press(84, 'Yoshni o‘tkazib'); await h.message(84, '2 yil'); await h.press(84, 'Javoblarni yuborish');
-  const summary = h.messages.findLast(m => m.body.chat_id === -100123456 && m.body.text?.includes('Xulosa, baho'));
+  const summary = h.messages.findLast(m => m.body.chat_id === -100123456 && m.body.text?.includes('PDFda'));
   assert.match(summary.body.text, /789-456-85 raqami hisoboti/);
   assert.ok(!summary.body.text.includes('Telegram name never stored'));
+  const pdf = await assertPdfAttachment(h.messages.findLast(m=>m.method==='sendDocument').body); assert.match(pdf,/789-456-85/);
+  await h.message(1,'/export employers');
   const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
   assert.match(csv, /789-456-85/);
   assert.ok(!csv.includes('Telegram name never stored'));
@@ -708,7 +724,7 @@ test('Delivery resumes after a later report fragment fails and does not repeat a
   const insights = buildSurveyInsights(definitions[0], session);
   insights.company.conclusion = 'Birinchi qism. '.repeat(500);
   insights.employee.conclusion = 'Ikkinchi qism. '.repeat(300);
-  await h.storage.put('channel-report:employees:abcdef1234', { survey: definitions[0], session, insights, attempts: 0, nextAttemptAt: 0 });
+  await h.storage.put('channel-report:employees:abcdef1234', { survey: definitions[0], session, insights, summaryChunks:splitReportText(renderSurveyInsights(insights)),summaryMessageIds:[], attempts: 0, nextAttemptAt: 0 });
   const normalCall = h.api.call;
   let count = 0;
   h.api.call = async (method, body) => { if (method === 'sendMessage' && body.chat_id === -100123456 && ++count === 2) throw new Error('Temporary fragment failure'); return normalCall(method, body); };
@@ -838,7 +854,8 @@ test('Changing the reports channel restarts partial delivery in the new destinat
   await h.storage.put('channel-report:employees:abcde12345', { survey: definitions[0], session, insights: buildSurveyInsights(definitions[0], session), deliveryChatId: -100111111, summaryChunks: ['First report part','Second report part'], summaryMessageIds: [77], summaryMessageId: 77, attempts: 1, nextAttemptAt: 0 });
   await h.bot.flushChannelReports(true);
   const sent = h.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100222222);
-  assert.deepEqual(sent.map(m => m.body.text), ['First report part','Second report part']);
+  assert.equal(sent.length,1); assert.match(sent[0].body.text,/@new_reports/); assert.ok(!sent[0].body.text.includes('First report part'));
+  assert.equal(sent[0].body.parse_mode,'HTML');
 });
 
 
@@ -897,6 +914,8 @@ test('Employee workplace name is separate from personal code and sector appears 
   await h.message(101, 'Mutaxassis'); await h.press(101, 'Javoblarni yuborish');
   const report = h.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456).map(m => m.body.text).join('\n');
   assert.match(report, /Ishxona: Namuna tashkilot/); assert.match(report, /Sektor: Davlat tashkiloti/);
+  const pdf=await assertPdfAttachment(h.messages.findLast(m=>m.method==='sendDocument').body); assert.ok(!pdf.includes('MAXFIY_ISHXONA_102'));
+  await h.message(1,'/export employees');
   const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
   assert.match(csv, /Namuna tashkilot/); assert.match(csv, /Davlat tashkiloti/);
 });
@@ -912,6 +931,8 @@ test('Choosing private after typing workplace removes its name from channel repo
   await h.message(102, 'Mutaxassis'); await h.press(102, 'Javoblarni yuborish');
   const report = h.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456).map(m => m.body.text).join('\n');
   assert.ok(!report.includes('MAXFIY_ISHXONA_102')); assert.match(report, /Ishxona: Sir saqlangan/);
+  const pdf=await assertPdfAttachment(h.messages.findLast(m=>m.method==='sendDocument').body); assert.ok(!pdf.includes('MAXFIY_ISHXONA_102'));
+  await h.message(1,'/export employees');
   const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
   assert.ok(!csv.includes('MAXFIY_ISHXONA_102')); assert.match(csv, /Sir saqlangan/);
 });
@@ -1059,4 +1080,79 @@ test('Previous 81 and 64 question review screens continue through appended KPI q
     const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
     assert.equal(csv.trim().split('\r\n').length, oldCount + 1);
   }
+});
+
+function reportModelForTest(survey=definitions[0], session={answers:{}}) {
+  return {survey,session:{token:'abcdef1234',stage:'done',script:'latin',questionCount:survey.questions.length,...session},insights:buildSurveyInsights(survey,session),identity:'789-856-77',workplace:'Sir saqlangan',sector:'Xususiy sektor',date:'24/11/2026, 20:01',channel:{username:'reports_test'},questionCount:session.questionCount??survey.questions.length};
+}
+test('Report status describes response patterns, handles missing evidence and never turns unknown into zero',()=>{
+  const high=buildSurveyInsights(definitions[0],situationSession(definitions[0],'high'));
+  assert.equal(reportProfile(high).key,'leadership');
+  const steady=structuredClone(high);steady.situational.score=6.5;assert.equal(reportProfile(steady).key,'steady');
+  steady.situational.score=8;assert.equal(reportProfile(steady).key,'strong');
+  steady.situational.score=3;assert.equal(reportProfile(steady).key,'develop');
+  assert.equal(reportProfile(buildSurveyInsights(definitions[0],{answers:{}})).key,'unknown');
+  assert.equal(reportPercent(null),null);assert.equal(reportPercent(NaN),null);assert.equal(reportPercent(0),0);assert.equal(reportPercent(9.4),94);
+});
+test('Channel report escapes public inputs, stays compact, distinguishes satisfaction, and contains subscription link',()=>{
+  const session=situationSession(definitions[0],'high');withDecision(definitions[0],session,'satisfaction','Hislarim aralash / o‘rtacha');
+  const model=reportModelForTest(definitions[0],session);model.identity='Ali <b>test</b> & Co';model.workplace='Ishxona <a href="x">';
+  const html=renderChannelReport(model);
+  assert.match(html,/Ali &lt;b&gt;test&lt;\/b&gt; &amp; Co/);assert.ok(!html.includes('<a href="x">'));
+  assert.match(html,/50%/);assert.match(html,/100%/);assert.match(html,/@reports_test/);assert.match(html,/https:\/\/t.me\/reports_test/);
+  assert.ok(html.length<4096);assert.match(html,/<b>/);
+});
+test('Vector PDFs embed Uzbek and Cyrillic fonts, preserve anonymous profile and expose a clickable channel link',()=>{
+  for(const script of ['latin','cyrillic']){
+    const session=situationSession(definitions[0],'high');session.questionCount=81;
+    const model=reportModelForTest(definitions[0],session);
+    model.identity='789-856-77';model.session.name='PRIVATE_TELEGRAM_NAME';model.session.workplace={visibility:'private',name:'PRIVATE_COMPANY_NAME'};
+    const pdf=createSurveyPdf(model,text=>toScript(text,script));
+    const raw=Buffer.from(pdf.bytes).toString('latin1'), text=pdfText(pdf.bytes);
+    assert.match(raw,/^%PDF-1.7/);assert.match(raw,/\/FontFile2/);assert.match(raw,/\/ToUnicode/);assert.match(raw,/https:\/\/t.me\/reports_test/);
+    assert.match(text,script==='latin'?/Xodim rivojlanish profili/:/Ходим ривожланиш профили/);
+    assert.match(text,/789-856-77/);assert.ok(!text.includes('PRIVATE_TELEGRAM_NAME'));assert.ok(!text.includes('PRIVATE_COMPANY_NAME'));
+    assert.ok(pdf.pages>=6 && pdf.pages<20);assert.ok(pdf.bytes.length<500_000);
+    assert.ok(pdf.layout.every(l=>l.x>=0 && l.x+l.width<=960.1 && l.y>=0 && l.y+l.height<=540));
+    const xref=Number(raw.match(/startxref\n(\d+)/)[1]);assert.equal(raw.slice(xref,xref+4),'xref');
+  }
+  const named=reportModelForTest();named.identity='Sardor Gʻaniyev';assert.match(pdfText(createSurveyPdf(named).bytes),/Sardor Gʻaniyev/);
+});
+test('Long respondent proposals and KPI examples paginate within the PDF without truncation',()=>{
+  const survey=definitions[1], session=situationSession(survey,'low');
+  const long='W'.repeat(900)+' YAKUNIY_BELGI';
+  session.answers[survey.questions.find(q=>q.proposal==='company').id]={text:long};
+  withKpi(survey,session,'current_example','Hisobchi > aniqlik > oy > tekshiruv '+long);
+  const model=reportModelForTest(survey,session);const pdf=createSurveyPdf(model);
+  const text=pdfText(pdf.bytes);assert.match(text,/YAKUNIY_BELGI/);
+  assert.ok(pdf.layout.every(l=>l.x+l.width<=960.1&&l.y+l.height<=540));assert.ok(pdf.pages<35);
+});
+test('Owner can regenerate a historical PDF privately and deliberately resend it once without changing response counts',async()=>{
+  const mini={...definitions[0],questions:[{id:1,section:1,type:'text',text:'Fikringiz?'}]};const h=harness([mini]);
+  await h.message(1,'/reportchannel @reports_test');await h.message(280,'/start employees');await h.press(280,'Boshlash');await h.message(280,'789-856-280');await h.press(280,'Yoshni o‘tkazib');await h.message(280,'Fikrim');await h.press(280,'Javoblarni yuborish');
+  const token=h.sessions()[0].token;
+  await h.message(1,'/pdf');await h.press(1,'789-856-280');
+  const privatePdf=h.messages.findLast(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='1');assert.ok(privatePdf);await assertPdfAttachment(privatePdf.body);
+  const button=h.buttons(1).find(b=>b.callback_data?.startsWith('a:pdfchannel:'));
+  const before=h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='-100123456').length;
+  await h.bot.handle({update_id:30000,callback_query:{id:'forged-pdf',from:{id:281},message:{chat:{id:281,type:'private'}},data:button.callback_data}});
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='-100123456').length,before);
+  const update=await h.press(1,'Kanalga qayta yuborish');await h.bot.handle(update);
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='-100123456').length,before+1);
+  assert.equal(surveyStats(mini,h.sessions()).completed,1);
+  await h.message(1,'/pdf '+token);assert.ok(h.messages.findLast(m=>m.method==='sendDocument').body.get('chat_id')==='1');
+});
+test('Participant resends only their completed report to the channel and receives a link instead of a private PDF',async()=>{
+  const mini={...definitions[0],questions:[{id:1,section:1,type:'text',text:'Fikringiz?'}]};const h=harness([mini]);
+  await h.message(1,'/reportchannel @reports_test');await h.message(282,'/start employees');await h.press(282,'Boshlash');await h.message(282,'789-856-282');await h.press(282,'Yoshni o‘tkazib');await h.message(282,'Fikrim');await h.press(282,'Javoblarni yuborish');
+  const before=h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='-100123456').length;
+  const update=await h.press(282,'Hisobotni qayta yuborish');await h.bot.handle(update);
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='-100123456').length,before+1);
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='282').length,0);
+  assert.ok(h.buttons(282).some(b=>b.url==='https://t.me/reports_test'));
+  await h.message(282,'/survey');await h.press(282,'Hisobotni qayta yuborish');
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='-100123456').length,before+1);
+  assert.equal(surveyStats(mini,h.sessions()).completed,1);
+  await h.message(282,'/pdf '+h.sessions()[0].token);
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='282').length,0);
 });
