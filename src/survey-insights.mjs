@@ -23,7 +23,7 @@ function companySummary(score) {
   return 'Javoblarda ish sharoitlari bo‘yicha e’tibor kutayotgan jihatlar ko‘rinadi. Eng zarur o‘zgarishlarni ketma-ket rejalashtirish foydali.';
 }
 function experienceSummary(score) {
-  if (score === null) return 'Xodimning ish tajribasi va qoniqishini baholash uchun yetarli javob yo‘q. Berilgan fikrlar baribir muhim va tavsiyalarda hisobga olinadi.';
+  if (score === null) return 'Xodimning ish tajribasi ko‘rsatkichlarini baholash uchun yetarli javob yo‘q. Berilgan fikrlar baribir muhim va tavsiyalarda hisobga olinadi.';
   if (score >= 8) return 'Javoblaringizda jamoa, e’tirof yoki rivojlanish bilan bog‘liq ijobiy tajribalar ko‘rinadi. Sizga foyda berayotgan sharoitlarni saqlab qolish muhim.';
   if (score >= 6) return 'Ish tajribangizda ijobiy tomonlar ham, e’tibor kutayotgan ehtiyojlar ham bor. Siz uchun eng muhim o‘zgarishlarni aniq aytish foydali bo‘ladi.';
   return 'Javoblaringiz ayrim ehtiyojlaringiz yetarlicha qondirilmayotganini ko‘rsatmoqda. O‘z fikringizni bildirish va sizga mos sharoitlarni muhokama qilish muhim.';
@@ -31,7 +31,7 @@ function experienceSummary(score) {
 
 const dimensionLabels = { communication: 'Ochiq muloqot', accountability: 'Mas’uliyat va adolat', pressure: 'Bosimda ishni tashkil qilish', collaboration: 'Jamoa bilan hamkorlik', learning: 'O‘rganish va tashabbus' };
 const ideaLabels = { experience: 'Amaliy tajribangiz', company: 'Korxona uchun taklifingiz', reward: 'Bonus va imtiyoz taklifingiz', development: 'Rivojlanish taklifingiz' };
-function excerpt(text, length = 130) { const clean = String(text).replace(/\s+/g, ' ').trim(); return clean.length > length ? clean.slice(0, length - 1) + '…' : clean; }
+function excerpt(text, length = 130) { const chars = Array.from(String(text).replace(/\s+/g, ' ').trim()); return chars.length > length ? chars.slice(0, length - 1).join('') + '…' : chars.join(''); }
 export function buildSituationalInsights(survey, session) {
   const questions = survey.questions.filter(q => q.assessment);
   if (!questions.length) return null;
@@ -190,6 +190,7 @@ export function buildSurveyInsights(survey, session) {
       metric(session, 34, 'Natijaning e’tirof etilishi', frequency, 'Yaxshi natijalarni aniq misollar bilan e’tirof eting va rag‘bat shartlarini oldindan tushuntiring.'),
       metric(session, 41, 'Rivojlanish imkoniyati', yes, 'Lavozimda o‘sish va maoshni qayta ko‘rish mezonlarini xodimga aniq tushuntiring.'),
     ];
+    if (first(session, 23) === 'Hech qachon') metrics[4].score = null;
     employeeMetrics = [metrics[6], metrics[7], metrics[8], metrics[9], metrics[10], metrics[11],
       metric(session, 32, 'Jamoa bilan munosabat', { 'Juda yaxshi': 10, 'Yaxshi': 8, 'O‘rtacha': 5, 'Yomon': 2, 'Juda yomon': 0 }, '')];
     priorities = choices(session, 43).map(v => v.replace(/[.]+$/, ''));
@@ -208,6 +209,7 @@ export function buildSurveyInsights(survey, session) {
     if (compensation.includes('Qo‘shimcha ishlanmaydi') && compensation.length === 1) overtimeScore = 10;
     else if (compensation.includes('Alohida qoplanmaydi') && compensation.length === 1) overtimeScore = 0;
     else if (compensation.length && compensation.every(c => ['Qo‘shimcha haq to‘lanadi', 'Dam olish vaqti beriladi'].includes(c))) overtimeScore = 10;
+    if (first(session, 26) === 'Hech qachon') overtimeScore = null;
     metrics = [
       metric(session, 18, 'Maoshning vaqtida to‘lanishi', { 'Har doim vaqtida': 10, "Ba'zan kechikadi": 4, 'Doimiy sana belgilanmagan': 2 }, 'Maosh to‘lash taqvimini belgilang va shu sanaga mablag‘ni oldindan rejalashtiring.', 2),
       metric(session, 26, 'Ish vaqti muvozanati', overtime, 'Doimiy ortiqcha ish sabablarini o‘rganib, ish yukini va vazifalarni qayta taqsimlashni ko‘rib chiqing.'),
@@ -239,7 +241,7 @@ export function buildSurveyInsights(survey, session) {
   const selectedCompanyTips = unique([companyTips[0], ...(situational?.companyRecommendations ?? []), ...companyTips.slice(1)]);
   const selectedEmployeeTips = unique([...(situational?.employeeRecommendations ?? []), ...employeeTips]);
   return {
-    method: 'laylo-survey-indicators-v2',
+    method: 'laylo-survey-indicators-v3',
     situational, ideas, satisfaction, decisionSupport,
     company: { ...company, conclusion: companySummary(company.score), strengths: unique(strongest.map(m => m.title), 2), recommendations: selectedCompanyTips },
     employee: { ...experience, conclusion: employeeConclusion, recommendations: selectedEmployeeTips },
@@ -258,8 +260,9 @@ export function renderSurveyInsights(insights) {
   if (insights.company.strengths.length) lines.push('Kuchli tomonlar: ' + insights.company.strengths.join('; ') + '.');
   lines.push('\n👤 Xodimning ish tajribasi — ' + scoreText(insights.employee), insights.employee.conclusion);
   if (insights.satisfaction) lines.push('O‘zingiz bildirgan qoniqish — ' + scoreText(insights.satisfaction) + ' · ' + insights.satisfaction.label);
-  if (insights.decisionSupport) lines.push('\n🎯 ' + insights.decisionSupport.title, insights.decisionSupport.conclusion, ...insights.decisionSupport.steps.map((v, i) => (i + 1) + '. ' + v));
   if (insights.employee.measured) lines.push('Asos: ' + insights.employee.measured + '/' + insights.employee.total + ' ko‘rsatkich.');
+  if (insights.decisionSupport) lines.push('\n🎯 ' + insights.decisionSupport.title, insights.decisionSupport.conclusion, ...insights.decisionSupport.steps.map((v, i) => (i + 1) + '. ' + v));
+
   if (insights.priorities.length) lines.push('Siz uchun muhim: ' + insights.priorities.join('; ') + '.');
   if (insights.situational) {
     const scenario = insights.situational;

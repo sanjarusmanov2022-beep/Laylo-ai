@@ -85,6 +85,14 @@ Free tarifning kunlik chegaralari bor. Worker va Durable Object so‘rovlari kun
 - https://developers.cloudflare.com/durable-objects/platform/pricing/
 - https://developers.cloudflare.com/workers/ci-cd/builds/
 
+## Holat va yetkazish bo‘yicha tekshirilgan chekka holatlar
+
+Tanaffusdan keyin alohida **Davom ettirish** tugmasi bor; tanaffusdagi oddiy matn javob sifatida yutilmaydi. Sinov rejimining qaytish tugmasi admin menyusiga chiqilgandan keyin ham faqat sinovga qaytaradi. Yozuv tanlash oynasida kiritilgan matn savol javobiga aylanmaydi; `/survey` yoki `/cancel` bilan yozuv tanlashni bekor qilish mumkin.
+
+Qo‘shimcha ish umuman bo‘lmasa, unga haq to‘lash haqidagi javob bahoni pasaytirmaydi. Tahlilning bu qoidalari `laylo-survey-indicators-v3` bilan belgilangan. Uzun iqtiboslardagi emoji belgilar Unicode bo‘yicha buzilmaydi.
+
+Kanal o‘zgartirilsa, oldingi kanalda qisman yuborilgan hisobot yangi kanalda boshidan to‘liq yuboriladi. Hisobot navbati 100 yozuvli sahifalar orqali ko‘riladi; barchasi birdan xotiraga yig‘ilmaydi. Navbatdagi ishlar oddiy savol tugmalariga javob berishni to‘sib turmaydi; alarm va alohida qayta yuborish yo‘li orqali ishlanadi.
+
 ## Tekshirish
 
 Node.js 22.12+ kerak. `node --test test/surveys.test.mjs` ikki rol, admin ruxsatlari, takroriy bosish, qayta ishga tushgach davom etish, hisobot va CSV’ni tekshiradi. `LAYLO_TEST_PARTICIPANTS=1000` sun'iy ishtirokchilar sonini oshiradi. Bu haqiqiy bir vaqtdagi yuk sinovi hisoblanmaydi.

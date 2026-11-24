@@ -789,3 +789,85 @@ test('KPI proposals match selected work outcomes and address influence, budget a
   assert.ok(support.steps.some(s => s.includes('byudjet')));
   assert.ok(support.steps.some(s => s.includes('qayta tekshirish')));
 });
+
+
+test('Paused respondents get a working resume button and their text is not silently consumed', async () => {
+  const mini = { id: 'mini', title: 'Test', sections: ['Savollar'], questions: [{ id: 1, section: 1, text: 'Fikringiz?', type: 'text' }] };
+  const h = harness([mini]);
+  await h.message(94, '/start mini'); await h.press(94, 'Boshlash'); await h.message(94, '789-856-94'); await h.press(94, 'Yoshni o‘tkazib');
+  await h.press(94, 'Keyinroq');
+  await h.message(94, 'Davom etmoqchiman');
+  assert.equal(h.sessions()[0].paused, true); assert.equal(h.sessions()[0].index, 0);
+  await h.press(94, 'Davom ettirish');
+  assert.equal(h.sessions()[0].paused, false);
+  await h.message(94, 'Haqiqiy javob');
+  assert.equal(h.sessions()[0].answers[1].text, 'Haqiqiy javob');
+});
+
+test('A pending script selection cannot accidentally consume a survey answer', async () => {
+  const mini = { id: 'mini', title: 'Test', sections: ['Savollar'], questions: [{ id: 1, section: 1, text: 'Fikringiz?', type: 'text' }] };
+  const h = harness([mini], undefined, false);
+  await h.message(95, '/start mini'); await h.press(95, 'Lotincha'); await h.press(95, 'Boshlash'); await h.message(95, '789-856-95'); await h.press(95, 'Yoshni o‘tkazib');
+  await h.press(95, '🔤'); await h.message(95, 'hali tanlamadim');
+  assert.equal(h.sessions()[0].index, 0);
+  assert.equal(h.sessions()[0].answers[1], undefined);
+  await h.press(95, 'Кириллча');
+  assert.match(h.messages.at(-1).body.text, /Фикрингиз/);
+});
+
+test('No overtime is not penalized for an unused overtime payment policy', () => {
+  const employee = { answers: { 8: { choices: ['Har doim'] }, 15: { choices: ['Ha'] }, 23: { choices: ['Hech qachon'] }, 24: { choices: ['To‘lanmaydi'] } } };
+  assert.equal(buildSurveyInsights(definitions[0], employee).company.score, 10);
+  const employer = { answers: { 18: { choices: ['Har doim vaqtida'] }, 26: { choices: ['Hech qachon'] }, 27: { choices: ['Alohida qoplanmaydi'] }, 34: { choices: ['Ha'] } } };
+  assert.equal(buildSurveyInsights(definitions[1], employer).company.score, 10);
+});
+
+test('Changing the reports channel restarts partial delivery in the new destination', async () => {
+  const h = harness();
+  await h.storage.put('report-channel', { id: -100222222, title: 'New reports', username: 'new_reports' });
+  const session = { survey: 'employees', token: 'abcde12345', publicIdentity: { kind: 'code', value: '789-856-96' }, stage: 'done', script: 'latin', answers: {}, completedAt: '2026-11-24T12:00:00Z' };
+  await h.storage.put('channel-report:employees:abcde12345', { survey: definitions[0], session, insights: buildSurveyInsights(definitions[0], session), deliveryChatId: -100111111, summaryChunks: ['First report part','Second report part'], summaryMessageIds: [77], summaryMessageId: 77, attempts: 1, nextAttemptAt: 0 });
+  await h.bot.flushChannelReports(true);
+  const sent = h.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100222222);
+  assert.deepEqual(sent.map(m => m.body.text), ['First report part','Second report part']);
+});
+
+
+test('Proposal excerpts keep emoji characters valid in both scripts', () => {
+  const survey = definitions[0]; const q = survey.questions.find(q => q.proposal === 'company');
+  const session = { answers: { [q.id]: { text: '🙂'.repeat(150) } } };
+  const insights = buildSurveyInsights(survey, session);
+  assert.ok(insights.ideas[0].text.isWellFormed());
+  assert.equal(session.answers[q.id].text, '🙂'.repeat(150));
+  for (const script of ['latin', 'cyrillic']) assert.ok(toScript(renderSurveyInsights(insights), script).isWellFormed());
+});
+
+test('A due report after several pages of future retries is delivered without draining future jobs', async () => {
+  const h = harness();
+  await h.storage.put('report-channel', { id: -100123456, title: 'Reports' });
+  const future = Date.now() + 3_600_000;
+  for (let i = 0; i < 250; i++) await h.storage.put('channel-report:future:' + String(i).padStart(5,'0'), { nextAttemptAt: future });
+  const mini = { id: 'mini', title: 'Test', sections: ['Savollar'], questions: [{ id: 1, section: 1, type: 'text', text: 'Fikringiz?' }] };
+  const session = { survey: 'mini', token: 'abcde12346', publicIdentity: { kind: 'code', value: '789-856-97' }, stage: 'done', script: 'latin', answers: { 1: { text: 'Javob' } }, completedAt: '2026-11-24T12:00:00Z' };
+  await h.storage.put('channel-report:zz:due', { survey: mini, session, nextAttemptAt: 0 });
+  await h.bot.flushChannelReports();
+  assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 1);
+  assert.equal(await h.storage.get('channel-report:zz:due'), undefined);
+  assert.equal([...h.data].filter(([key]) => key.startsWith('channel-report:')).length, 250);
+  assert.ok(h.data.get('alarmAt') >= future);
+});
+
+
+test('An old owner preview resume button always returns to preview, even after opening admin', async () => {
+  const mini = { ...definitions[0], questions: [{ ...definitions[0].questions[8], id: 1 }] };
+  const h = harness([mini]);
+  await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim'); await h.press(1, 'Boshlash');
+  await h.message(1, '789-856-98'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, 'Keyinroq');
+  const resume = h.buttons(1).find(b => b.text.includes('Davom ettirish'));
+  assert.equal(resume.callback_data, 'a:resumepreview:employees');
+  await h.message(1, '/admin');
+  await h.bot.handle({ update_id: 5000, callback_query: { id: 'old-preview-resume', from: { id: 1 }, message: { chat: { id: 1, type: 'private' } }, data: resume.callback_data } });
+  assert.match(h.messages.at(-1).body.text, /SINOV/);
+  assert.equal(h.sessions().length, 0);
+  assert.equal([...h.data].filter(([key]) => key.startsWith('preview-session:')).length, 1);
+});
