@@ -192,10 +192,10 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nJavoblar so‘rovnoma egasiga ko‘rinadi. Telegram texnik identifikatorni botga uzatadi. Biz uning o‘rniga tasodifiy maxfiy kalit bilan hosil qilingan belgini saqlaymiz. Avval ism va yosh alohida so‘raladi; ikkalasini ham o‘tkazib yuborish mumkin. Ish joyi nomi yoki boshqa odamlarning shaxsiy ma'lumotlarini yozishingiz shart emas.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
       keyboard = [[button('Boshlash ✅', session, 'begin')], [{ text: 'Bosh menyu', callback_data: 'home' }]];
     } else if (session.stage === 'name') {
-      text = 'Siz haqingizda · 1/2\n\n👤 Ismingiz nima?\n\nIsmingizni xabar qilib yozing. Ism yozish ixtiyoriy; istamasangiz, pastdagi tugmani bosing.';
+      text = '👤 Ismingiz nima?\n\nIsmingizni xabar qilib yozing. Ism yozish ixtiyoriy; istamasangiz, pastdagi tugmani bosing.';
       keyboard = [[button('Ismsiz davom etish', session, 'skip')]];
     } else if (session.stage === 'age') {
-      text = 'Siz haqingizda · 2/2\n\n🎂 Yoshingiz nechada?\n\nYoshingizni raqam bilan yozing. Masalan: 28. Javob berish ixtiyoriy.';
+      text = '🎂 Yoshingiz nechada?\n\nYoshingizni raqam bilan yozing. Masalan: 28. Javob berish ixtiyoriy.';
       keyboard = [[button('Yoshni o‘tkazib yuborish', session, 'skip')], [button('⬅️ Ismga qaytish', session, 'back')]];
     } else if (session.stage === 'review') {
       const answered = Object.values(session.answers).filter(Boolean).length;
@@ -212,7 +212,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       const hint = q.type === 'multi' ? (q.choose ? `Eng muhim ${q.choose} ta variantni belgilang, so‘ng «Davom etish»ni bosing.` : 'Bir nechta javob tanlash mumkin. Sizga mos barcha variantlarni bittadan bosib belgilang, so‘ng «Davom etish»ni bosing. Belgini olib tashlash uchun yana bosing.')
         : q.type === 'money' ? 'Summa va valyutani yozing. Masalan, 3 500 000 UZS yoki 3,5 mln. Valyuta yozilmasa, so‘m hisoblanadi.'
           : q.type === 'number' ? 'Butun son kiriting. Masalan, 5 yoki 30.' : q.type === 'single' ? 'Variantni tanlang yoki javobingizni yozing.' : 'Javobingizni matnda yozing.';
-      text = `${q.section}-bo‘lim · ${survey.sections[q.section - 1]}\nSavol ${q.id}/${survey.questions.length}\n\n${q.text}\n\n${hint}`;
+      text = `Savol ${q.id}/${survey.questions.length}\n\n${q.text}\n\n${hint}`;
       if (q.type === 'multi') text += `\n\n✅ Tanlandi: ${selected.length}${q.choose ? `/${q.choose}` : ''} ta`;
       if (options.length) text += '\n\n' + options.map((o, i) => `${q.type === 'multi' ? (selected.includes(o) ? '✅ ' : '☐ ') : ''}${i + 1}. ${o}`).join('\n');
       if (session.answers[q.id]) text += `\n\nAvvalgi javobingiz\n${display(session.answers[q.id])}`;
