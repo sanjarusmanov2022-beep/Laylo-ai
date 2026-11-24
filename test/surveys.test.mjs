@@ -416,6 +416,10 @@ test('Configured channel receives one complete response file after submit, not w
   await h.press(55, '1.'); await h.press(55, '2.'); await h.press(55, 'Davom etish');
   assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 0);
   const submitted = await h.press(55, 'Javoblarni yuborish');
+  const completedMessage = h.messages.findLast(m => m.body.chat_id === 55 && m.body.text);
+  assert.match(completedMessage.body.text, /Hisobotni shu kanalda olasiz/);
+  assert.match(completedMessage.body.text, /@reports_test/);
+  assert.ok(h.buttons(55).some(b => b.url === 'https://t.me/reports_test'));
   const reports = h.messages.filter(m => m.method === 'sendDocument' && m.body.get('chat_id') === '-100123456');
   assert.equal(reports.length, 1);
   assert.match(reports[0].body.get('caption'), /Aziza/);
@@ -438,6 +442,7 @@ test('Client preview never sends respondent data to the reports channel', async 
   await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
   await h.press(1, 'Davom etish'); await h.press(1, 'Javoblarni yuborish');
   assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 0);
+  assert.ok(!h.messages.at(-1).body.text.includes('@reports_test'));
   assert.equal([...h.data].filter(([key]) => key.startsWith('channel-report:')).length, 0);
 });
 

@@ -203,9 +203,14 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       text = `Savollar tugadi ✅\n\nJavob berilgan — ${answered}\nO‘tkazilgan — ${survey.questions.length - answered}\n\n«Yuborish»ni bosing. Savollarni ko‘rib chiqish uchun orqaga qaytishingiz mumkin.`;
       keyboard = [[button('Javoblarni yuborish ✅', session, 'submit')], [button('⬅️ Oldingi savol', session, 'back')]];
     } else if (session.stage === 'done') {
-      return session.preview
-        ? send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')])
-        : send(chat, survey.thanks ?? 'Javoblaringiz saqlandi. Rahmat!', [scriptButton('menu')]);
+      if (session.preview) return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')]);
+      const channel = await storage.get('report-channel');
+      const thanks = survey.thanks ?? 'Rahmat! Javoblaringiz saqlandi ✅';
+      const channelUrl = channel?.username ? `https://t.me/${channel.username}` : null;
+      return send(chat, thanks + (channelUrl ? `\n\n📊 Hisobotni shu kanalda olasiz:\n@${channel.username}\n${channelUrl}` : ''), [
+        ...(channelUrl ? [[{ text: '📊 Hisobotlar kanalini ochish', url: channelUrl }]] : []),
+        scriptButton('menu'),
+      ]);
     } else {
       const q = survey.questions[session.index];
       const selected = session.pending ?? session.answers[q.id]?.choices ?? [];
