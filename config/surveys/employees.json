@@ -1,7 +1,7 @@
 {
   "id": "employees",
   "title": "Xodimlar ish faoliyati va ish joyidan qoniqish bo‘yicha so‘rovnoma",
-  "introduction": "Hurmatli respondent!\n\nIltimos, quyidagi savollarga chin dildan va imkon qadar haqqoniy javob bering. Sizning javoblaringiz biz uchun juda muhim. Ushbu tadqiqotning maqsadi — zamonaviy korxonalarda xodimlar uchun qanday ish sharoitlari muhimligini, ularning motivatsiyasini oshiruvchi omillarni va yaxshi ish muhitini shakllantirish usullarini o‘rganishdir.\n\nJavoblaringiz tadqiqot maqsadida tahlil qilinadi. Ismingizni yozishingiz shart emas.",
+  "introduction": "Hurmatli respondent!\n\nIltimos, quyidagi savollarga chin dildan va imkon qadar haqqoniy javob bering. Sizning javoblaringiz biz uchun juda muhim. Ushbu tadqiqotning maqsadi — zamonaviy korxonalarda xodimlar uchun qanday ish sharoitlari muhimligini, ularning motivatsiyasini oshiruvchi omillarni va yaxshi ish muhitini shakllantirish usullarini o‘rganishdir.\n\nJavoblaringiz tadqiqot maqsadida tahlil qilinadi. Ismingizni yozishingiz shart emas.\n\nVaziyatli savollar: ideal ko‘rinadigan javobni emas, amalda ko‘proq qanday yo‘l tutishingizni chin dildan belgilang. Xulosa ishdagi yondashuvni muhokama qilish va rivojlanish rejasini tuzish uchun beriladi. Shaxsiy ismlar va maxfiy ma’lumotlarni yozmang.",
   "thanks": "Sizga vaqt ajratib, savollarga javob berganingiz uchun katta rahmat!\n\nSizning fikrlaringiz kelajakda yanada yaxshi, adolatli va samarali ish muhitini yaratishga yordam beradi.",
   "sections": [
     "Ish faoliyati va tajriba",
@@ -12,7 +12,8 @@
     "Ishdan ketish va xodimlarni saqlab qolish",
     "Motivatsiya va qo‘shimcha imkoniyatlar",
     "Ishga qabul qilish va yangi xodimlar",
-    "Shaxsiy fikr va takliflar"
+    "Shaxsiy fikr va takliflar",
+    "Vaziyatli savollar va amaliy takliflar"
   ],
   "questions": [
     {
@@ -575,6 +576,715 @@
       "section": 9,
       "text": "Bizning tadqiqotimiz uchun qo‘shimcha fikr, taklif yoki tavsiyangiz bormi?",
       "type": "text"
+    },
+    {
+      "id": 58,
+      "section": 10,
+      "type": "single",
+      "text": "Korxonada maosh birinchi marta kechikdi. Hali aniq izoh berilmadi. Amalda siz birinchi nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Aniq sana, sabab va qisman to‘lov imkonini so‘rab, kelishuvni yozib olaman.",
+        "Moliyaviy holatimni aytib, to‘lov va ishni davom ettirish shartlarini ochiq kelishaman.",
+        "Hech narsa so‘ramay kutaman, lekin ichimda ranjiyman.",
+        "Umumiy chatda sababini bilmasdan keskin ayblov yozaman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "communication",
+        "title": "Maosh kechikishidagi muloqot",
+        "scale": [
+          {
+            "score": 10,
+            "tip": "Kechikishda aniq muddat va kelishuvni yozib borish usulingizni saqlang."
+          },
+          {
+            "score": 10,
+            "tip": "O‘z ehtiyojingiz va ish shartlarini hurmat bilan aniq muhokama qilishni davom ettiring."
+          },
+          {
+            "score": 4,
+            "tip": "Kutish o‘rniga o‘zingiz uchun muhim to‘lov savollarini rahbarga aniq yetkazing."
+          },
+          {
+            "score": 1,
+            "tip": "Maosh masalasida avval tekshirilgan ma’lumot va aniq talab bilan alohida muloqot boshlang."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 59,
+      "section": 10,
+      "type": "single",
+      "text": "Siz yuborgan hujjatda xato borligini payqadingiz. Bu mijozga zarar keltirishi mumkin. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Avval o‘zim tekshirib, zarar xavfi bo‘lsa darhol mas’ul odamga aytaman.",
+        "Hech kim payqamasa, indamay qo‘yaman.",
+        "Kim sababchi bo‘lganini aniqlamaguncha tuzatishni boshlamayman.",
+        "Xatoni tez xabar qilib, oqibatini kamaytirish va tuzatish rejasini taklif qilaman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "accountability",
+        "title": "O‘z xatosini tuzatish",
+        "scale": [
+          {
+            "score": 9,
+            "tip": "Tekshirish bilan birga zararni to‘xtatish uchun xabar berish muddatini ham belgilang."
+          },
+          {
+            "score": 1,
+            "tip": "Xatoni yashirmasdan, uni erta bildirish va tuzatish tartibidan foydalaning."
+          },
+          {
+            "score": 3,
+            "tip": "Aybdorni izlashdan oldin mijozga ta’sirini kamaytirish va ishni tuzatishga kirishing."
+          },
+          {
+            "score": 10,
+            "tip": "Xato, ta’sir va tuzatish rejasini birga yetkazish odatingizni saqlang."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 60,
+      "section": 10,
+      "type": "single",
+      "text": "Rahbar sizni hamkasblar oldida tanqid qildi. Siz ayrim gaplarga qo‘shilmaysiz. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Javoban uning kamchiliklarini hamma oldida sanab beraman.",
+        "Indamayman, keyingi safar ham savol bermayman.",
+        "Keyin alohida gaplashib, aniq misol so‘rayman va o‘z dalilimni tushuntiraman.",
+        "Shu payt xotirjam aniqlik so‘rayman, zarur bo‘lsa suhbatni alohida davom ettiraman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "communication",
+        "title": "Tanqidni aniqlashtirish",
+        "scale": [
+          {
+            "score": 2,
+            "tip": "Tanqidga javobda shaxsga o‘tmasdan, aynan vazifa va dalillarga qayting."
+          },
+          {
+            "score": 4,
+            "tip": "Tushunarsiz tanqid bo‘yicha xavfsiz va xotirjam vaqtda aniqlik so‘rashni sinab ko‘ring."
+          },
+          {
+            "score": 10,
+            "tip": "Tanqidni aniq misol va alohida suhbat bilan muhokama qilish usulini saqlang."
+          },
+          {
+            "score": 9,
+            "tip": "Suhbatda o‘z pozitsiyangiz va hurmatli muomala chegarasini birga aniq ayting."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 61,
+      "section": 10,
+      "type": "single",
+      "text": "Jamoa muvaffaqiyati uchun faqat siz maqtov oldingiz, hamkasbingizning ham katta hissasi bor. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Hamkasbimning hissasini kichraytirib ko‘rsataman.",
+        "Hamkasbimning hissasini aniq aytib, e’tirofni bo‘lishaman.",
+        "Rahbar bilan keyin gaplashib, uning hissasini ham eslataman.",
+        "Bu safar indamayman: maqtov menga foydali.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "accountability",
+        "title": "Hissalarni adolatli tan olish",
+        "scale": [
+          {
+            "score": 0,
+            "tip": "Natijalarni bo‘lishishda hissalarni tekshiriladigan misollar bilan adolatli ko‘rsating."
+          },
+          {
+            "score": 10,
+            "tip": "Natijada kim qanday hissa qo‘shganini aniq ko‘rsatishni davom ettiring."
+          },
+          {
+            "score": 8,
+            "tip": "Hamkasb hissasini vaqtida va tegishli odamlar oldida tan olishga harakat qiling."
+          },
+          {
+            "score": 2,
+            "tip": "Jamoaviy natijalarda o‘z hissangiz bilan birga boshqalarning hissasini ham ko‘rsating."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 62,
+      "section": 10,
+      "type": "single",
+      "text": "Bir vaqtda uchta shoshilinch topshiriq keldi, hammasiga vaqt yetmaydi. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Muddat va ahamiyatni aniqlab, ustuvorlik hamda real muddatni kelishaman.",
+        "Eng muhimidan boshlayman va qolganlari kechikishini darhol xabar qilaman.",
+        "Barchasiga va’da beraman, kechikishni oxirida aytaman.",
+        "Faqat osonini qilaman, boshqalariga javob bermayman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "pressure",
+        "title": "Vazifalarni ustuvorlashtirish",
+        "scale": [
+          {
+            "score": 10,
+            "tip": "Vazifa hajmi va muddatni oldindan kelishish amaliyotini saqlang."
+          },
+          {
+            "score": 8,
+            "tip": "Ustuvorlikni tanlaganingizda rahbar bilan mezon va muddatni ham tekshirib oling."
+          },
+          {
+            "score": 2,
+            "tip": "Vaqt yetmasligini erta aytib, bajarish mumkin bo‘lgan reja taklif qiling."
+          },
+          {
+            "score": 1,
+            "tip": "Osonlik o‘rniga ta’sir va muddat bo‘yicha ustuvorlikni kelishing."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 63,
+      "section": 10,
+      "type": "single",
+      "text": "Hamkasbingiz bilan vazifa bo‘yicha qarashlaringiz zid. Suhbat keskinlashmoqda. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Ikkimizga mos kichik sinov o‘tkazib, natijani solishtirishni taklif qilaman.",
+        "Uning shaxsiy kamchiliklarini tilga olaman.",
+        "Kelishmasdan uning ishini sezdirmay o‘zgartiraman.",
+        "Dalil va umumiy maqsadga qaytaman, kerak bo‘lsa qisqa tanaffus taklif qilaman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "communication",
+        "title": "Kelishmovchilikni hal qilish",
+        "scale": [
+          {
+            "score": 9,
+            "tip": "Bahsni kichik sinov va oldindan kelishilgan mezon bilan tekshirish usulini saqlang."
+          },
+          {
+            "score": 1,
+            "tip": "Bahsda odamni baholash o‘rniga taklifning foyda va xavflarini muhokama qiling."
+          },
+          {
+            "score": 2,
+            "tip": "Hamkasb ishini o‘zgartirishdan avval sabab va mas’uliyatni ochiq kelishing."
+          },
+          {
+            "score": 10,
+            "tip": "Kelishmovchilikda umumiy maqsad va tekshiriladigan dalillarga tayanishni davom ettiring."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 64,
+      "section": 10,
+      "type": "single",
+      "text": "Yangi xodim sizdan bir masalani qayta so‘radi. Sizning ham ishingiz ko‘p. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Bilsa kerak deb javob bermay qo‘yaman.",
+        "Boshqalar oldida bilmasligini masxara qilaman.",
+        "Qisqa yo‘l-yo‘riq beraman yoki yordam bera oladigan vaqt va odamni aytaman.",
+        "Bir marta ko‘rsatib, keyingi safar foydalanishi uchun yozib olishini so‘rayman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "collaboration",
+        "title": "Yangi hamkasbga yordam",
+        "scale": [
+          {
+            "score": 3,
+            "tip": "Yordam bera olmasangiz ham qachon yoki kimga murojaat qilishni aniq ayting."
+          },
+          {
+            "score": 0,
+            "tip": "Yangi xodimga savol berish qulay bo‘lgan hurmatli muhit yarating."
+          },
+          {
+            "score": 10,
+            "tip": "Yordamni o‘z ish yukingizga mos aniq vaqt va manba bilan tashkil eting."
+          },
+          {
+            "score": 9,
+            "tip": "Takroriy savollar uchun qisqa yozma yo‘riqnoma yoki umumiy manba tayyorlang."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 65,
+      "section": 10,
+      "type": "single",
+      "text": "Mijoz sizga keskin gapirdi. Muammo sababini hali bilmaysiz. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Tekshirmasdan bajarolmaydigan va’da beraman.",
+        "Xotirjam savol berib, muammoni tekshiraman va muloqot chegarasini hurmat bilan aytaman.",
+        "Qisqa tanaffus yoki mas’ul hamkasbni jalb qilishni so‘rayman.",
+        "O‘zim ham ovozimni ko‘taraman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "pressure",
+        "title": "Bosim ostida muloqot",
+        "scale": [
+          {
+            "score": 3,
+            "tip": "Bosimni kamaytirish uchun tekshirilmagan va’da o‘rniga real tekshiruv muddatini ayting."
+          },
+          {
+            "score": 10,
+            "tip": "Muammoni tekshirish va hurmatli muloqot chegarasini birga saqlang."
+          },
+          {
+            "score": 8,
+            "tip": "Bosimda kerakli yordamni erta so‘rab, mijozga keyingi qadamni tushuntiring."
+          },
+          {
+            "score": 2,
+            "tip": "Keskin suhbatda javob berishdan oldin vaziyatni aniqlashtirib, qisqa tanaffus oling."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 66,
+      "section": 10,
+      "type": "single",
+      "text": "Korxonada yangi dastur joriy qilindi, avvalgi usulingiz qulay edi. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Maqsadini tushunib, o‘rganish va sinab ko‘rish uchun vaqt so‘rayman.",
+        "Xavf va qulayliklarini aytib, eski va yangi usul natijasini solishtiraman.",
+        "Tushunishga urinmasdan undan foydalanishni rad qilaman.",
+        "Tushunmaganimni yashirib, taxmin bilan ishlayman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "learning",
+        "title": "O‘zgarishni o‘rganish",
+        "scale": [
+          {
+            "score": 10,
+            "tip": "Yangi usulni maqsad va kichik sinov orqali o‘rganishni davom ettiring."
+          },
+          {
+            "score": 9,
+            "tip": "O‘zgarish haqidagi fikrni taqqoslanadigan natija bilan asoslang."
+          },
+          {
+            "score": 2,
+            "tip": "Rad etishdan oldin yangi usulning maqsadi va sizga kerakli o‘qitishni aniqlang."
+          },
+          {
+            "score": 3,
+            "tip": "Bilmagan joyingizni erta so‘rab, xavfsiz sinov yoki yo‘riqnoma bilan tekshiring."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 67,
+      "section": 10,
+      "type": "single",
+      "text": "Sizdan uzr so‘rashdi, lekin aynan qaysi harakat o‘zgarishi noma’lum. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Vaqt so‘rayman va keyin xotirjam gaplashishga kelishaman.",
+        "Endi hech qanday suhbatga rozi bo‘lmayman.",
+        "Uzrni boshqalarga masxara qilib aytib yuraman.",
+        "Uzrni tinglab, takrorlanmasligi uchun aniq kelishuvni muhokama qilaman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "communication",
+        "title": "Tinglash va aniqlik",
+        "scale": [
+          {
+            "score": 8,
+            "tip": "Suhbatga tayyor bo‘lmagan paytda aniq vaqt belgilab qaytishni odat qiling."
+          },
+          {
+            "score": 3,
+            "tip": "Vaziyat xavfsiz bo‘lsa, takrorlanishni to‘xtatadigan shartlarni aniq muhokama qiling."
+          },
+          {
+            "score": 1,
+            "tip": "Nozik kelishmovchilikni omma oldida masxara qilish o‘rniga bevosita muhokama qiling."
+          },
+          {
+            "score": 10,
+            "tip": "Uzrdan keyingi aniq harakat va kuzatish muddatini kelishib oling."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 68,
+      "section": 10,
+      "type": "single",
+      "text": "Sizga vazifangizdan tashqari ish berildi, asosiy ishingiz kechikishi mumkin. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Hammasiga rozi bo‘lib, keyin ikkalasini ham kechiktiraman.",
+        "Sababini bilmasdan qo‘pol rad qilaman.",
+        "Maqsad, hajm va ustuvorlikni so‘rab, asosiy ishim muddatini birga kelishaman.",
+        "Qila oladigan qismini aytib, qolganiga resurs yoki yordam so‘rayman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "collaboration",
+        "title": "Vazifalarni kelishish",
+        "scale": [
+          {
+            "score": 2,
+            "tip": "Rozilik berishdan avval vaqt va mavjud majburiyatlaringizni ochiq ayting."
+          },
+          {
+            "score": 3,
+            "tip": "Vazifa bo‘yicha chegarangizni qo‘pol muomala o‘rniga aniq sabab bilan tushuntiring."
+          },
+          {
+            "score": 10,
+            "tip": "Qo‘shimcha vazifa bilan birga asosiy ishga ta’sirini ham oldindan kelishing."
+          },
+          {
+            "score": 9,
+            "tip": "O‘z imkoniyatingiz va kerakli yordamni aniq ko‘rsatishni davom ettiring."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 69,
+      "section": 10,
+      "type": "single",
+      "text": "Rahbar hisobotdagi raqamni dalilsiz yaxshiroq ko‘rsatishni so‘radi. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Dalilni tekshirmasdan darhol hammani ommaviy ayblayman.",
+        "Dalil va sababini so‘rayman, noto‘g‘ri ma’lumot kiritmay, xavfsiz tartibda masalani ko‘taraman.",
+        "Asl ma’lumotni saqlab, mas’ul shaxsdan yozma aniqlik so‘rayman.",
+        "Tekshirmay o‘zgartiraman: aytilganini qilish oson.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "accountability",
+        "title": "Noqulay topshiriqni aniqlashtirish",
+        "scale": [
+          {
+            "score": 2,
+            "tip": "Avval ma’lumot va xavfsiz murojaat tartibini aniqlab, tekshiriladigan dalil bilan gapiring."
+          },
+          {
+            "score": 10,
+            "tip": "Ma’lumot aniqligi bo‘yicha shubhani dalil va belgilangan murojaat tartibi bilan bildiring."
+          },
+          {
+            "score": 9,
+            "tip": "Asl ma’lumotni saqlash va yozma aniqlik so‘rash usulingizni davom ettiring."
+          },
+          {
+            "score": 1,
+            "tip": "Hisobotni o‘zgartirishdan oldin ma’lumot asosini tekshirib, shubhani ochiq ayting."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 70,
+      "section": 10,
+      "type": "single",
+      "text": "Jamoa siz qo‘shilmagan qarorni tanladi. Qaror xavfsiz, lekin sizda boshqa taklif bor. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Dalilimni aytib, sinov mezonini kelishaman va qabul qilingan ish rejasiga amal qilaman.",
+        "Muqobil usulni kichik ko‘lamda tekshirishga ruxsat so‘rayman.",
+        "Kelishmasdan qarorning bajarilishiga xalal beraman.",
+        "Tashqarida rozi bo‘lib, hamkasblarni yashirin qarshi qo‘yaman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "collaboration",
+        "title": "Jamoa qaroriga munosabat",
+        "scale": [
+          {
+            "score": 10,
+            "tip": "Qarorni sinov natijasi bilan qayta ko‘rish imkonini oldindan kelishing."
+          },
+          {
+            "score": 8,
+            "tip": "Muqobil taklifni jamoa ishini buzmaydigan kelishilgan sinovga aylantiring."
+          },
+          {
+            "score": 1,
+            "tip": "Fikr farqini ishga xalal berish o‘rniga ochiq dalil va sinov bilan ifodalang."
+          },
+          {
+            "score": 2,
+            "tip": "Jamoa qaroriga e’tirozni yashirin qarshilik o‘rniga ochiq va aniq bildiring."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 71,
+      "section": 10,
+      "type": "single",
+      "text": "Taklifingiz qabul qilinmadi. Sababi sizga to‘liq tushuntirilmagan. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Qo‘shimcha dalil yig‘ib, mos vaqtda qayta muhokama qilishni so‘rayman.",
+        "Endi hech qachon taklif bermayman.",
+        "Rad etgan odamni shaxsan yomonlayman.",
+        "Rad etish mezonini so‘rab, taklifni yaxshilash yoki kichik sinov variantini izlayman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "learning",
+        "title": "Rad etilgan taklifdan o‘rganish",
+        "scale": [
+          {
+            "score": 8,
+            "tip": "Taklifni qayta ko‘tarishda yangi dalil va foyda mezonini ko‘rsating."
+          },
+          {
+            "score": 3,
+            "tip": "Bitta rad javobidan keyin fikr bildirishni to‘xtatmay, kerakli mezonni aniqlang."
+          },
+          {
+            "score": 1,
+            "tip": "Taklif va odamni ajratib, fikringizni uning dalili hamda foydasiga qarating."
+          },
+          {
+            "score": 10,
+            "tip": "Taklifni aniq mezon va kichik sinov bilan takomillashtirishni davom ettiring."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 72,
+      "section": 10,
+      "type": "single",
+      "text": "Bir necha kun ketma-ket juda charchab ishlayapsiz, xato xavfi oshdi. Nima qilasiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Hech kim bilmasin deb xatolarni ham yashirib ishlayveraman.",
+        "Hech qanday xabar bermay vazifalarni tashlab ketaman.",
+        "Ish yukini aytib, ustuvorlik, yordam va tanaffusni rahbar bilan kelishaman.",
+        "Xavfli yoki xato chiqishi mumkin bo‘lgan ishni to‘xtatib, mas’ul odamga xabar beraman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "pressure",
+        "title": "Ish va dam olish chegaralari",
+        "scale": [
+          {
+            "score": 1,
+            "tip": "Charchoq yoki xatoni yashirish o‘rniga xavfni erta aytib, yordam so‘rang."
+          },
+          {
+            "score": 3,
+            "tip": "Imkon bo‘lsa, ishni to‘xtatish zarurati va keyingi qadamni mas’ul odamga xabar qiling."
+          },
+          {
+            "score": 10,
+            "tip": "Charchoq ish sifatiga ta’sir qilishidan oldin yuk va dam olishni muhokama qiling."
+          },
+          {
+            "score": 10,
+            "tip": "Sifat va xavfsizlikka ta’sir qiladigan charchoqni vaqtida bildirib, ishni qayta rejalashtiring."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 73,
+      "section": 10,
+      "type": "single",
+      "text": "So‘nggi ish natijangiz kutilganidan past bo‘ldi. Keyingi qadamni qanday tanlaysiz? Odatda qanday yo‘l tutishingizga eng yaqin javobni tanlang yoki o‘z javobingizni yozing.",
+      "options": [
+        "Faqat boshqalarni ayblab, o‘z ish usulimni ko‘rib chiqmayman.",
+        "Aniq misollar bilan fikr so‘rab, bitta yaxshilash maqsadi va tekshirish muddatini belgilayman.",
+        "Usulimni tahlil qilib, hamkasb yoki ustoz bilan yangi yondashuvni sinayman.",
+        "Faqat omad bo‘lmadi deb, usulimni o‘zgartirmayman.",
+        "Vaziyatga bog‘liq / aniq javobim yo‘q"
+      ],
+      "assessment": {
+        "dimension": "learning",
+        "title": "Fikr-mulohazadan foydalanish",
+        "scale": [
+          {
+            "score": 1,
+            "tip": "Tashqi omillar bilan birga o‘z ish usulingizdan ham yaxshilash nuqtasini toping."
+          },
+          {
+            "score": 10,
+            "tip": "Rivojlanish maqsadini bitta o‘lchanadigan qadam va qayta aloqa bilan bog‘lang."
+          },
+          {
+            "score": 9,
+            "tip": "Yangi yondashuvni tekshirish uchun oldindan natija mezonini belgilang."
+          },
+          {
+            "score": 3,
+            "tip": "Natijadagi omillarni ajratib, o‘zingiz o‘zgartira oladigan bitta qadamni sinang."
+          },
+          {
+            "score": null,
+            "tip": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": 74,
+      "section": 10,
+      "type": "text",
+      "text": "Oxirgi olti oyda ishda yuz bergan qiyin bir vaziyatni ismlarsiz yozing: nima bo‘ldi, siz nima qildingiz, natija qanday bo‘ldi va nimani boshqacha qilardingiz?",
+      "proposal": "experience"
+    },
+    {
+      "id": 75,
+      "section": 10,
+      "type": "text",
+      "text": "Korxonangizda bitta qoidani yoki ish sharoitini o‘zgartira olsangiz, nimani va qanday o‘zgartirardingiz? Birinchi amaliy qadamni yozing.",
+      "proposal": "company"
+    },
+    {
+      "id": 76,
+      "section": 10,
+      "type": "text",
+      "text": "Siz uchun foydali bonus yoki imtiyoz tizimini o‘zingiz taklif qiling. Qaysi natija uchun, qanday miqdor yoki shaklda va qanday adolatli mezon bilan berilishi kerak?",
+      "proposal": "reward"
+    },
+    {
+      "id": 77,
+      "section": 10,
+      "type": "text",
+      "text": "Kelgusi bir oyda o‘zingiz yaxshilamoqchi bo‘lgan ish odatini yozing. Sizga rahbar yoki korxonadan qanday yordam kerak?",
+      "proposal": "development"
+    },
+    {
+      "id": 78,
+      "section": 10,
+      "type": "single",
+      "text": "Hozirgi vazifalaringizda o‘z bilim va ko‘nikmalaringizdan qanchalik foydalanasiz?",
+      "options": [
+        "Asosan foydalanaman",
+        "Qisman foydalanaman",
+        "Juda kam foydalanaman",
+        "Ko‘nikmalarim hozirgi vazifaga hali yetmaydi",
+        "Aniq bilmayman"
+      ],
+      "decision": "skill_use"
+    },
+    {
+      "id": 79,
+      "section": 10,
+      "type": "single",
+      "text": "Boshqa ish variantlari haqida sizda hozir qanday aniq ma’lumot bor?",
+      "options": [
+        "Aniq shartlari yozilgan taklif bor",
+        "Faqat og‘zaki taklif bor",
+        "Hozircha faqat e’lonlarni ko‘ryapman",
+        "Hali boshqa variant qidirmadim"
+      ],
+      "decision": "alternatives"
+    },
+    {
+      "id": 80,
+      "section": 10,
+      "type": "single",
+      "text": "Ishdagi siz uchun muhim muammo yoki ehtiyojni rahbar bilan muhokama qilish qanday natija bergan?",
+      "options": [
+        "Hali muhokama qilmaganman",
+        "Muhokama qilingan, kelishilgan muddatni kutyapman",
+        "Bir necha marta muhokama qilingan, sezilarli o‘zgarish bo‘lmadi",
+        "Muhokama qilingan va foydali o‘zgarish bo‘ldi",
+        "Hozir muhim muammo yo‘q"
+      ],
+      "decision": "resolution"
+    },
+    {
+      "id": 81,
+      "section": 10,
+      "type": "single",
+      "text": "Hozirgi ishingizdan umuman qanchalik qoniqasiz? O‘zingiz his qilayotgan holatga eng yaqin variantni tanlang. Istasangiz, sababini matnda yozing.",
+      "options": [
+        "Juda qoniqaman",
+        "Asosan qoniqaman",
+        "Hislarim aralash / o‘rtacha",
+        "Asosan noroziman",
+        "Juda noroziman",
+        "Hozir baholay olmayman"
+      ],
+      "decision": "satisfaction"
     }
-  ]
+  ],
+  "version": "situations-v3"
 }

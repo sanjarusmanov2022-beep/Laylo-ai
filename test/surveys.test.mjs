@@ -1,8 +1,8 @@
-import { buildSurveyInsights, renderSurveyInsights } from '../src/survey-insights.mjs';
+import { buildSurveyInsights, renderSurveyInsights, buildSituationalInsights, buildDecisionSupport } from '../src/survey-insights.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { createSurveyBot, parseAmount, surveyStats, validateSurvey, toScript, parsePublicIdentity } from '../src/surveys.mjs';
+import { createSurveyBot, parseAmount, surveyStats, validateSurvey, toScript, parsePublicIdentity, splitReportText } from '../src/surveys.mjs';
 import worker, { SurveyStore } from '../src/survey-worker.mjs';
 
 const definitions = await Promise.all(['employees', 'employers'].map(async id => JSON.parse(await readFile(new URL(`../config/surveys/${id}.json`, import.meta.url), 'utf8'))));
@@ -51,8 +51,8 @@ function harness(defs = definitions, existing, autoScript = true) {
 }
 
 test('Both role questionnaires validate and keep all supplied employee questions', () => {
-  assert.equal(validateSurvey(definitions[0]).questions.length, 57);
-  assert.equal(validateSurvey(definitions[1]).questions.length, 40);
+  assert.equal(validateSurvey(definitions[0]).questions.length, 81);
+  assert.equal(validateSurvey(definitions[1]).questions.length, 64);
   assert.equal(definitions[0].questions[5].type, 'money');
   assert.equal(definitions[1].questions[2].type, 'number');
   assert.equal(parseAmount('3,5 mln').amount, 3500000);
@@ -81,7 +81,7 @@ test('Roles, private admin access, duplicate and forged callbacks, and resume af
   await h.press(222, 'Keyinroq');
   const restarted = harness(definitions, h.data);
   await restarted.message(222, '/survey');
-  assert.match(restarted.messages.at(-1).body.text, /Savol 2\/57/);
+  assert.match(restarted.messages.at(-1).body.text, /Savol 2\/81/);
   assert.equal(h.sessions()[0].answers[1].choices[0], '2–5 oy');
   assert.ok(!JSON.stringify([...h.data]).includes('Telegram name never stored'));
   assert.ok(![...h.data.keys()].some(k => k.includes(':222')));
@@ -120,7 +120,7 @@ test('Participants finish both roles independently, and reports/export include o
   await h.message(1, '/export');
   const file = h.messages.findLast(m => m.method === 'sendDocument').body.get('document');
   const csv = await file.text();
-  assert.equal(csv.trim().split('\r\n').length, 1 + participants / 2 * (57 + 40));
+  assert.equal(csv.trim().split('\r\n').length, 1 + participants / 2 * (definitions[0].questions.length + definitions[1].questions.length));
   assert.ok(!csv.includes('session:'));
   assert.ok(!csv.includes('Telegram name never stored'));
   await h.message(100, '/start employees');
@@ -233,17 +233,17 @@ test('Client preview resets, resumes after restart and leaves real owner respons
   await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim');
   await h.press(1, 'Boshlash'); await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
   await h.press(1, 'Keyinroq'); await h.message(1, '/survey');
-  assert.match(h.messages.at(-1).body.text, /Savol 2[/]57/);
+  assert.match(h.messages.at(-1).body.text, /Savol 2[/]81/);
   const restarted = harness(definitions, h.data);
   await restarted.message(1, '/survey');
   assert.match(restarted.messages.at(-1).body.text, /SINOV/);
-  assert.match(restarted.messages.at(-1).body.text, /Savol 2[/]57/);
+  assert.match(restarted.messages.at(-1).body.text, /Savol 2[/]81/);
   await h.press(1, 'Boshidan boshlash');
   const preview = [...h.data].find(([key]) => key.startsWith('preview-session:'))[1];
   assert.equal(preview.stage, 'intro'); assert.deepEqual(preview.answers, {});
   assert.deepEqual(h.sessions()[0], real);
   await h.message(1, '/admin'); await h.message(1, '/survey employees');
-  assert.match(h.messages.at(-1).body.text, /Savol 2[/]57/);
+  assert.match(h.messages.at(-1).body.text, /Savol 2[/]81/);
   assert.ok(!h.messages.at(-1).body.text.includes('SINOV'));
 });
 
@@ -258,7 +258,7 @@ test('Preview is owner only, clears survey drafts and can inspect closed questio
   assert.equal(await h.storage.get('draft'), null);
   await h.storage.put('open:employees', false);
   await h.press(1, 'Xodim'); await h.press(1, 'Boshlash'); await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib');
-  assert.match(h.messages.at(-1).body.text, /Savol 1[/]57/);
+  assert.match(h.messages.at(-1).body.text, /Savol 1[/]81/);
   await h.message(22, '/start employees');
   assert.match(h.messages.at(-1).body.text, /hozir yopiq/);
 });
@@ -307,7 +307,7 @@ test('Identity is mandatory, can be changed to a private code, and age remains o
   assert.equal(h.sessions()[0].name, undefined);
   await h.press(88, 'Yoshni o‘tkazib');
   assert.equal(h.sessions()[0].age, undefined);
-  assert.match(h.messages.at(-1).body.text, /Savol 1[/]57/);
+  assert.match(h.messages.at(-1).body.text, /Savol 1[/]81/);
 });
 
 test('Benefits allow four or more selections, show a count, and commit all selected options', async () => {
@@ -541,8 +541,11 @@ test('Cyrillic respondent reports retain their own script through delayed delive
   const session = h.sessions()[0];
   assert.equal(session.script, 'cyrillic');
   const summary = h.messages.findLast(m => m.method === 'sendMessage' && m.body.chat_id === -100123456 && m.body.text?.includes('Хулоса, баҳо'));
-  assert.ok(summary); assert.match(summary.body.text, /Корхона учун тавсиялар/); assert.match(summary.body.text, /Ходим учун тавсиялар/);
-  assert.ok(summary.body.text.includes(session.token)); assert.ok(summary.body.text.length <= 4096);
+  assert.ok(summary);
+  const parts = h.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456);
+  const fullReport = parts.map(m => m.body.text).join('\n');
+  assert.match(fullReport, /Корхона учун тавсиялар/); assert.match(fullReport, /Ходим учун тавсиялар/);
+  assert.ok(summary.body.text.includes(session.token)); assert.ok(parts.every(m => m.body.text.length <= 4096));
   await h.message(78, '/script'); await h.press(78, 'Lotincha');
   const restarted = harness(definitions, h.data, false);
   await restarted.bot.flushChannelReports(true);
@@ -600,4 +603,189 @@ test('Company code is used in channel report and CSV without disclosing Telegram
   const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
   assert.match(csv, /789-456-85/);
   assert.ok(!csv.includes('Telegram name never stored'));
+});
+
+
+test('Both roles append exactly sixteen scored situations and four proposal questions without renumbering the original questions', () => {
+  for (const survey of definitions) {
+    const base = survey.id === 'employees' ? 57 : 40;
+    assert.equal(survey.questions.length, base + 24);
+    assert.equal(survey.questions.filter(q => q.decision).length, 4);
+    assert.ok(survey.questions.slice(0, base).every(q => !q.assessment && !q.proposal));
+    assert.equal(survey.questions.filter(q => q.assessment).length, 16);
+    assert.equal(survey.questions.filter(q => q.proposal).length, 4);
+    assert.equal(new Set(survey.questions.filter(q => q.assessment).map(q => q.assessment.dimension)).size, 5);
+    assert.equal(validateSurvey(survey), survey);
+  }
+  const invalid = structuredClone(definitions[0]);
+  invalid.questions[57].assessment.scale[0].score = 20;
+  assert.throws(() => validateSurvey(invalid), /mezonlari/);
+});
+
+function situationSession(survey, mode) {
+  return { answers: Object.fromEntries(survey.questions.filter(q => q.assessment).map(q => {
+    const scales = q.assessment.scale;
+    const numeric = scales.map((v, i) => [v.score, i]).filter(([v]) => v !== null);
+    const selected = mode === 'unknown' ? scales.findIndex(v => v.score === null) : numeric.sort((a, b) => mode === 'high' ? b[0] - a[0] : a[0] - b[0])[0][1];
+    return [q.id, { choices: [q.options[selected]] }];
+  })) };
+}
+
+test('Situational profiles use actual options, require coverage and generate different grounded recommendations', () => {
+  for (const survey of definitions) {
+    const high = buildSituationalInsights(survey, situationSession(survey, 'high'));
+    const low = buildSituationalInsights(survey, situationSession(survey, 'low'));
+    const unknown = buildSituationalInsights(survey, situationSession(survey, 'unknown'));
+    assert.equal(high.score, 10); assert.ok(low.score < 4);
+    assert.equal(high.dimensions.length, 5);
+    assert.ok(high.dimensions.every(d => d.score === 10));
+    assert.equal(unknown.score, null); assert.equal(unknown.measured, 0);
+    assert.notDeepEqual(high.companyRecommendations, low.companyRecommendations);
+    assert.notDeepEqual(high.employeeRecommendations, low.employeeRecommendations);
+    assert.ok(low.observations.every(o => survey.questions[o.id - 1].options.includes(o.selected)));
+  }
+  const payment = definitions[0].questions[57];
+  assert.equal(payment.assessment.scale[payment.options.indexOf('Moliyaviy holatimni aytib, to‘lov va ishni davom ettirish shartlarini ochiq kelishaman.')].score, 10);
+});
+
+test('Respondent proposals appear as their own words, retain full raw answers and personalize otherwise identical reports', () => {
+  const survey = definitions[0];
+  const firstSession = situationSession(survey, 'high');
+  const secondSession = structuredClone(firstSession);
+  const q = survey.questions.find(q => q.proposal === 'company');
+  firstSession.answers[q.id] = { text: 'Tushlik uchun qulay joy tashkil qilishni taklif qilaman.' };
+  secondSession.answers[q.id] = { text: 'Oyda bir marta rivojlanish bo‘yicha suhbat bo‘lishini istayman.' };
+  const a = buildSurveyInsights(survey, firstSession);
+  const b = buildSurveyInsights(survey, secondSession);
+  assert.notEqual(renderSurveyInsights(a), renderSurveyInsights(b));
+  assert.match(renderSurveyInsights(a), /Tushlik uchun qulay joy/);
+  assert.match(renderSurveyInsights(b), /rivojlanish bo‘yicha suhbat/);
+  assert.equal(firstSession.answers[q.id].text, 'Tushlik uchun qulay joy tashkil qilishni taklif qilaman.');
+});
+
+test('Old review screens continue into added questions and old completed responses do not count newly added questions as skipped', async () => {
+  const h = harness();
+  await h.message(90, '/start employees'); await h.press(90, 'Boshlash'); await h.message(90, '789-856-90'); await h.press(90, 'Yoshni o‘tkazib');
+  const [key, session] = [...h.data].find(([key]) => key.startsWith('session:'));
+  session.stage = 'review'; session.index = 57; session.questionCount = 57;
+  session.answers = { 1: { choices: ['2–5 oy'] } };
+  await h.storage.put(key, session);
+  await h.bot.handle({ update_id: 10000, callback_query: { id: 'old-submit', from: { id: 90 }, message: { chat: { id: 90, type: 'private' } }, data: 's:employees:' + session.token + ':' + session.revision + ':submit' } });
+  assert.equal(h.sessions()[0].stage, 'questions');
+  assert.match(h.messages.at(-1).body.text, /Savol 58[/]81/);
+  assert.equal(h.sessions()[0].answers[1].choices[0], '2–5 oy');
+  const oldDone = { ...session, stage: 'done', completedAt: '2026-11-24T00:00:00Z' };
+  delete oldDone.questionCount;
+  await h.storage.put(key, oldDone);
+  const stats = surveyStats(definitions[0], h.sessions());
+  assert.equal(stats.questions[57].skipped, 0);
+  await h.message(1, '/export employees');
+  const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
+  assert.equal(csv.trim().split('\r\n').length, 58);
+});
+
+test('Long Unicode reports split without losing text or breaking surrogate pairs', () => {
+  const text = ('Rahbar 👩‍💼 va xodim 🙂\n').repeat(700) + 'yakun';
+  const parts = splitReportText(text);
+  assert.ok(parts.length > 1); assert.equal(parts.join(''), text);
+  assert.ok(parts.every(p => p.length <= 3500));
+  assert.ok(parts.every(p => !/[\uD800-\uDBFF]$/.test(p)));
+});
+
+test('Delivery resumes after a later report fragment fails and does not repeat already delivered fragments', async () => {
+  const h = harness();
+  await h.message(1, '/reportchannel @reports_test');
+  const session = { survey: 'employees', token: 'abcdef1234', publicIdentity: { kind: 'code', value: '789-856-91' }, stage: 'done', script: 'latin', answers: {}, completedAt: '2026-11-24T12:00:00Z', questionCount: 81 };
+  const insights = buildSurveyInsights(definitions[0], session);
+  insights.company.conclusion = 'Birinchi qism. '.repeat(500);
+  insights.employee.conclusion = 'Ikkinchi qism. '.repeat(300);
+  await h.storage.put('channel-report:employees:abcdef1234', { survey: definitions[0], session, insights, attempts: 0, nextAttemptAt: 0 });
+  const normalCall = h.api.call;
+  let count = 0;
+  h.api.call = async (method, body) => { if (method === 'sendMessage' && body.chat_id === -100123456 && ++count === 2) throw new Error('Temporary fragment failure'); return normalCall(method, body); };
+  await h.bot.flushChannelReports();
+  const pending = await h.storage.get('channel-report:employees:abcdef1234');
+  assert.equal(pending.summaryMessageIds.length, 1);
+  assert.ok(pending.summaryChunks.length > 2);
+  const firstPart = pending.summaryChunks[0];
+  const restarted = harness(definitions, h.data);
+  await restarted.bot.flushChannelReports(true);
+  assert.ok(!restarted.messages.some(m => m.method === 'sendMessage' && m.body.text === firstPart));
+  assert.ok(restarted.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456).every(m => m.body.text.length <= 3500));
+  assert.equal(await h.storage.get('channel-report:employees:abcdef1234'), undefined);
+  assert.equal(restarted.messages.filter(m => m.method === 'sendDocument').length, 1);
+});
+
+
+test('Equal overall situational scores can produce different dimension findings and recommendations', () => {
+  const survey = definitions[0];
+  const a = situationSession(survey, 'high');
+  const b = situationSession(survey, 'high');
+  for (const [session, dimension] of [[a, 'communication'], [b, 'learning']]) {
+    const qs = survey.questions.filter(q => q.assessment?.dimension === dimension && q.assessment.scale.some(v => v.score === 1)).slice(0, 2);
+    assert.equal(qs.length, 2);
+    for (const q of qs) session.answers[q.id] = { choices: [q.options[q.assessment.scale.findIndex(v => v.score === 1)]] };
+  }
+  const pa = buildSituationalInsights(survey, a);
+  const pb = buildSituationalInsights(survey, b);
+  assert.equal(pa.score, pb.score);
+  assert.notEqual(pa.conclusion, pb.conclusion);
+  assert.notDeepEqual(pa.employeeRecommendations, pb.employeeRecommendations);
+});
+
+
+function withDecision(survey, session, key, value) {
+  const q = survey.questions.find(q => q.decision === key);
+  assert.ok(q, key);
+  session.answers[q.id] = { choices: Array.isArray(value) ? value : [value] };
+  return session;
+}
+
+test('Explicit dissatisfaction is preserved even when other workplace answers are positive', () => {
+  const survey = definitions[0];
+  const session = { answers: Object.fromEntries(survey.questions.filter(q => q.options).map(q => [q.id, { choices: [q.options[0]] }])) };
+  withDecision(survey, session, 'satisfaction', 'Juda noroziman');
+  const insights = buildSurveyInsights(survey, session);
+  assert.equal(insights.company.score, 10);
+  assert.equal(insights.satisfaction.score, 0);
+  assert.match(insights.employee.conclusion, /noroziligingizni alohida muhokama/);
+  assert.ok(!insights.decisionSupport.title.includes('qolib rivojlanish'));
+  assert.match(renderSurveyInsights(insights), /Juda noroziman/);
+});
+
+test('Career guidance differentiates unresolved problems, positive work, underused skills and development needs without unsupported market claims', () => {
+  const survey = definitions[0];
+  const good = { answers: Object.fromEntries(survey.questions.filter(q => q.options).map(q => [q.id, { choices: [q.options[0]] }])) };
+  withDecision(survey, good, 'satisfaction', 'Juda qoniqaman');
+  withDecision(survey, good, 'skill_use', 'Asosan foydalanaman');
+  assert.match(buildDecisionSupport(survey, good, 10).title, /qolib rivojlanish/);
+  const poor = structuredClone(good);
+  poor.answers[8] = { choices: ['Deyarli hech qachon'] }; poor.answers[31] = { choices: ['Yo‘q'] };
+  withDecision(survey, poor, 'satisfaction', 'Juda noroziman');
+  withDecision(survey, poor, 'resolution', 'Bir necha marta muhokama qilingan, sezilarli o‘zgarish bo‘lmadi');
+  withDecision(survey, poor, 'alternatives', 'Hali boshqa variant qidirmadim');
+  const comparison = buildDecisionSupport(survey, poor, 2);
+  assert.match(comparison.title, /Boshqa ish variantlarini jiddiy solishtirish/);
+  assert.ok(comparison.steps.some(step => step.includes('yozma taklif yo‘q')));
+  const underused = structuredClone(good);
+  withDecision(survey, underused, 'skill_use', 'Juda kam foydalanaman');
+  withDecision(survey, underused, 'satisfaction', 'Hislarim aralash / o‘rtacha');
+  assert.match(buildDecisionSupport(survey, underused, 7).title, /Ko‘nikmaga mos vazifa/);
+  withDecision(survey, underused, 'skill_use', 'Ko‘nikmalarim hozirgi vazifaga hali yetmaydi');
+  assert.match(buildDecisionSupport(survey, underused, 7).title, /ko‘nikmani rivojlantirish/);
+});
+
+test('KPI proposals match selected work outcomes and address influence, budget and review rules', () => {
+  const survey = definitions[1]; const session = { answers: {} };
+  withDecision(survey, session, 'kpi_target', ['Ishni muddatida bajarish','Xatolarni kamaytirish va aniqlik']);
+  withDecision(survey, session, 'kpi_control', 'Asosan tashqi omillarga bog‘liq');
+  withDecision(survey, session, 'bonus_budget', 'Hali byudjet belgilanmagan');
+  withDecision(survey, session, 'kpi_fairness', 'Hali bunday tartib yo‘q');
+  const support = buildDecisionSupport(survey, session, 7);
+  assert.equal(support.steps.length, 5);
+  assert.ok(support.steps.some(s => s.includes('Muddat uchun')));
+  assert.ok(support.steps.some(s => s.includes('Aniqlik uchun')));
+  assert.ok(support.steps.some(s => s.includes('xodim o‘zi boshqara oladigan')));
+  assert.ok(support.steps.some(s => s.includes('byudjet')));
+  assert.ok(support.steps.some(s => s.includes('qayta tekshirish')));
 });

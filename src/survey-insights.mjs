@@ -28,6 +28,146 @@ function experienceSummary(score) {
   if (score >= 6) return 'Ish tajribangizda ijobiy tomonlar ham, e’tibor kutayotgan ehtiyojlar ham bor. Siz uchun eng muhim o‘zgarishlarni aniq aytish foydali bo‘ladi.';
   return 'Javoblaringiz ayrim ehtiyojlaringiz yetarlicha qondirilmayotganini ko‘rsatmoqda. O‘z fikringizni bildirish va sizga mos sharoitlarni muhokama qilish muhim.';
 }
+
+const dimensionLabels = { communication: 'Ochiq muloqot', accountability: 'Mas’uliyat va adolat', pressure: 'Bosimda ishni tashkil qilish', collaboration: 'Jamoa bilan hamkorlik', learning: 'O‘rganish va tashabbus' };
+const ideaLabels = { experience: 'Amaliy tajribangiz', company: 'Korxona uchun taklifingiz', reward: 'Bonus va imtiyoz taklifingiz', development: 'Rivojlanish taklifingiz' };
+function excerpt(text, length = 130) { const clean = String(text).replace(/\s+/g, ' ').trim(); return clean.length > length ? clean.slice(0, length - 1) + '…' : clean; }
+export function buildSituationalInsights(survey, session) {
+  const questions = survey.questions.filter(q => q.assessment);
+  if (!questions.length) return null;
+  const evaluated = [];
+  let answered = 0;
+  for (const q of questions) {
+    const response = answer(session, q.id);
+    if (response) answered++;
+    const option = q.options.indexOf(response?.choices?.[0]);
+    const rule = q.assessment.scale[option];
+    if (!rule || rule.score === null) continue;
+    evaluated.push({ id: q.id, title: q.assessment.title, dimension: q.assessment.dimension, score: rule.score, weight: 1, tip: rule.tip, selected: q.options[option] });
+  }
+  const dimensions = Object.entries(dimensionLabels).map(([id, title]) => {
+    const related = evaluated.filter(e => e.dimension === id);
+    return { id, title, ...index(related, 2), total: questions.filter(q => q.assessment.dimension === id).length };
+  });
+  const total = index(evaluated, 8);
+  if (dimensions.filter(d => d.score !== null).length < 3) total.score = null;
+  const weakest = [...evaluated].filter(e => e.score < 8).sort((a, b) => a.score - b.score || a.id - b.id);
+  const strongest = [...evaluated].filter(e => e.score >= 8).sort((a, b) => b.score - a.score || a.id - b.id);
+  const positiveDimensions = dimensions.filter(d => d.score !== null && d.score >= 8).sort((a, b) => b.score - a.score).slice(0, 2);
+  const attention = [...dimensions].filter(d => d.score !== null && d.score < 8).sort((a, b) => a.score - b.score)[0];
+  let conclusion = total.score === null ? 'Umumiy vaziyatli xulosa uchun kamida 8 ta baholanadigan javob va 3 yo‘nalish bo‘yicha yetarli javob kerak.' : 'Tanlagan javoblaringiz ishdagi yondashuvingizni muhokama qilish uchun asos beradi.';
+  if (positiveDimensions.length) conclusion += ' Kuchli ko‘ringan yo‘nalishlar: ' + positiveDimensions.map(d => d.title.toLowerCase()).join(', ') + '.';
+  if (attention) conclusion += ' Rivojlantirish uchun birinchi yo‘nalish: ' + attention.title.toLowerCase() + '.';
+  const observations = unique([...weakest.slice(0, 2), ...strongest.slice(0, 1)].map(e => e.id), 3).map(id => evaluated.find(e => e.id === id));
+  const contextualCompanyTips = {
+    communication: 'Xodimlar savol va e’tirozini hurmat bilan ayta oladigan alohida suhbat va aniq murojaat tartibini yo‘lga qo‘ying.',
+    accountability: 'Xato haqida erta xabar berish, ma’lumotni tekshirish va natijaga qo‘shilgan hissani tan olish tartibini jamoa bilan kelishing.',
+    pressure: 'Bosim paytida xodimlarga ustuvorlik, yordam va tanaffusni kelishish uchun aniq imkoniyat bering.',
+    collaboration: 'Vazifa, vakolat, yordam va jamoa qaroriga e’tiroz bildirish chegaralarini birga aniqlashtiring.',
+    learning: 'Yangi usul va takliflarni o‘qitish, kichik sinov hamda xotirjam fikr-mulohaza bilan qo‘llab-quvvatlang.',
+  };
+  const contextualEmployeeTips = {
+    communication: 'Rahbar bilan suhbatga aniq misol, savol va sizga kerakli keyingi qadamni tayyorlab boring.',
+    accountability: 'Vazifa va natija bo‘yicha kelishuvlarni yozib, xato yoki noaniqlikni erta aniqlashtiring.',
+    pressure: 'Ish hajmi va sifatga xavfni erta aytib, ustuvorlik va kerakli yordamni rahbar bilan kelishing.',
+    collaboration: 'Jamoada vazifa, yordam va mustaqil qaror chegaralarini oldindan aniqlashtirib oling.',
+    learning: 'O‘z taklifingizni kichik sinov, foyda mezoni va qayta fikr olish muddati bilan tayyorlang.',
+  };
+  const important = weakest.slice(0, 3);
+  const companyRecommendations = survey.id === 'employers' ? important.map(e => e.tip) : important.map(e => contextualCompanyTips[e.dimension]);
+  const employeeRecommendations = survey.id === 'employees' ? important.map(e => e.tip) : important.map(e => contextualEmployeeTips[e.dimension]);
+  if (!important.length && evaluated.length) {
+    companyRecommendations.push('Vaziyatli savollardagi ijobiy yondashuvlarni kundalik ish qoidasi va amaliy misollar orqali mustahkamlang.');
+    employeeRecommendations.push('Tanlagan yondashuvlaringizni haqiqiy vaziyatlarda sinab, natija va olingan fikrlarni qayd qilib boring.');
+  }
+  return { title: survey.id === 'employers' ? 'Rahbarlik yondashuvi' : 'Vaziyatlardagi ish yondashuvi', ...total, total: questions.length, answered, dimensions, conclusion, observations, companyRecommendations: unique(companyRecommendations), employeeRecommendations: unique(employeeRecommendations) };
+}
+
+
+function decisionQuestion(survey, key) { return survey.questions.find(q => q.decision === key); }
+function decisionValue(survey, session, key) {
+  const q = decisionQuestion(survey, key);
+  if (!q) return undefined;
+  const a = answer(session, q.id);
+  return a?.choices?.[0] ?? (q.options.includes(a?.text?.trim()) ? a.text.trim() : undefined);
+}
+function satisfactionAnswer(survey, session) {
+  const q = decisionQuestion(survey, 'satisfaction');
+  if (!q || !answer(session, q.id)) return null;
+  const value = decisionValue(survey, session, 'satisfaction');
+  const scores = { 'Juda qoniqaman': 10, 'Asosan qoniqaman': 8, 'Hislarim aralash / o‘rtacha': 5, 'Asosan noroziman': 2, 'Juda noroziman': 0 };
+  return { score: Number.isFinite(scores[value]) ? scores[value] : null, label: value ?? excerpt(answer(session, q.id).text ?? '') };
+}
+export function buildDecisionSupport(survey, session, companyScore = null) {
+  if (survey.id === 'employers') {
+    const q = decisionQuestion(survey, 'kpi_target');
+    const targets = q ? choices(session, q.id) : [];
+    const plans = {
+      'Yangi mijozlar va savdo hajmi': 'Savdo uchun: tasdiqlangan kelishuvlar va real tushumni xizmat sifati bilan birga kuzating. Maqsadni oldingi natija va mavjud resursga moslang.',
+      'Foyda va xarajat samaradorligi': 'Samaradorlik uchun: xodim ta’sir qila oladigan foyda yoki tasdiqlangan xarajat kamayishini oling. Hisoblash manbasini oldindan kelishing.',
+      'Xizmat sifati va mijoz qoniqishi': 'Xizmat uchun: tekshirilgan sifat, asosli shikoyatlar va mijoz fikrini birga kuzating; faqat bajarilgan ishlar soniga tayanmang.',
+      'Xatolarni kamaytirish va aniqlik': 'Aniqlik uchun: tekshirilgan ishlardagi xatolar ulushini oling. Ish murakkabligi va qayta ishlash sababini ham hisobga oling.',
+      'Ishni muddatida bajarish': 'Muddat uchun: vaqtida tugallangan vazifalar ulushini kuzating. Xodimga bog‘liq bo‘lmagan kechikishni hisoblash tartibini oldindan belgilang.',
+      'Jamoani o‘qitish va hamkorlik': 'Rivojlanish uchun: o‘qitish rejasining bajarilishi bilan birga yangi ko‘nikma ishda qo‘llanganini amaliy misol orqali tekshiring.',
+    };
+    const steps = targets.slice(0, 2).map(t => plans[t]).filter(Boolean);
+    const control = decisionValue(survey, session, 'kpi_control');
+    const budget = decisionValue(survey, session, 'bonus_budget');
+    const fairness = decisionValue(survey, session, 'kpi_fairness');
+    if (control && control !== 'Asosiy qismini bevosita boshqara oladi') steps.push('KPI ni xodim o‘zi boshqara oladigan natijaga ajrating; tashqi omil va boshqa bo‘limlar ta’sirini alohida kelishing.');
+    if (budget && budget !== 'Byudjet va hisoblash sharti oldindan belgilangan') steps.push('Bonus haqida va’da berishdan avval byudjet, hisoblash sharti va to‘lash imkoniyatini aniqlang.');
+    if (fairness && fairness !== 'Yozma mezon, ma’lumot manbasi va qayta tekshirish tartibi bor') steps.push('Formula, ma’lumot manbasi, hisob davri va xodim qayta tekshirishni so‘raydigan tartibni yozib qo‘ying.');
+    return steps.length ? { title: 'KPI va ish qoidalari uchun aniq yo‘nalish', conclusion: 'Quyidagilar siz tanlagan maqsad va cheklovlarga mos sinov rejasidir.', steps: unique(steps, 5) } : null;
+  }
+  if (survey.id !== 'employees') return null;
+  const skill = decisionValue(survey, session, 'skill_use');
+  const alternative = decisionValue(survey, session, 'alternatives');
+  const resolution = decisionValue(survey, session, 'resolution');
+  const satisfaction = satisfactionAnswer(survey, session);
+  const supplied = [skill, alternative, resolution, satisfaction?.label].filter(Boolean).length;
+  if (supplied < 2) return null;
+  const flags = [
+    ['Deyarli hech qachon', "Ba'zan"].includes(first(session, 8)),
+    first(session, 31) === 'Yo‘q',
+    first(session, 28) === 'Yo‘q',
+    ['Tez-tez', 'Har kuni'].includes(first(session, 23)) && first(session, 24) === 'To‘lanmaydi',
+  ].filter(Boolean).length;
+  const unresolved = resolution === 'Bir necha marta muhokama qilingan, sezilarli o‘zgarish bo‘lmadi';
+  const unhappy = satisfaction?.score !== null && satisfaction?.score <= 2;
+  let direction, conclusion, steps;
+  if (unhappy && flags >= 2 && unresolved) {
+    direction = 'Boshqa ish variantlarini jiddiy solishtirish';
+    conclusion = 'Siz norozilik, bir nechta noqulay sharoit va muhokamalardan keyin ham o‘zgarish bo‘lmaganini bildirgansiz. Boshqa ish variantlarini o‘rganish asosli keyingi qadam bo‘lishi mumkin.';
+    steps = ['Hozirgi va yangi variantni qo‘lga tegadigan maosh, bonus sharti, ish vaqti, muomala va o‘sish bo‘yicha solishtiring.', 'Ko‘chish qaroridan oldin yangi taklifning aniq shartlari va o‘zingizning o‘tish imkoniyatingizni tekshiring.'];
+  } else if (skill === 'Ko‘nikmalarim hozirgi vazifaga hali yetmaydi') {
+    direction = 'Avval aniq ko‘nikmani rivojlantirish';
+    conclusion = 'Siz hozirgi vazifaga ayrim ko‘nikmalar hali yetmayotganini bildirgansiz. Ustoz va aniq o‘quv rejasi bilan bitta amaliy natijani yaxshilash foydali bo‘ladi.';
+    steps = ['Rahbar bilan yetishmayotgan bitta ko‘nikma va uni ko‘rsatadigan amaliy natijani aniqlang.', 'O‘rganish muddati, yordam va qayta fikr olish vaqtini kelishing.'];
+  } else if (satisfaction?.score >= 8 && companyScore >= 8 && flags === 0) {
+    direction = 'Hozirgi ishda qolib rivojlanishni rejalashtirish';
+    conclusion = 'Siz qoniqish va bir nechta qulay ish sharoitini bildirgansiz. Hozirgi ishning siz qadrlagan tomonlarini saqlab, shu joyda rivojlanish rejasini kelishish foydali variant.';
+    steps = ['Keyingi mas’uliyat, ko‘nikma va maoshni qayta ko‘rish mezonlarini rahbar bilan aniqlashtiring.', 'Boshqa taklif bo‘lsa, uni taxmin bilan emas, aniq shartlar bilan solishtiring.'];
+  } else if (['Qisman foydalanaman', 'Juda kam foydalanaman'].includes(skill)) {
+    direction = 'Ko‘nikmaga mos vazifa yoki rolni izlash';
+    conclusion = 'Siz ko‘nikmalaringizdan to‘liq foydalanmayotganingizni bildirgansiz. Avval murakkabroq vazifa yoki ichki o‘sish imkonini muhokama qilish, natija bo‘lmasa boshqa rollarni solishtirish mumkin.';
+    steps = ['Ko‘rsata oladigan 2–3 amaliy natijangizni tayyorlab, mos vazifa va o‘sish yo‘lini so‘rang.', 'Takliflarni ish mazmuni, o‘rganish, maosh va sharoit bo‘yicha birga baholang.'];
+  } else if (alternative === 'Aniq shartlari yozilgan taklif bor') {
+    direction = 'Aniq takliflarni mezonlar bilan solishtirish';
+    conclusion = 'Sizda yozma shartlari bor boshqa taklif mavjud. Qaysi variant sizga mosligini aynan shu shartlar bilan solishtirish mumkin.';
+    steps = ['Asosiy maosh, kafolatlangan va o‘zgaruvchan bonus, ish vaqti, yo‘l va rivojlanish imkonini bir jadvalga yozing.', 'Siz uchun muhim shartlarni aniqlashtirmasdan faqat yuqori summaga qarab xulosa qilmang.'];
+  } else if (unhappy || flags > 0 || (companyScore !== null && companyScore < 6)) {
+    direction = unresolved ? 'Muqobil variantlar va aniq shartlarni o‘rganish' : 'Sharoitlarni aniq kelishish';
+    conclusion = unhappy && companyScore >= 8 ? 'Ayrim sharoitlarga ijobiy javob bergansiz, ammo umumiy noroziligingiz bor. Bu farqning vazifa, ehtiyoj yoki boshqa sababini alohida aniqlash kerak.' : 'Javoblaringizda yaxshilash kerak bo‘lgan jihatlar bor. Siz uchun muhim o‘zgarish va uni tekshirish muddatini aniq kelishish foydali.';
+    steps = ['Eng muhim 1–2 ehtiyojni misol bilan aytib, kim nima va qachon o‘zgartirishini kelishing.', 'Kelishilgan muddatdan keyin natijani qayta baholang; o‘zgarish bo‘lmasa boshqa ishlarning real shartlarini o‘rganing.'];
+  } else {
+    direction = 'Qaror mezonlarini aniqlashtirish';
+    conclusion = 'Qolish yoki o‘tish qarori uchun sizga muhim shartlar va mavjud variantlarni aniq solishtirish foydali.';
+    steps = ['Sizga eng muhim uchta ish shartini yozib, hozirgi ish va real takliflar bilan taqqoslang.', 'Noaniq shartlarni taxmin qilmasdan tegishli odamdan aniqlashtiring.'];
+  }
+  if (alternative && alternative !== 'Aniq shartlari yozilgan taklif bor' && direction.includes('solishtirish')) steps.push('Hozircha yozma taklif yo‘q: avval mos vakansiya va aniq shartlar haqida ma’lumot yig‘ing.');
+  return { title: direction, conclusion, steps: unique(steps) };
+}
+
 export function buildSurveyInsights(survey, session) {
   if (!['employees', 'employers'].includes(survey.id)) return null;
   let metrics;
@@ -83,15 +223,26 @@ export function buildSurveyInsights(survey, session) {
   }
   const company = index(metrics);
   const experience = index(employeeMetrics);
+  const satisfaction = satisfactionAnswer(survey, session);
+  const decisionSupport = buildDecisionSupport(survey, session, company.score);
+  let employeeConclusion = survey.id === 'employees' ? experienceSummary(experience.score) : 'Bu so‘rovnomada rahbarning javoblari berilgan. Xodimning qoniqishini baholash uchun uning o‘z javoblari ham kerak.';
+  if (satisfaction?.label) {
+    employeeConclusion = 'Umumiy qoniqish haqidagi javobingiz: «' + satisfaction.label + '». ' + (satisfaction.score !== null && satisfaction.score <= 2 && experience.score >= 8 ? 'Ayrim sharoitlarga ijobiy javob bergan bo‘lsangiz ham, umumiy noroziligingizni alohida muhokama qilish muhim.' : employeeConclusion);
+  }
   const weakest = metrics.filter(m => m.score !== null && m.score < 8).sort((a, b) => a.score - b.score || b.weight - a.weight);
   const strongest = metrics.filter(m => m.score !== null && m.score >= 8).sort((a, b) => b.score - a.score);
   const companyTips = unique([...weakest.map(m => m.tip), ...extraCompany]);
   if (!companyTips.length) companyTips.push(company.score !== null ? 'Kuchli sharoitlarni saqlab, xodimlar fikrini muntazam yig‘ing va eng ko‘p takrorlangan ehtiyojni birinchi bo‘lib ko‘rib chiqing.' : 'Ish vaqti, maosh to‘lash tartibi, dam olish va xodim bilan muloqot haqida ko‘proq javob yig‘ing.');
   if (!employeeTips.length) employeeTips.push('Sizga eng ko‘p foyda berayotgan ish sharoitlari va yaxshilanishini istagan 2–3 ehtiyojingizni yozib, rahbar bilan muhokama qiling.');
+  const situational = buildSituationalInsights(survey, session);
+  const ideas = survey.questions.filter(q => q.proposal && answer(session, q.id)?.text?.trim()).map(q => ({ question: q.id, category: q.proposal, title: ideaLabels[q.proposal], text: excerpt(answer(session, q.id).text) }));
+  const selectedCompanyTips = unique([companyTips[0], ...(situational?.companyRecommendations ?? []), ...companyTips.slice(1)]);
+  const selectedEmployeeTips = unique([...(situational?.employeeRecommendations ?? []), ...employeeTips]);
   return {
-    method: 'laylo-survey-indicators-v1',
-    company: { ...company, conclusion: companySummary(company.score), strengths: unique(strongest.map(m => m.title), 2), recommendations: companyTips },
-    employee: { ...experience, conclusion: survey.id === 'employees' ? experienceSummary(experience.score) : 'Bu so‘rovnomada rahbarning javoblari berilgan. Xodimning qoniqishini baholash uchun uning o‘z javoblari ham kerak.', recommendations: unique(employeeTips) },
+    method: 'laylo-survey-indicators-v2',
+    situational, ideas, satisfaction, decisionSupport,
+    company: { ...company, conclusion: companySummary(company.score), strengths: unique(strongest.map(m => m.title), 2), recommendations: selectedCompanyTips },
+    employee: { ...experience, conclusion: employeeConclusion, recommendations: selectedEmployeeTips },
     priorities: priorities.slice(0, 3),
   };
 }
@@ -105,11 +256,23 @@ export function renderSurveyInsights(insights) {
   ];
   if (insights.company.measured) lines.push('Asos: ' + insights.company.measured + '/' + insights.company.total + ' ko‘rsatkich.');
   if (insights.company.strengths.length) lines.push('Kuchli tomonlar: ' + insights.company.strengths.join('; ') + '.');
-  lines.push('\n👤 Xodim tajribasi va qoniqishi — ' + scoreText(insights.employee), insights.employee.conclusion);
+  lines.push('\n👤 Xodimning ish tajribasi — ' + scoreText(insights.employee), insights.employee.conclusion);
+  if (insights.satisfaction) lines.push('O‘zingiz bildirgan qoniqish — ' + scoreText(insights.satisfaction) + ' · ' + insights.satisfaction.label);
+  if (insights.decisionSupport) lines.push('\n🎯 ' + insights.decisionSupport.title, insights.decisionSupport.conclusion, ...insights.decisionSupport.steps.map((v, i) => (i + 1) + '. ' + v));
   if (insights.employee.measured) lines.push('Asos: ' + insights.employee.measured + '/' + insights.employee.total + ' ko‘rsatkich.');
   if (insights.priorities.length) lines.push('Siz uchun muhim: ' + insights.priorities.join('; ') + '.');
+  if (insights.situational) {
+    const scenario = insights.situational;
+    lines.push('\n🧭 ' + scenario.title + ' — ' + scoreText(scenario), scenario.conclusion);
+    lines.push(...scenario.dimensions.map(d => d.title + ': ' + scoreText(d) + ' (' + d.measured + '/' + d.total + ')'));
+    lines.push(...scenario.observations.map(o => 'Savol ' + o.id + ' · ' + o.title + ': «' + excerpt(o.selected, 105) + '»'));
+  }
+  if (insights.ideas?.length) {
+    lines.push('\n🗣 Siz yozgan fikrlar va takliflar');
+    lines.push(...insights.ideas.map(idea => 'Savol ' + idea.question + ' · ' + idea.title + ': «' + idea.text + '»'));
+  }
   lines.push('\n📌 Korxona uchun tavsiyalar', ...insights.company.recommendations.map((v, i) => (i + 1) + '. ' + v));
   lines.push('\n💡 Xodim uchun tavsiyalar', ...insights.employee.recommendations.map((v, i) => (i + 1) + '. ' + v));
-  lines.push('\nBaholar faqat berilgan javoblarga asoslangan so‘rovnoma indeksidir. O‘tkazilgan yoki noma’lum javoblar past baho sifatida olinmaydi.');
+  lines.push('\nBaholar berilgan javoblarga asoslangan rivojlanish indeksidir. O‘tkazilgan va noma’lum javoblar past baho hisoblanmaydi. Natijani amaliy misollar va suhbat bilan muhokama qilish foydali.');
   return lines.join('\n');
 }

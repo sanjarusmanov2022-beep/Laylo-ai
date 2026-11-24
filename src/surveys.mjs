@@ -37,6 +37,9 @@ export function validateSurvey(survey) {
     if (q.id !== index + 1 || !q.text?.trim() || q.text.length > 1000 || !survey.sections[q.section - 1]) throw new Error('Savol raqami, matni yoki bo‘limi noto‘g‘ri');
     if (!['text', 'single', 'multi', 'money', 'number'].includes(q.type)) throw new Error('Savol turi noto‘g‘ri');
     if (['single', 'multi'].includes(q.type) && (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 15 || q.options.some(o => typeof o !== 'string' || !o.trim() || o.length > 150) || new Set(q.options).size !== q.options.length)) throw new Error('Javob variantlari noto‘g‘ri');
+    if (q.assessment && (q.type !== 'single' || !['communication','accountability','pressure','collaboration','learning'].includes(q.assessment.dimension) || typeof q.assessment.title !== 'string' || q.assessment.title.length > 100 || !Array.isArray(q.assessment.scale) || q.assessment.scale.length !== q.options.length || q.assessment.scale.some(r => (r.score !== null && (!Number.isFinite(r.score) || r.score < 0 || r.score > 10)) || typeof r.tip !== 'string' || r.tip.length > 300))) throw new Error('Vaziyatli savol mezonlari noto‘g‘ri');
+    if (q.decision && !['skill_use','alternatives','resolution','satisfaction','kpi_target','kpi_control','bonus_budget','kpi_fairness'].includes(q.decision)) throw new Error('Qaror uchun savol turi noto‘g‘ri');
+    if (q.proposal && (q.type !== 'text' || !['experience','company','reward','development'].includes(q.proposal))) throw new Error('Taklif savoli noto‘g‘ri');
     if (q.choose && (q.type !== 'multi' || !Number.isInteger(q.choose) || q.choose < 1 || q.choose > q.options.length)) throw new Error('Tanlov soni noto‘g‘ri');
   }
   return survey;
@@ -88,6 +91,25 @@ export async function listStored(storage, prefix) {
   }
 }
 
+
+export function splitReportText(text, limit = 3500) {
+  if (!Number.isInteger(limit) || limit < 2) throw new Error('Invalid message limit');
+  const parts = [];
+  let rest = String(text);
+  while (rest.length > limit) {
+    let end = rest.lastIndexOf('\n', limit - 1) + 1;
+    if (end < limit / 2) end = limit;
+    if (/[\uD800-\uDBFF]/.test(rest[end - 1])) end--;
+    parts.push(rest.slice(0, end)); rest = rest.slice(end);
+  }
+  if (rest) parts.push(rest);
+  return parts;
+}
+function applicableQuestionCount(survey, session) {
+  const original = { employees: 57, employers: 40 }[survey.id];
+  return Math.min(survey.questions.length, session.questionCount ?? (session.stage === 'done' && original ? original : survey.questions.length));
+}
+
 export function surveyStats(survey, sessions) {
   sessions = sessions.filter(s => !s.preview);
   const completed = sessions.filter(s => s.stage === 'done');
@@ -95,10 +117,11 @@ export function surveyStats(survey, sessions) {
   return {
     started: started.length, completed: completed.length, unfinished: started.length - completed.length,
     questions: survey.questions.map(question => {
-      const answers = completed.map(s => s.answers[question.id]).filter(Boolean);
+      const eligible = completed.filter(s => applicableQuestionCount(survey, s) >= question.id);
+      const answers = eligible.map(s => s.answers[question.id]).filter(Boolean);
       const counts = new Map((question.options ?? []).map(o => [o, 0]));
       for (const answer of answers) for (const choice of answer.choices ?? []) counts.set(choice, (counts.get(choice) ?? 0) + 1);
-      return { question, answered: answers.length, skipped: completed.length - answers.length, custom: answers.filter(a => a.text).length,
+      return { question, answered: answers.length, skipped: eligible.length - answers.length, custom: answers.filter(a => a.text).length,
         choices: [...counts].map(([label, count]) => ({ label, count, percent: answers.length ? Math.round(count * 1000 / answers.length) / 10 : 0 })),
         money: ['UZS', 'USD', 'EUR'].flatMap(currency => {
           const values = answers.filter(a => a.currency === currency).map(a => a.amount).sort((a, b) => a - b);
@@ -221,7 +244,11 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     } else if (session.stage === 'done') {
       if (session.preview) {
         const analysis = renderSurveyInsights(buildSurveyInsights(survey, session));
-        return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.' + (analysis ? '\n\n' + identityHeading(survey, session) + '\n\n' + analysis : ''), [...previewNavigation(survey.id), scriptButton('menu')]);
+        if (analysis) {
+          const text = toScript(identityHeading(survey, session) + '\n\n' + analysis, await getScript(chat) ?? 'latin');
+          for (const part of splitReportText(text)) await send(chat, part);
+        }
+        return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')]);
       }
       const channel = await storage.get('report-channel');
       const thanks = survey.thanks ?? 'Rahmat! Javoblaringiz saqlandi ✅';
@@ -271,6 +298,8 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (!isPreviewActor(actor) && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
     let session = await storage.get(sessionKey(id, actor));
     if (!session) session = { survey: id, token: randomId(), revision: 0, stage: 'intro', index: 0, answers: {}, paused: false };
+    if (session.stage === 'review' && session.index < survey.questions.length) { session.stage = 'questions'; session.revision++; }
+    if (session.stage !== 'done') session.questionCount = survey.questions.length;
     if (publicIdentity(session).kind === 'unknown' && !['intro', 'name', 'done'].includes(session.stage)) {
       session.identityReturnStage = session.stage;
       session.stage = 'name';
@@ -290,6 +319,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   }
 
   async function accept(chat, actor, survey, session, answer, updateId) {
+    session.questionCount = survey.questions.length;
     session.answers[survey.questions[session.index].id] = answer;
     session.index++;
     session.pending = undefined;
@@ -325,7 +355,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     for (const survey of surveys.values()) {
       if (id !== 'all' && survey.id !== id) continue;
       const sessions = (await sessionList(survey.id)).filter(s => s.stage !== 'intro');
-      for (const [i, session] of sessions.entries()) for (const q of survey.questions) rows.push([
+      for (const [i, session] of sessions.entries()) for (const q of survey.questions.slice(0, applicableQuestionCount(survey, session))) rows.push([
         survey.title, i + 1, publicIdentity(session).value, session.age ?? '', session.stage === 'done' ? 'Yakunlangan' : 'Tugallanmagan', q.id, q.text,
         session.stage === 'done' || Object.hasOwn(session.answers, q.id) ? display(session.answers[q.id]) : 'Hali yetib kelmagan',
         session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '',
@@ -410,11 +440,19 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       form.set('caption', toScript(insights ? '📎 ' + publicIdentity(session).value + ' — barcha savol-javoblar\nHisobot ID: ' + session.token : caption, script));
       form.set('document', new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'laylo-' + survey.id + '-' + session.token + '.csv');
       try {
-        if (insights && !job.summaryMessageId) {
-          const report = caption.replace('\n\nBarcha savollar va javoblar faylda.', '') + '\n\n' + renderSurveyInsights(insights);
-          const summary = await api.call('sendMessage', { chat_id: channel.id, text: toScript(report, script), link_preview_options: { is_disabled: true } });
-          job.summaryMessageId = summary.message_id;
-          await storage.put(key, job);
+        if (insights) {
+          if (!job.summaryChunks) {
+            const report = caption.replace('\n\nBarcha savollar va javoblar faylda.', '') + '\n\n' + renderSurveyInsights(insights);
+            job.summaryChunks = splitReportText(toScript(report, script));
+            job.summaryMessageIds = job.summaryMessageId ? [job.summaryMessageId] : [];
+            await storage.put(key, job);
+          }
+          for (let i = job.summaryMessageIds.length; i < job.summaryChunks.length; i++) {
+            const summary = await api.call('sendMessage', { chat_id: channel.id, text: job.summaryChunks[i], link_preview_options: { is_disabled: true } });
+            job.summaryMessageIds.push(summary.message_id);
+            job.summaryMessageId ??= summary.message_id;
+            await storage.put(key, job);
+          }
         }
         const sent = await api.call('sendDocument', form);
         await storage.put('report-sent:' + session.token, { chatId: channel.id, messageId: sent.message_id, sentAt: new Date().toISOString() });
@@ -560,6 +598,10 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const session = survey && await storage.get(sessionKey(id, actor));
     if (!session) return menu(chat, owner);
     if (!preview && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
+    if (session.stage === 'review' && session.index < survey.questions.length) {
+      session.stage = 'questions'; session.questionCount = survey.questions.length; session.revision++;
+      return persist(chat, actor, survey, session, update.update_id);
+    }
     if (publicIdentity(session).kind === 'unknown' && !['intro', 'name', 'done'].includes(session.stage)) {
       session.identityReturnStage = session.stage; session.stage = 'name'; session.revision++;
       return persist(chat, actor, survey, session, update.update_id);
@@ -584,6 +626,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       }
       if (action === 'submit' && session.stage === 'review') {
         session.stage = 'done'; session.revision++;
+        session.questionCount = survey.questions.length;
         session.completedAt = new Date().toISOString();
         session.script = await getScript(chat) ?? 'latin';
         session.insights = buildSurveyInsights(survey, session);
