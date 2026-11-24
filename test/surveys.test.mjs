@@ -55,7 +55,7 @@ test('Roles, private admin access, duplicate and forged callbacks, and resume af
   assert.equal(h.messages.slice(before).filter(m => m.method !== 'answerCallbackQuery').length, 0);
   await h.press(222, 'Xodim');
   await h.press(222, 'Boshlash');
-  await h.press(222, 'Ismsiz');
+  await h.press(222, 'Ismsiz'); await h.press(222, 'Yoshni o‘tkazib');
   const update = await h.press(222, '2–5 oy');
   assert.equal(h.sessions()[0].index, 1);
   await h.bot.handle(update);
@@ -80,7 +80,7 @@ test('Participants finish both roles independently, and reports/export include o
     const survey = definitions[i % 2];
     await h.message(user, `/start ${survey.id}`);
     await h.press(user, 'Boshlash');
-    await h.press(user, 'Ismsiz');
+    await h.press(user, 'Ismsiz'); await h.press(user, 'Yoshni o‘tkazib');
     for (const q of survey.questions) {
       if (q.type === 'single') await h.press(user, q.options[0].slice(0, 30));
       else if (q.type === 'multi') {
@@ -117,7 +117,7 @@ test('Multiple choice needs three choices, back restores answers, and closed sur
     { id: 2, section: 1, text: 'Son', type: 'number' },
   ] };
   const h = harness([mini]);
-  await h.message(22, '/start mini'); await h.press(22, 'Boshlash'); await h.press(22, 'Ismsiz');
+  await h.message(22, '/start mini'); await h.press(22, 'Boshlash'); await h.press(22, 'Ismsiz'); await h.press(22, 'Yoshni o‘tkazib');
   await h.press(22, '1.'); await h.press(22, 'Davom etish');
   assert.equal(h.sessions()[0].index, 0);
   await h.press(22, '2.'); await h.press(22, '3.'); await h.press(22, 'Davom etish');
@@ -138,7 +138,7 @@ test('Skipped answers do not inflate percentages and uncompleted answers are mar
   const mini = { id: 'mini', title: 'Test', sections: ['Savollar'], questions: [{ id: 1, section: 1, type: 'single', text: 'Tanlang', options: ['Ha', 'Yo‘q'] }] };
   const h = harness([mini]);
   for (const user of [10, 20, 30]) {
-    await h.message(user, '/start mini'); await h.press(user, 'Boshlash'); await h.press(user, 'Ismsiz');
+    await h.message(user, '/start mini'); await h.press(user, 'Boshlash'); await h.press(user, 'Ismsiz'); await h.press(user, 'Yoshni o‘tkazib');
     if (user === 30) continue;
     await h.press(user, user === 10 ? '1.' : 'O‘tkazib'); await h.press(user, 'yuborish');
   }
@@ -179,7 +179,7 @@ test('Owner client mode completes both real questionnaires without entering repo
   assert.match(h.messages.at(-1).body.text, /SINOV/);
   for (const survey of definitions) {
     await h.press(1, survey.id === 'employees' ? 'Xodim' : 'Rahbar');
-    await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz');
+    await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib');
     for (const q of survey.questions) {
       assert.match(h.messages.at(-1).body.text, /Mijoz rejimi · SINOV/);
       if (q.type === 'single') await h.press(1, '1.');
@@ -211,11 +211,11 @@ test('Owner client mode completes both real questionnaires without entering repo
 
 test('Client preview resets, resumes after restart and leaves real owner responses intact', async () => {
   const h = harness();
-  await h.message(1, '/start employees'); await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz');
+  await h.message(1, '/start employees'); await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib');
   await h.press(1, '2–5 oy');
   const real = structuredClone(h.sessions()[0]);
   await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim');
-  await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, '1.');
+  await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
   await h.press(1, 'Keyinroq'); await h.message(1, '/survey');
   assert.match(h.messages.at(-1).body.text, /Savol 2[/]57/);
   const restarted = harness(definitions, h.data);
@@ -241,8 +241,53 @@ test('Preview is owner only, clears survey drafts and can inspect closed questio
   await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi');
   assert.equal(await h.storage.get('draft'), null);
   await h.storage.put('open:employees', false);
-  await h.press(1, 'Xodim'); await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz');
+  await h.press(1, 'Xodim'); await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib');
   assert.match(h.messages.at(-1).body.text, /Savol 1[/]57/);
   await h.message(22, '/start employees');
   assert.match(h.messages.at(-1).body.text, /hozir yopiq/);
+});
+
+
+test('Both roles ask name then age separately and export the supplied profile fields', async () => {
+  const short = definitions.map(s => ({ ...s, questions: s.questions.slice(0, 1) }));
+  const h = harness(short);
+  for (const [index, survey] of short.entries()) {
+    const user = 70 + index;
+    await h.message(user, '/start ' + survey.id); await h.press(user, 'Boshlash');
+    assert.match(h.messages.at(-1).body.text, /Ismingiz nima/);
+    await h.message(user, 'Aziza');
+    assert.match(h.messages.at(-1).body.text, /Yoshingiz nechada/);
+    for (const invalid of ['yigirma', '3.5', '-1', '0', '121', '28 yosh']) {
+      await h.message(user, invalid);
+      assert.equal(h.sessions().find(s => s.survey === survey.id).stage, 'age');
+    }
+    await h.message(user, '28');
+    assert.match(h.messages.at(-1).body.text, /Savol 1[/]1/);
+    if (survey.questions[0].type === 'single') await h.press(user, '1.');
+    else await h.message(user, 'Javob');
+    await h.press(user, 'Javoblarni yuborish');
+  }
+  assert.ok(h.sessions().every(s => s.name === 'Aziza' && s.age === 28));
+  await h.message(1, '/export');
+  const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
+  assert.match(csv, /Yosh [(]ixtiyoriy[)]/);
+  assert.match(csv, /"Aziza","28","Yakunlangan"/);
+});
+
+test('Name and age can be skipped independently and age step survives a restart', async () => {
+  const h = harness();
+  await h.message(88, '/start employees'); await h.press(88, 'Boshlash');
+  await h.message(88, 'Ali');
+  assert.equal(h.sessions()[0].stage, 'age');
+  const restarted = harness(definitions, h.data);
+  await restarted.message(88, '/survey');
+  assert.match(restarted.messages.at(-1).body.text, /Yoshingiz nechada/);
+  await h.press(88, 'Ismga qaytish');
+  assert.match(h.messages.at(-1).body.text, /Ismingiz nima/);
+  await h.press(88, 'Ismsiz');
+  assert.equal(h.sessions()[0].name, undefined);
+  assert.match(h.messages.at(-1).body.text, /Yoshingiz nechada/);
+  await h.press(88, 'Yoshni o‘tkazib');
+  assert.equal(h.sessions()[0].age, undefined);
+  assert.match(h.messages.at(-1).body.text, /Savol 1[/]57/);
 });

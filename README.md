@@ -4,7 +4,7 @@ Telegram orqali xodimlar va rahbarlar fikrini yig‘adi. Xodimlar uchun 57 ta, r
 
 ## Ishtirokchi
 
-/start rol tanlash tugmalarini ochadi. Variantli savollar tugma bilan, boshqa savollar matn yoki raqam bilan javoblanadi. Ism ixtiyoriy. Har bir javob saqlanadi. Orqaga qaytish, o‘tkazib yuborish va /survey orqali davom etish mumkin.
+/start rol tanlash tugmalarini ochadi. Variantli savollar tugma bilan, boshqa savollar matn yoki raqam bilan javoblanadi. Ism va yosh avval alohida savollar bilan so‘raladi; ikkalasiga javob berish ham ixtiyoriy. Yosh 1–120 oralig‘ida butun son sifatida tekshiriladi va CSV fayliga alohida ustunda yoziladi. Har bir javob saqlanadi. Orqaga qaytish, o‘tkazib yuborish va /survey orqali davom etish mumkin.
 
 ## Egasi
 

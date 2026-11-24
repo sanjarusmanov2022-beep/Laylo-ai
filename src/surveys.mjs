@@ -119,11 +119,14 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     let text;
     let keyboard;
     if (session.stage === 'intro') {
-      text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nJavoblar so‘rovnoma egasiga ko‘rinadi. Telegram texnik identifikatorni botga uzatadi. Biz uning o‘rniga tasodifiy maxfiy kalit bilan hosil qilingan belgini saqlaymiz. Ism yozish ixtiyoriy. Ish joyi nomi yoki boshqa odamlarning shaxsiy ma'lumotlarini yozishingiz shart emas.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
+      text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nJavoblar so‘rovnoma egasiga ko‘rinadi. Telegram texnik identifikatorni botga uzatadi. Biz uning o‘rniga tasodifiy maxfiy kalit bilan hosil qilingan belgini saqlaymiz. Avval ism va yosh alohida so‘raladi; ikkalasini ham o‘tkazib yuborish mumkin. Ish joyi nomi yoki boshqa odamlarning shaxsiy ma'lumotlarini yozishingiz shart emas.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
       keyboard = [[button('Boshlash ✅', session, 'begin')], [{ text: 'Bosh menyu', callback_data: 'home' }]];
     } else if (session.stage === 'name') {
-      text = 'Ismingizni yozishingiz mumkin yoki pastdagi tugma bilan o‘tkazing. Yozsangiz, so‘rovnoma egasiga javoblar bilan birga ko‘rinadi.';
+      text = 'Siz haqingizda · 1/2\n\n👤 Ismingiz nima?\n\nIsmingizni xabar qilib yozing. Ism yozish ixtiyoriy; istamasangiz, pastdagi tugmani bosing.';
       keyboard = [[button('Ismsiz davom etish', session, 'skip')]];
+    } else if (session.stage === 'age') {
+      text = 'Siz haqingizda · 2/2\n\n🎂 Yoshingiz nechada?\n\nYoshingizni raqam bilan yozing. Masalan: 28. Javob berish ixtiyoriy.';
+      keyboard = [[button('Yoshni o‘tkazib yuborish', session, 'skip')], [button('⬅️ Ismga qaytish', session, 'back')]];
     } else if (session.stage === 'review') {
       const answered = Object.values(session.answers).filter(Boolean).length;
       text = `Savollar tugadi ✅\n\nJavob berilgan — ${answered}\nO‘tkazilgan — ${survey.questions.length - answered}\n\n«Yuborish»ni bosing. Savollarni ko‘rib chiqish uchun orqaga qaytishingiz mumkin.`;
@@ -211,12 +214,12 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   }
 
   async function exportCsv(chat, id = 'all') {
-    const rows = [['So‘rovnoma', 'Javob raqami', 'Ism (ixtiyoriy)', 'Holat', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
+    const rows = [['So‘rovnoma', 'Javob raqami', 'Ism (ixtiyoriy)', 'Yosh (ixtiyoriy)', 'Holat', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
     for (const survey of surveys.values()) {
       if (id !== 'all' && survey.id !== id) continue;
       const sessions = (await sessionList(survey.id)).filter(s => s.stage !== 'intro');
       for (const [i, session] of sessions.entries()) for (const q of survey.questions) rows.push([
-        survey.title, i + 1, session.name ?? '', session.stage === 'done' ? 'Yakunlangan' : 'Tugallanmagan', q.id, q.text,
+        survey.title, i + 1, session.name ?? '', session.age ?? '', session.stage === 'done' ? 'Yakunlangan' : 'Tugallanmagan', q.id, q.text,
         session.stage === 'done' || Object.hasOwn(session.answers, q.id) ? display(session.answers[q.id]) : 'Hali yetib kelmagan',
         session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '',
       ]);
@@ -359,7 +362,17 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (session.paused || session.stage === 'done') return;
       if (action === 'pause') { session.paused = true; await storage.put(sessionKey(id, actor), session); return send(chat, 'Javoblaringiz saqlandi. /survey orqali davom etishingiz mumkin.'); }
       if (action === 'begin' && session.stage === 'intro') { session.stage = 'name'; session.revision++; return persist(chat, actor, survey, session, update.update_id); }
-      if (action === 'skip' && session.stage === 'name') { session.stage = 'questions'; session.revision++; return persist(chat, actor, survey, session, update.update_id); }
+      if (action === 'skip' && ['name', 'age'].includes(session.stage)) {
+        const field = session.stage;
+        delete session[field];
+        session.stage = field === 'name' ? 'age' : 'questions';
+        session.revision++;
+        return persist(chat, actor, survey, session, update.update_id);
+      }
+      if (action === 'back' && session.stage === 'age') {
+        session.stage = 'name'; session.revision++;
+        return persist(chat, actor, survey, session, update.update_id);
+      }
       if (action === 'submit' && session.stage === 'review') {
         session.stage = 'done'; session.revision++;
         session.completedAt = new Date().toISOString();
@@ -397,7 +410,12 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (!input || input.length > 1000) return send(chat, 'Javobingizni 1000 belgigacha matnda yozing yoki variantni tanlang.');
     if (session.stage === 'name') {
       if (input.length > 80) return send(chat, 'Ismni 80 belgigacha yozing yoki o‘tkazing.');
-      session.name = input; session.stage = 'questions'; session.revision++;
+      session.name = input; session.stage = 'age'; session.revision++;
+      return persist(chat, actor, survey, session, update.update_id);
+    }
+    if (session.stage === 'age') {
+      if (!/^[0-9]{1,3}$/.test(input) || Number(input) < 1 || Number(input) > 120) return send(chat, 'Yoshingizni 1 dan 120 gacha butun son bilan yozing. Masalan: 28. Yoki «Yoshni o‘tkazib yuborish» tugmasini bosing.');
+      session.age = Number(input); session.stage = 'questions'; session.revision++;
       return persist(chat, actor, survey, session, update.update_id);
     }
     const q = survey.questions[session.index];
