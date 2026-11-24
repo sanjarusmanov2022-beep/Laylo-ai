@@ -4,7 +4,7 @@ Telegram orqali xodimlar va rahbarlar fikrini yig‘adi. Xodimlar uchun 84 ta, r
 
 ## Ishtirokchi
 
-/start har safar avval yozuvni tanlash tugmalarini ochadi: **Lotincha** yoki **Кириллча**. Tanlov saqlanadi; savollar, variantlar va tugmalar shu yozuvda ko‘rinadi. Menyu va savollardagi **🔤 Lotin / Кирилл** tugmasi yoki `/script` orqali yozuvni almashtirish mumkin; savol va tanlangan javoblar saqlanadi. Bevosita so‘rovnoma havolasida ham avval yozuv so‘raladi, keyin aynan o‘sha so‘rovnoma davom etadi. Kirilcha `3,5 млн сўм` summasi ham qabul qilinadi. Yozma javoblar asl holida, tanlovlar esa umumiy bir xil variantlar bilan saqlanadi.
+/start har safar avval yozuvni tanlash tugmalarini ochadi: **O‘zbekcha · Lotincha**, **Ўзбекча · Кириллча** yoki **Русский**. Tanlov saqlanadi; savollar, variantlar va tugmalar shu yozuvda ko‘rinadi. Menyu va savollardagi **🔤 Lotin / Кирилл** tugmasi yoki `/script` orqali yozuvni almashtirish mumkin; savol va tanlangan javoblar saqlanadi. Bevosita so‘rovnoma havolasida ham avval yozuv so‘raladi, keyin aynan o‘sha so‘rovnoma davom etadi. Kirilcha `3,5 млн сўм` summasi ham qabul qilinadi. Yozma javoblar asl holida, tanlovlar esa umumiy bir xil variantlar bilan saqlanadi.
 
 Yozuv tanlangach rol tanlash tugmalari ochiladi. Ko‘p tanlovli savolda mos variantlar bittadan belgilanadi: belgi va tanlanganlar soni ko‘rinadi, so‘ng **Davom etish** bosiladi. Imtiyozlar savolida 3–4 ta yoki barcha variantni tanlash mumkin; «eng muhim 3 ta» deb so‘ralgan savollarda 3 ta cheklovi saqlanadi.
 
@@ -16,7 +16,7 @@ Variantli savollar tugma bilan, boshqa savollar matn yoki raqam bilan javoblanad
 
 Admin menyusidagi **🧪 Mijoz rejimi** xodim va rahbar savollarini egasiga sinash imkonini beradi. Sinov jarayoni va javoblari alohida saqlanadi: ishtirokchilar soni, hisobot, CSV va yakunlanganlik bildirishnomalariga qo‘shilmaydi. Har bir savolda rolni tanlash, boshidan boshlash va admin menyusiga qaytish tugmalari bor. `/admin` yoki `/start` sinov rejimidan chiqaradi. Yopiq so‘rovnomalarni ham egasi sinashi mumkin.
 
-Hisobot foizlari savolga javob bergan va so‘rovnomani yakunlaganlar sonidan olinadi. Ko‘p tanlovli foizlar 100 dan oshishi mumkin. CSV faylida tugallanmagan javoblar belgilangan. Yozma javoblar bazada asl holida saqlanadi. Kanal hisobotining matni va PDF fayli qatnashuvchi yakunlash paytida tanlagan lotin yoki kiril yozuvida chiqariladi; keyin yozuvni almashtirish navbatdagi tayyor hisobot yozuvini o‘zgartirmaydi. Pul summalari valyuta bo‘yicha hisoblanadi. `3,5 mln` kabi javobda valyuta ko‘rsatilmasa, UZS olinadi.
+Hisobot foizlari savolga javob bergan va so‘rovnomani yakunlaganlar sonidan olinadi. Ko‘p tanlovli foizlar 100 dan oshishi mumkin. CSV faylida tugallanmagan javoblar belgilangan. Yozma javoblar bazada asl holida saqlanadi. Kanal hisobotining matni va PDF fayli qatnashuvchi yakunlash paytida tanlagan lotin, kiril yoki rus tilida chiqariladi; keyin yozuvni almashtirish navbatdagi tayyor hisobot yozuvini o‘zgartirmaydi. Pul summalari valyuta bo‘yicha hisoblanadi. `3,5 mln` kabi javobda valyuta ko‘rsatilmasa, UZS olinadi.
 
 ## Xulosa, baho va tavsiyalar
 
@@ -138,3 +138,14 @@ PDF fayl nomi ulangan kanal nomi va hisobot IDsi bilan tayyorlanadi: HR_hisobot_
 
 
 Mijozlarda hisobotni qayta yuborish tugmasi olib tashlangan. Eski tugmalar va /reports faqat kanal havolasini ko‘rsatadi; yangi post yaratmaydi. Avval navbatga tushgan participant qayta-yuborish vazifalari ham bekor qilinadi. Har bir yangi yakunlangan so‘rovnoma avtomatik bir marta yuboriladi. Faqat egasi admin PDF menyusidan ongli ravishda qayta yuborishi mumkin.
+
+
+## Rus tili
+
+/start oynasida savollardan oldin Русский tanlovi mavjud. Bu o‘zbekcha kiril yozuvidan alohida til. Tanlov mavjud script sozlamasida russian qiymati bilan saqlanadi; eski latin/cyrillic sessiyalari o‘zgarishsiz ishlaydi. Tilni savol davomida almashtirishda javob va ko‘p tanlov belgilari saqlanadi.
+
+src/locale-ru.mjs ichidagi statik katalog asosiy 84 ta xodim va 67 ta rahbar savoli, variantlari, vaziyatli mezonlari, navigatsiya, tasdiq/xato xabarlari, tavsiyalar va PDF sarlavhalarini qamrab oladi. Runtime tarjima xizmati yoki pullik AI chaqirilmaydi. Katalog savollar yangilanganda birga yangilanishi kerak; admin yozgan ixtiyoriy yangi savollarni avtomatik tarjima qilmaydi.
+
+Tugma orqali tanlangan ruscha variantlar umumiy asl variant qiymati bilan saqlanadi. Ruscha va o‘zbekcha qatnashuvchilar bir statistika ichida hisoblanadi, mezon va ballar o‘zgarmaydi. Ruscha yozib yuborilgan aniq variant ham asl qiymatga moslanadi; erkin matn esa asl holida qoladi. 3,5 млн сум, 3,5 млн. сум va 5 тыс. сум summalari UZS sifatida qabul qilinadi.
+
+Telegramning chatga tegishli Menu buyruqlari ham tanlangan tilga moslanadi; admin buyruqlari faqat egasi uchun qo‘shiladi. Ruscha yakunlangan javobning kanal posti va PDFi russian qiymati bo‘yicha chiqadi, keyingi til almashtirish navbatdagi hisobot tilini o‘zgartirmaydi. CSVda ruscha respondentning savol va variant nomlari ruscha chiqariladi, asl kanonik qiymat bazada saqlanadi; sarlavhalar esa eksport olayotgan egasining tilida bo‘ladi. Kanal brendi, HR_hisobot fayl nomi, URL va texnik IDlar o‘zgartirilmaydi.

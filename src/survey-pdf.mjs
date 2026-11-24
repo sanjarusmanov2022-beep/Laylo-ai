@@ -144,7 +144,7 @@ export function createSurveyPdf(model, transform = value => String(value)) {
     {title:'Ishxona va sektor',body:workplace+' · '+sector},
   ];
   if(survey.id==='employees') {
-    const value=id=>{const a=session.answers?.[id];return a?[...(a.choices??[]),a.text].filter(Boolean).join(' / '):'Ko‘rsatilmagan';};
+    const value=id=>{const a=session.answers?.[id];return a?[...(a.choices??[]).map(t),a.text].filter(Boolean).join(' / '):'Ko‘rsatilmagan';};
     facts.push({title:'Lavozim va tajriba',body:value(2)+' · Shu ish joyida: '+value(1)});
     facts.push({title:'O‘zingiz ko‘rsatgan maosh',body:value(6)});
   }

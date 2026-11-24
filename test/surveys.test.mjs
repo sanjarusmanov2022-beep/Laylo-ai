@@ -1,3 +1,4 @@
+import { russianCatalogue, translateRussian } from '../src/locale-ru.mjs';
 import { createSurveyPdf } from '../src/survey-pdf.mjs';
 import { renderChannelReport, reportProfile, reportPercent } from '../src/report-format.mjs';
 import { buildSurveyInsights, renderSurveyInsights, buildSituationalInsights, buildDecisionSupport, buildKpiInsights } from '../src/survey-insights.mjs';
@@ -363,7 +364,7 @@ test('New participants select a script before a deep-linked survey; display choi
   for (const [user, script] of [[64, 'Кириллча'], [65, 'Lotincha']]) {
     await h.message(user, '/start employees');
     assert.equal(h.sessions().length, user === 64 ? 0 : 1);
-    assert.match(h.messages.at(-1).body.text, /Qaysi yozuv.*Қайси ёзув/s);
+    assert.match(h.messages.at(-1).body.text, /Til va yozuvni tanlang.*Выберите язык/s);
     await h.press(user, script);
     assert.ok(h.buttons(user).some(b => b.text.includes(user === 64 ? 'Бошлаш' : 'Boshlash')));
     await h.press(user, user === 64 ? 'Бошлаш' : 'Boshlash');
@@ -1169,4 +1170,53 @@ test('Previously queued participant resend jobs are discarded while actual surve
  await h.storage.put('channel-report:participant:abcdef1234:1',{survey:definitions[0],session,deliveryKey:'participant:abcdef1234:1',nextAttemptAt:0});
  await h.bot.flushChannelReports(true);assert.equal(await h.storage.get('channel-report:participant:abcdef1234:1'),undefined);
  assert.equal(h.messages.filter(m=>m.method==='sendDocument').length,0);
+});
+
+
+test('All standard questions, answer choices and assessment feedback have Russian translations without option collisions',()=>{
+ for(const survey of definitions)for(const q of survey.questions){
+  assert.ok(russianCatalogue[q.text],survey.id+' question '+q.id);assert.match(translateRussian(q.text),/[А-Яа-яЁё]/);
+  if(q.options){const labels=q.options.map(o=>translateRussian(o));assert.equal(new Set(labels).size,labels.length,survey.id+' options '+q.id);for(const o of q.options)assert.ok(russianCatalogue[o],o);}
+  if(q.assessment)for(const r of q.assessment.scale)if(r.tip)assert.ok(russianCatalogue[r.tip],r.tip);
+ }
+ assert.equal(translateRussian(definitions[0].questions[60].options[0]),'Преуменьшу вклад коллеги.');
+ assert.match(translateRussian(definitions[0].questions[22].text),/задерживаетесь/);
+ assert.deepEqual(parseAmount('3,5 млн сум'),{amount:3500000,currency:'UZS'});
+ assert.deepEqual(parseAmount('5 тыс. сум'),{amount:5000,currency:'UZS'});
+});
+test('Russian participants complete both roles with canonical answers and receive Russian channel posts and PDFs only through the channel',async()=>{
+ const h=harness(definitions,undefined,false);await h.message(1,'/reportchannel @reports_test');
+ for(const [i,survey]of definitions.entries()){
+  const user=340+i;await h.message(user,'/start '+survey.id);assert.ok(h.buttons(user).some(b=>b.callback_data==='script:russian'));
+  await h.press(user,'Русский');assert.match(h.messages.at(-1).body.text,/вопрос/);
+  const commands=h.messages.findLast(m=>m.method==='setMyCommands'&&m.body.scope?.chat_id===user);assert.ok(commands);assert.ok(!commands.body.commands.some(c=>c.command==='admin'));assert.ok(commands.body.commands.some(c=>c.command==='script'&&c.description==='Выбрать язык'));await h.press(user,'Начать');await h.message(user,'789-856-'+user);await h.press(user,'Пропустить возраст');
+  for(const q of survey.questions){
+   const prompt=h.messages.findLast(m=>m.body.chat_id===user&&m.body.text).body.text;
+   assert.match(prompt,/Вопрос/);assert.ok(!prompt.includes(q.text),survey.id+' unlocalized question '+q.id);
+   if(q.type==='single')await h.press(user,'1.');else if(q.type==='multi'){for(let k=0;k<(q.choose??1);k++)await h.press(user,(k+1)+'.');await h.press(user,'Продолжить');}else await h.message(user,q.type==='money'?'3,5 млн сум':q.type==='number'?'30':'Предлагаю обучение команды и прозрачные бонусы.');
+  }
+  await h.press(user,'Отправить ответы');const session=h.sessions().find(s=>s.survey===survey.id);assert.equal(session.script,'russian');
+  const q=survey.questions.find(q=>q.type==='single');assert.equal(session.answers[q.id].choices[0],q.options[0]);
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')===String(user)).length,0);
+  const pdf=await assertPdfAttachment(h.messages.findLast(m=>m.method==='sendDocument').body);
+  assert.match(pdf,survey.id==='employees'?/Профиль развития сотрудника/:/Профиль руководителя и компании/);
+  assert.ok(!/[ЎўҚқҒғҲҳ]/u.test(pdf));assert.ok(!pdf.includes('Kuchli ko‘ringan'));
+  const posts=h.messages.filter(m=>m.body.chat_id===-100123456&&m.body.parse_mode==='HTML');assert.match(posts.at(-1).body.text,/Условия в компании/);assert.ok(posts.at(-1).body.text.length<4096);assert.match(posts.at(-1).body.text,/reports_test/);
+  assert.match(h.messages.findLast(m=>m.body.chat_id===user&&m.body.text).body.text,/канал/);
+ }
+});
+test('Switching between Russian and Uzbek keeps selections and typed Russian options map to the same canonical score values',async()=>{
+ const mini={...definitions[0],questions:[{...definitions[0].questions[8],id:1},{...definitions[0].questions[14],id:2}]};const h=harness([mini],undefined,false);
+ await h.message(342,'/start employees');await h.press(342,'Русский');await h.press(342,'Начать');await h.message(342,'789-342');await h.press(342,'Пропустить возраст');
+ await h.press(342,'1.');await h.press(342,'2.');await h.press(342,'🔤');await h.press(342,'Lotincha');
+ assert.equal(h.sessions()[0].pending.length,2);await h.press(342,'🔤');await h.press(342,'Русский');await h.press(342,'Продолжить');
+ await h.message(342,'Нет');assert.equal(h.sessions()[0].answers[2].choices[0],'Yo‘q');
+ const restart=harness([mini],h.data,false);await restart.message(342,'/survey');assert.match(restart.messages.at(-1).body.text,/вопрос|Вопрос|Отправ/);
+});
+
+test('Russian CSV exports localize question and choice labels while retaining free text and canonical stored values',async()=>{
+ const mini={...definitions[0],questions:[{id:1,section:1,type:'single',text:'Ofisingiz yoki ish joyingiz zamonaviy va qulay tashkil etilganmi?',options:['Ha','Qisman','Yo‘q']}]};const h=harness([mini],undefined,false);
+ await h.message(343,'/start employees');await h.press(343,'Русский');await h.press(343,'Начать');await h.message(343,'789-343');await h.press(343,'Пропустить возраст');await h.message(343,'Да');await h.press(343,'Отправить ответы');
+ await h.message(1,'/script');await h.press(1,'Русский');await h.message(1,'/export employees');const csv=await h.messages.findLast(m=>m.method==='sendDocument').body.get('document').text();assert.match(csv,/Ваш офис/);assert.match(csv.split('\r\n')[0],/Номер вопроса/);assert.match(csv,/Да/);assert.equal(h.sessions()[0].answers[1].choices[0],'Ha');
+ assert.equal(parseAmount('3,5 млн. сум').amount,3500000);
 });

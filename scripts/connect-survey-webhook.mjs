@@ -19,7 +19,7 @@ const commands = [
   { command: 'menu', description: 'Bosh menyuni ochish' },
   { command: 'reports', description: 'Hisobotlar kanalini ochish' },
   { command: 'survey', description: 'So‘rovnomani davom ettirish' },
-  { command: 'script', description: 'Lotin / Кирилл — yozuvni tanlash' },
+  { command: 'script', description: 'Til va yozuv: O‘zbekcha / Русский' },
   { command: 'cancel', description: 'Tanaffus qilish' },
   { command: 'help', description: 'Yordam' },
 ];

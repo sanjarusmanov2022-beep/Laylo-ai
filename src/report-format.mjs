@@ -32,7 +32,7 @@ export function renderChannelReport({ survey, session, insights, identity, workp
     '🗓 ' + e(date) + ' · ' + e('Toshkent'),
   ];
   if (insights) {
-    parts.push('\n' + figure('🏢 Korxona sharoitlari', insights.company), e(brief(insights.company.conclusion, 150)));
+    parts.push('\n' + figure('🏢 Korxona sharoitlari', insights.company), e(brief(transform(insights.company.conclusion), 150)));
     parts.push('\n' + figure('👤 Ish tajribasi', insights.employee));
     if (insights.satisfaction) parts.push('💬 ' + bold('O‘zi bildirgan qoniqish: ') + e(insights.satisfaction.label) + (reportPercent(insights.satisfaction.score) === null ? '' : ' · ' + reportPercent(insights.satisfaction.score) + '%'));
     if (insights.situational) parts.push('\n' + figure(survey.id === 'employers' ? '🧭 Rahbarlik yondashuvi' : '🧭 Vaziyatlardagi yondashuv', insights.situational));
@@ -40,8 +40,8 @@ export function renderChannelReport({ survey, session, insights, identity, workp
     if (strengths.length) parts.push('\n' + bold('💪 Kuchli ko‘ringan tomonlar'), ...strengths.map(d => '✓ ' + e(d.title) + ' · ' + reportPercent(d.score) + '%'));
     const needs = (insights.company.indicators ?? []).filter(d => Number.isFinite(d.score) && d.score < 8).sort((a,b) => a.score-b.score).slice(0,2);
     if (needs.length) parts.push('\n' + bold('🛠 Korxonada e’tibor kerak'), ...needs.map(d => '• ' + e(d.title) + ' · ' + reportPercent(d.score) + '%'));
-    parts.push('\n' + bold('🏢 Korxona uchun tavsiyalar'), e(brief(insights.company.recommendations[0], 180)));
-    parts.push('\n' + bold('🌱 Xodim uchun tavsiyalar'), e(brief(insights.employee.recommendations[0], 180)));
+    parts.push('\n' + bold('🏢 Korxona uchun tavsiyalar'), e(brief(transform(insights.company.recommendations[0]), 180)));
+    parts.push('\n' + bold('🌱 Xodim uchun tavsiyalar'), e(brief(transform(insights.employee.recommendations[0]), 180)));
   }
   parts.push('\n📑 ' + bold('To‘liq tahlil, diagrammalar va tavsiyalar — PDFda.'), 'ℹ️ ' + e('Foizlar 10 ballik indeksning ko‘rinishi; bu malaka sinovi emas.'), e('Hisobot ID: ' + session.token));
   const link = reportChannelLink(channel);
