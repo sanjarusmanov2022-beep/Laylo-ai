@@ -135,3 +135,6 @@ Mijozning bosh menyusida ham Hisobotni qayta yuborish tugmasi bor. Bitta tugalla
 
 
 Hisobotni qayta yuborish tugmasi /start dagi yozuv tanlash oynasida ham ko‘rinadi. /menu bosh menyuni ochadi; /reports oddiy mijozning o‘z hisoboti bo‘yicha qayta yuborishni, egaga esa haqiqiy PDF hisobotlar ro‘yxatini ochadi. Telegramning umumiy Menu buyruqlariga menu va reports qo‘shilgan; admin buyruqlari faqat egaga tegishli chat scope ichida ko‘rsatiladi.
+
+
+PDF fayl nomi ulangan kanal nomi va hisobot IDsi bilan tayyorlanadi: HR_hisobot_23fc2559e2.pdf. Sinov fayliga SINOV belgisi qo‘shiladi. Bu nom avtomatik kanal hisobotida, qayta yuborishda va egasining PDF eksportida bir xil qo‘llanadi.

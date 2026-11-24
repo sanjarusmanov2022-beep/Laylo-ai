@@ -48,3 +48,9 @@ export function renderChannelReport({ survey, session, insights, identity, workp
   if (link) parts.push('\n📊 ' + bold('Yangi tahlillar uchun obuna bo‘ling:') + '\n<a href="' + link.url + '">' + e(link.username) + '</a>');
   return parts.join('\n');
 }
+
+export function reportPdfName(channel, token, preview = false) {
+  const brand = String(channel?.title || 'HR hisobot').normalize('NFKC').replace(/[\u0000-\u001f\u007f/\\:*?"<>|]/gu, '').trim().replace(/\s+/gu, '_').slice(0,60).replace(/[ ._]+$/gu,'') || 'HR_hisobot';
+  const id = String(token ?? '').replace(/[^A-Za-z0-9_-]/g,'').slice(0,40) || 'hisobot';
+  return brand + '_' + (preview ? 'SINOV_' : '') + id + '.pdf';
+}

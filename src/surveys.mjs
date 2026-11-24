@@ -1,6 +1,6 @@
 import { buildSurveyInsights, renderSurveyInsights } from './survey-insights.mjs';
 import { createSurveyPdf } from './survey-pdf.mjs';
-import { renderChannelReport, reportChannelLink } from './report-format.mjs';
+import { renderChannelReport, reportChannelLink, reportPdfName } from './report-format.mjs';
 const encoder = new TextEncoder();
 
 const latinLetters = { a:'а', b:'б', d:'д', f:'ф', g:'г', h:'ҳ', i:'и', j:'ж', k:'к', l:'л', m:'м', n:'н', o:'о', p:'п', q:'қ', r:'р', s:'с', t:'т', u:'у', v:'в', x:'х', y:'й', z:'з', c:'с', w:'в' };
@@ -326,7 +326,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         await api.call('sendMessage', { chat_id: chat, text: '🧪 ' + toScript('SINOV', script) + '\n\n' + renderChannelReport(model, text => toScript(text, script)), parse_mode: 'HTML', link_preview_options: { is_disabled: true } });
         const pdf = createSurveyPdf(model, text => toScript(text, script));
         const form = new FormData(); form.set('chat_id', String(chat));
-        form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), 'laylo-preview-' + survey.id + '-' + session.token + '.pdf');
+        form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), reportPdfName(channel, session.token, true));
         form.set('caption', toScript('🧪 SINOV · PDF tahlil. Asosiy hisobot va kanalga qo‘shilmaydi.', script));
         await api.call('sendDocument', form);
         return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [[{text:'📨 Hisobotni qayta yuborish',callback_data:'a:previewreports'}], ...previewNavigation(survey.id), scriptButton('menu')]);
@@ -567,7 +567,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         }
         const pdf = createSurveyPdf(model, text => toScript(text, script));
         const form = new FormData(); form.set('chat_id', String(channel.id));
-        form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), 'laylo-' + survey.id + '-' + session.token + '.pdf');
+        form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), reportPdfName(channel, session.token));
         form.set('caption', toScript('📑 ' + model.identity + ' — diagrammali PDF tahlil\nHisobot ID: ' + session.token + (channelLink ? '\n\n📊 Yangi tahlillar uchun obuna bo‘ling: ' + channelLink.username + '\n' + channelLink.url : ''), script));
         const sent = await api.call('sendDocument', form);
         await storage.put('report-sent:' + (job.deliveryKey ?? session.token), { chatId: channel.id, messageId: sent.message_id, sentAt: new Date().toISOString() });
@@ -618,7 +618,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const model = surveyReportModel(survey,session,insights,channel), script = session.script ?? 'latin';
     const pdf = createSurveyPdf(model,text=>toScript(text,script));
     const form = new FormData();form.set('chat_id',String(chat));
-    form.set('document',new Blob([pdf.bytes],{type:'application/pdf'}),'laylo-'+id+'-'+token+'.pdf');
+    form.set('document',new Blob([pdf.bytes],{type:'application/pdf'}),reportPdfName(channel, token));
     form.set('caption',toScript('📑 '+model.identity+' — PDF tahlil\nHisobot ID: '+token,script));
     await api.call('sendDocument',form);
     return send(chat,'PDF tayyor. Kanalga ham qayta yuborish kerak bo‘lsa, quyidagi tugmani bosing.',[
