@@ -18,6 +18,14 @@ Admin menyusidagi **🧪 Mijoz rejimi** xodim va rahbar savollarini egasiga sina
 
 Hisobot foizlari savolga javob bergan va so‘rovnomani yakunlaganlar sonidan olinadi. Ko‘p tanlovli foizlar 100 dan oshishi mumkin. CSV faylida tugallanmagan javoblar belgilangan. Yozma javoblar asl holida saqlanadi. Pul summalari valyuta bo‘yicha hisoblanadi. `3,5 mln` kabi javobda valyuta ko‘rsatilmasa, UZS olinadi.
 
+## Hisobotlar kanali yoki guruhi
+
+Admin menyusidagi **📨 Hisobotlar kanali** → **Kanalni ulash** orqali @username, t.me havolasi yoki yopiq kanaldan forward qilingan xabarni yuboring. Egasi ham, Laylo ham shu kanalda administrator bo‘lishi, Layloda xabar joylash huquqi bo‘lishi kerak. Faqat egasi ulanishni o‘zgartira oladi. `/reportchannel @username` ham ishlaydi. Kanal ulanmaguncha odatiy admin hisobotlari va CSV ishlashda davom etadi.
+
+Ulangandan keyin har bir yakunlangan yangi so‘rovnoma kanalga qisqa ma’lumot (ixtiyoriy ism va yosh, so‘rovnoma, sana, javob raqami) va barcha savol-javoblar CSV fayli bilan yuboriladi. Telegram ID faylga qo‘shilmaydi. Sinov rejimidagi javoblar yuborilmaydi. Yakunlanmagan javoblar asosiy bazada saqlanadi, kanalga yuborilmaydi. Kanalning o‘z ruxsatlari undagi hisobotlarni kim ko‘rishini belgilaydi.
+
+Yuboriladigan hisobot tugallangan javob bilan birga atomik saqlanadi. Vaqtinchalik xatoda navbat saqlanadi; Cloudflare Durable Object alarm orqali qayta urinadi. Admin menyusidan ham qayta yuborishga urinish mumkin. Ulanish o‘chirilsa, navbat kutadi; keyin ulangan kanalga yuboriladi. Telegramdan muvaffaqiyatli javob olingan hisobot qayta tugma bosilganda takrorlanmaydi.
+
 ## Bepul Cloudflare va GitHub
 
 Cloudflare Workers Free va SQLite-backed Durable Objects ishlatiladi. Javoblar Durable Object ichida saqlanadi. GitHub’da kod va savollar joylashadi. Bot tokeni va javoblar GitHub’ga kiritilmaydi.

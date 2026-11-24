@@ -27,6 +27,12 @@ export class SurveyStore {
     });
   }
 
+  async alarm() {
+    const operation = this.queue.then(() => this.bot.flushChannelReports());
+    this.queue = operation.catch(() => {});
+    return operation;
+  }
+
   async fetch(request) {
     const text = await request.text();
     if (new TextEncoder().encode(text).length > 128_000) return new Response('Too large', { status: 413 });

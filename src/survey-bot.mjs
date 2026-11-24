@@ -18,7 +18,12 @@ const save = async () => {
 };
 const storage = {
   get: async key => structuredClone(data[key]),
-  put: async (key, value) => { data[key] = structuredClone(value); await save(); },
+  put: async (key, value) => {
+    if (typeof key === 'object') Object.assign(data, structuredClone(key));
+    else data[key] = structuredClone(value);
+    await save();
+  },
+  delete: async key => { delete data[key]; await save(); },
   list: async ({ prefix, startAfter, limit }) => new Map(Object.keys(data).sort().filter(key => key.startsWith(prefix) && (!startAfter || key > startAfter)).slice(0, limit).map(key => [key, structuredClone(data[key])])),
 };
 const api = surveyTelegram(process.env.TELEGRAM_BOT_TOKEN);
@@ -38,6 +43,7 @@ while (true) {
     await new Promise(resolve => setTimeout(resolve, 3000));
     continue;
   }
+  await bot.flushChannelReports();
   for (const update of updates) {
     await bot.handle(update);
     data.offset = update.update_id + 1;

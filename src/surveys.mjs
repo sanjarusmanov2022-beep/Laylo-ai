@@ -160,6 +160,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     [{ text: '📊 Qatnashuvchilar va hisobot', callback_data: 'a:report:all' }],
     [{ text: '📥 Barcha javoblar · CSV', callback_data: 'a:export:all' }],
     [{ text: '📋 So‘rovnomalar va havolalar', callback_data: 'a:list' }],
+    [{ text: '📨 Hisobotlar kanali', callback_data: 'a:channel' }],
     [{ text: '🧪 Mijoz rejimi', callback_data: 'a:preview' }],
     [{ text: '➕ Yangi so‘rovnoma', callback_data: 'a:new' }],
     scriptButton('admin'),
@@ -189,7 +190,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     let text;
     let keyboard;
     if (session.stage === 'intro') {
-      text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nJavoblar so‘rovnoma egasiga ko‘rinadi. Telegram texnik identifikatorni botga uzatadi. Biz uning o‘rniga tasodifiy maxfiy kalit bilan hosil qilingan belgini saqlaymiz. Avval ism va yosh alohida so‘raladi; ikkalasini ham o‘tkazib yuborish mumkin. Ish joyi nomi yoki boshqa odamlarning shaxsiy ma'lumotlarini yozishingiz shart emas.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
+      text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nJavoblar so‘rovnoma egasiga va u belgilagan hisobotlar kanali yoki guruhiga yuboriladi. Telegram texnik identifikatorni botga uzatadi. Biz uning o‘rniga tasodifiy maxfiy kalit bilan hosil qilingan belgini saqlaymiz. Avval ism va yosh alohida so‘raladi; ikkalasini ham o‘tkazib yuborish mumkin. Ish joyi nomi yoki boshqa odamlarning shaxsiy ma'lumotlarini yozishingiz shart emas.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
       keyboard = [[button('Boshlash ✅', session, 'begin')], [{ text: 'Bosh menyu', callback_data: 'home' }]];
     } else if (session.stage === 'name') {
       text = '👤 Ismingiz nima?\n\nIsmingizni xabar qilib yozing. Ism yozish ixtiyoriy; istamasangiz, pastdagi tugmani bosing.';
@@ -321,7 +322,85 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     }
   }
 
+
+  async function channelSettings(chat) {
+    const channel = await storage.get('report-channel');
+    const pending = (await listStored(storage, 'channel-report:')).length;
+    return send(chat, '📨 Hisobotlar kanali\n\n' + (channel ? 'Ulangan: ' + channel.title + (channel.username ? '\n@' + channel.username : '') : 'Hozircha kanal ulanmagan.') + '\n\nSo‘rovnoma tugaganda ism, yosh, yo‘nalish va barcha javoblar yozilgan CSV shu kanalga yuboriladi. Sinov javoblari yuborilmaydi.\nYuborishni kutayotgan hisobotlar: ' + pending, [
+      [{ text: channel ? 'Kanalni almashtirish' : 'Kanalni ulash', callback_data: 'a:channelsetup' }],
+      ...(channel ? [[{ text: 'Qayta yuborishga urinish', callback_data: 'a:channelretry' }, { text: 'Kanalni uzish', callback_data: 'a:channeloff' }]] : []),
+      [{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }],
+    ]);
+  }
+  async function configureReportChannel(chat, target) {
+    const match = String(target).trim().match(/^(?:https?:\/\/)?t\.me\/([A-Za-z][A-Za-z0-9_]{4,})(?:\/\d+)?\/?$/);
+    if (match) target = '@' + match[1];
+    if (!/^@[A-Za-z][A-Za-z0-9_]{4,}$/.test(String(target)) && !/^-\d{5,}$/.test(String(target))) return send(chat, 'Kanalning @username yoki t.me havolasini yozing. Yopiq kanaldan xabarni aynan shu chatga forward qiling.');
+    let channel;
+    try {
+      channel = await api.call('getChat', { chat_id: String(target) });
+      if (!['channel', 'group', 'supergroup'].includes(channel.type)) throw new Error('Not a channel or group');
+      const me = await api.call('getMe', {});
+      const botMember = await api.call('getChatMember', { chat_id: channel.id, user_id: me.id });
+      const ownerMember = await api.call('getChatMember', { chat_id: channel.id, user_id: ownerId });
+      if (!['creator', 'administrator'].includes(ownerMember.status)) return send(chat, 'Bu kanal yoki guruhda siz administrator bo‘lishingiz kerak. Oldingi ulanish o‘zgarmadi.');
+      if (!['creator', 'administrator'].includes(botMember.status) || (channel.type === 'channel' && botMember.can_post_messages === false)) return send(chat, 'Layloni shu kanalga administrator qiling va xabar joylash huquqini bering, keyin qayta yuboring.');
+      await api.call('sendMessage', { chat_id: channel.id, text: '✅ Laylo so‘rovnoma hisobotlari shu yerga keladi. Har bir yakunlangan so‘rovnoma qisqa ma’lumot va to‘liq javoblar fayli bilan yuboriladi.' });
+    } catch {
+      return send(chat, 'Kanalga ulana olmadim. Laylo kanalda administrator ekanini va xabar joylash huquqi borligini tekshiring. Yopiq kanal bo‘lsa, undan xabar forward qiling. Oldingi ulanish o‘zgarmadi.');
+    }
+    await storage.put('report-channel', { id: channel.id, title: channel.title, username: channel.username ?? null, type: channel.type });
+    await storage.put('channel-setup', false);
+    await flushChannelReports(true);
+    return send(chat, '✅ Hisobotlar kanali ulandi: ' + channel.title + '\n\nEndi yakunlangan yangi so‘rovnomalar shu yerga avtomatik yuboriladi. Admin menyusidagi hisobot va CSV ham ishlaydi.', adminKeyboard());
+  }
+  async function scheduleChannelReports() {
+    if (!storage.setAlarm) return;
+    const pending = await listStored(storage, 'channel-report:');
+    if (pending.length && await storage.get('report-channel')) await storage.setAlarm(Math.max(Date.now() + 1000, Math.min(...pending.map(([, job]) => job.nextAttemptAt ?? 0))));
+    else if (storage.deleteAlarm) await storage.deleteAlarm();
+  }
+  async function flushChannelReports(force = false) {
+    await ready;
+    const channel = await storage.get('report-channel');
+    if (!channel) return;
+    const jobs = (await listStored(storage, 'channel-report:')).filter(([, job]) => force || (job.nextAttemptAt ?? 0) <= Date.now()).slice(0, 10);
+    for (const [key, job] of jobs) {
+      if (!force && (job.nextAttemptAt ?? 0) > Date.now()) continue;
+      if (await storage.get('report-sent:' + job.session.token)) { await storage.delete(key); continue; }
+      const { survey, session } = job;
+      const rows = [['So‘rovnoma', 'Javob raqami', 'Ism (ixtiyoriy)', 'Yosh (ixtiyoriy)', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
+      for (const q of survey.questions) rows.push([survey.title, session.token, session.name ?? '', session.age ?? '', q.id, q.text, display(session.answers[q.id]), session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '']);
+      const csv = '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+      const date = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tashkent', dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.completedAt));
+      const caption = '✅ Yangi so‘rovnoma yakunlandi\n\n' + survey.title + '\nIsm: ' + (session.name ?? 'Ko‘rsatilmagan') + '\nYosh: ' + (session.age ?? 'Ko‘rsatilmagan') + '\nJavob berilgan: ' + Object.values(session.answers).filter(Boolean).length + '/' + survey.questions.length + '\nSana: ' + date + ' (Toshkent)\nJavob raqami: ' + session.token + '\n\nBarcha savollar va javoblar faylda.';
+      const form = new FormData();
+      form.set('chat_id', String(channel.id));
+      form.set('caption', toScript(caption, await getScript(ownerId) ?? 'latin'));
+      form.set('document', new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'laylo-' + survey.id + '-' + session.token + '.csv');
+      try {
+        const sent = await api.call('sendDocument', form);
+        await storage.put('report-sent:' + session.token, { chatId: channel.id, messageId: sent.message_id, sentAt: new Date().toISOString() });
+        await storage.delete(key);
+      } catch {
+        job.attempts = (job.attempts ?? 0) + 1;
+        job.nextAttemptAt = Date.now() + Math.min(60_000 * 2 ** Math.min(job.attempts - 1, 6), 3_600_000);
+        await storage.put(key, job);
+        if (job.attempts === 1) await send(ownerId, 'Hisobotni kanalga yubora olmadim. Javoblar saqlangan, avtomatik qayta urinaman. Kanal huquqlarini «Hisobotlar kanali» menyusidan tekshirishingiz mumkin.', adminKeyboard()).catch(() => {});
+      }
+    }
+    await scheduleChannelReports();
+  }
+
   async function adminAction(chat, action, id) {
+    if (action === 'channel') return channelSettings(chat);
+    if (action === 'channelsetup') {
+      await storage.put('draft', null);
+      await storage.put('channel-setup', true);
+      return send(chat, 'Hisobotlar kanalining @username yoki t.me havolasini yuboring. Kanal yopiq bo‘lsa, undan bitta xabarni shu chatga forward qiling. Siz ham, Laylo ham kanalda administrator bo‘lishingiz kerak. Bekor qilish: /cancel.');
+    }
+    if (action === 'channeloff') { await storage.put('report-channel', null); await storage.put('channel-setup', false); await scheduleChannelReports(); return channelSettings(chat); }
+    if (action === 'channelretry') { await flushChannelReports(true); return channelSettings(chat); }
     if (action === 'report') return report(chat, id);
     if (action === 'export') return exportCsv(chat, id);
     if (action === 'list') return adminList(chat);
@@ -330,6 +409,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       const preview = action !== 'exitpreview' && action !== 'new';
       await storage.put(`preview-mode:${actor}`, preview);
       await storage.put('draft', null);
+      await storage.put('channel-setup', false);
       if (action === 'exitpreview') return menu(chat, true);
       if (action === 'preview') return menu(chat, false, true);
       if (action === 'trypreview' || action === 'resetpreview') {
@@ -380,6 +460,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
 
   async function handle(update) {
     await ready;
+    await flushChannelReports();
     const callback = update.callback_query;
     const message = callback?.message ?? update.message;
     const user = callback?.from ?? message?.from;
@@ -403,18 +484,24 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const [commandWithBot, arg] = input.split(/\s+/);
     const command = commandWithBot?.split('@')[0];
     if (!callback) {
+      if (owner && command === '/reportchannel') return arg ? configureReportChannel(chat, arg) : channelSettings(chat);
+      if (owner && await storage.get('channel-setup') && !input.startsWith('/')) {
+        const forwarded = message.forward_origin?.type === 'channel' ? message.forward_origin.chat : message.forward_from_chat;
+        return configureReportChannel(chat, forwarded?.id ?? input);
+      }
       if (command === '/script') return scriptMenu(chat, { type: 'resume' });
       if (command === '/start' || command === '/help' || command === '/admin') {
         await storage.delete(`script-next:${baseActor}`);
         if (owner) {
           await storage.put('draft', null);
+          await storage.put('channel-setup', false);
           await storage.put(`preview-mode:${baseActor}`, false);
         }
         if (command === '/start') return scriptMenu(chat, arg ? { type: 'begin', survey: arg } : { type: 'menu' });
         return menu(chat, owner);
       }
       if (command === '/cancel') {
-        if (owner) await storage.put('draft', null);
+        if (owner) { await storage.put('draft', null); await storage.put('channel-setup', false); }
         const id = await storage.get(`active:${actor}`);
         const session = id && await storage.get(sessionKey(id, actor));
         if (session && session.stage !== 'done') { session.paused = true; await storage.put(sessionKey(id, actor), session); }
@@ -457,8 +544,14 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (action === 'submit' && session.stage === 'review') {
         session.stage = 'done'; session.revision++;
         session.completedAt = new Date().toISOString();
-        await persist(chat, actor, survey, session, update.update_id);
+        session.lastUpdate = update.update_id;
+        const record = { [sessionKey(id, actor)]: session };
+        if (!session.preview && await storage.get('report-channel')) record[`channel-report:${id}:${session.token}`] = { survey, session: structuredClone(session), attempts: 0, nextAttemptAt: Date.now() };
+        await storage.put(record);
+        await scheduleChannelReports();
+        await prompt(chat, survey, session);
         if (session.preview) return;
+        await flushChannelReports();
         const stats = surveyStats(survey, await sessionList(id));
         await send(ownerId, `Yangi so‘rovnoma yakunlandi ✅\n${survey.title}\n\nJami yakunlagan — ${stats.completed}\nDavom etayotgan — ${stats.unfinished}`, adminKeyboard()).catch(() => {});
         return;
@@ -511,5 +604,5 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     }
     return accept(chat, actor, survey, session, { text: input, ...extra }, update.update_id);
   }
-  return { handle, ready };
+  return { handle, ready, flushChannelReports };
 }

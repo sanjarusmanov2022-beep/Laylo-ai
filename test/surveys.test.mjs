@@ -12,11 +12,19 @@ function harness(defs = definitions, existing, autoScript = true) {
   const storage = {
     get: async key => structuredClone(data.get(key)),
     delete: async key => data.delete(key),
-    put: async (key, value) => { data.set(key, structuredClone(value)); },
+    put: async (key, value) => {
+      if (typeof key === 'object') for (const [k, v] of Object.entries(key)) data.set(k, structuredClone(v));
+      else data.set(key, structuredClone(value));
+    },
+    setAlarm: async time => data.set('alarmAt', time),
+    deleteAlarm: async () => data.delete('alarmAt'),
     list: async ({ prefix, limit, startAfter }) => new Map([...data].sort(([a], [b]) => a.localeCompare(b)).filter(([key]) => key.startsWith(prefix) && (!startAfter || key > startAfter)).slice(0, limit)),
   };
   const api = { call: async (method, body) => {
     messages.push({ method, body: body instanceof FormData ? body : structuredClone(body) });
+    if (method === 'getMe') return { id: 999, username: 'SurveyTestBot' };
+    if (method === 'getChat') return { id: -100123456, type: 'channel', title: 'Hisobotlar', username: 'reports_test' };
+    if (method === 'getChatMember') return { status: 'administrator', can_post_messages: true };
     return { message_id: messages.length };
   } };
   const bot = createSurveyBot({ storage, api, ownerId: 1, username: 'SurveyTestBot', definitions: defs });
@@ -38,7 +46,7 @@ function harness(defs = definitions, existing, autoScript = true) {
     return update;
   };
   const sessions = () => [...data].filter(([key]) => key.startsWith('session:')).map(([, session]) => session);
-  return { data, storage, messages, bot, message, press, buttons, sessions };
+  return { data, storage, messages, api, bot, message, press, buttons, sessions };
 }
 
 test('Both role questionnaires validate and keep all supplied employee questions', () => {
@@ -396,4 +404,80 @@ test('Every /start asks for script first, including the owner and returning user
   assert.ok(h.buttons(1).some(b => b.callback_data === 'a:preview'));
   await h.message(1, '/start');
   assert.ok(h.buttons(1).some(b => b.callback_data === 'script:latin'));
+});
+
+
+test('Configured channel receives one complete response file after submit, not while answering or on duplicate callbacks', async () => {
+  const mini = { ...definitions[0], questions: [{ ...definitions[0].questions[8], id: 1 }] };
+  const h = harness([mini]);
+  await h.message(1, '/reportchannel @reports_test');
+  assert.equal((await h.storage.get('report-channel')).id, -100123456);
+  await h.message(55, '/start employees'); await h.press(55, 'Boshlash'); await h.message(55, 'Aziza'); await h.message(55, '28');
+  await h.press(55, '1.'); await h.press(55, '2.'); await h.press(55, 'Davom etish');
+  assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 0);
+  const submitted = await h.press(55, 'Javoblarni yuborish');
+  const reports = h.messages.filter(m => m.method === 'sendDocument' && m.body.get('chat_id') === '-100123456');
+  assert.equal(reports.length, 1);
+  assert.match(reports[0].body.get('caption'), /Aziza/);
+  assert.match(reports[0].body.get('caption'), /Yosh: 28/);
+  const csv = await reports[0].body.get('document').text();
+  assert.match(csv, /Tushlik bepul beriladi/);
+  assert.match(csv, /Yo‘l xarajatlari qoplanadi/);
+  assert.ok(!csv.includes('Telegram name never stored'));
+  await h.bot.handle(submitted);
+  assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 1);
+  assert.equal([...h.data].filter(([key]) => key.startsWith('channel-report:')).length, 0);
+  assert.equal(h.sessions()[0].stage, 'done');
+});
+
+test('Client preview never sends respondent data to the reports channel', async () => {
+  const mini = { ...definitions[0], questions: [{ ...definitions[0].questions[8], id: 1 }] };
+  const h = harness([mini]);
+  await h.message(1, '/reportchannel @reports_test'); await h.message(1, '/admin');
+  await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim'); await h.press(1, 'Boshlash');
+  await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
+  await h.press(1, 'Davom etish'); await h.press(1, 'Javoblarni yuborish');
+  assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 0);
+  assert.equal([...h.data].filter(([key]) => key.startsWith('channel-report:')).length, 0);
+});
+
+test('Failed channel delivery remains queued across restarts and retries without losing answers', async () => {
+  const mini = { id: 'mini', title: 'Test', sections: ['Savollar'], questions: [{ id: 1, section: 1, type: 'text', text: 'Fikringiz?' }] };
+  const h = harness([mini]);
+  await h.message(1, '/reportchannel @reports_test');
+  const normalCall = h.api.call;
+  h.api.call = async (method, body) => { if (method === 'sendDocument') throw new Error('Temporary outage'); return normalCall(method, body); };
+  await h.message(57, '/start mini'); await h.press(57, 'Boshlash'); await h.press(57, 'Ismsiz'); await h.press(57, 'Yoshni o‘tkazib');
+  await h.message(57, 'Saqlanadigan javob'); await h.press(57, 'Javoblarni yuborish');
+  assert.equal(h.sessions()[0].stage, 'done');
+  assert.equal(h.sessions()[0].answers[1].text, 'Saqlanadigan javob');
+  const queue = [...h.data].filter(([key]) => key.startsWith('channel-report:'));
+  assert.equal(queue.length, 1); assert.equal(queue[0][1].attempts, 1);
+  assert.ok(h.data.get('alarmAt') > Date.now());
+  const restarted = harness([mini], h.data);
+  await restarted.bot.flushChannelReports(true);
+  assert.equal(restarted.messages.filter(m => m.method === 'sendDocument').length, 1);
+  assert.equal([...h.data].filter(([key]) => key.startsWith('channel-report:')).length, 0);
+  await restarted.bot.flushChannelReports(true);
+  assert.equal(restarted.messages.filter(m => m.method === 'sendDocument').length, 1);
+});
+
+test('Only owner can configure a channel, both admins are verified and forwarded private channels are supported', async () => {
+  const h = harness();
+  await h.message(23, '/reportchannel @reports_test');
+  await h.bot.handle({ update_id: 300, callback_query: { id: 'attack', from: { id: 23 }, message: { chat: { id: 23, type: 'private' } }, data: 'a:channelsetup' } });
+  assert.equal(await h.storage.get('report-channel'), undefined);
+  await h.message(1, '/reportchannel'); await h.press(1, 'Kanalni ulash');
+  await h.bot.handle({ update_id: 301, message: { from: { id: 1 }, chat: { id: 1, type: 'private' }, forward_origin: { type: 'channel', chat: { id: -100123456, type: 'channel' } }, text: 'Kanal xabari' } });
+  const configured = await h.storage.get('report-channel');
+  assert.equal(configured.id, -100123456);
+  const normalCall = h.api.call;
+  h.api.call = async (method, body) => method === 'getChatMember' && body.user_id === 1 ? { status: 'member' } : normalCall(method, body);
+  await h.message(1, '/reportchannel @different_channel');
+  assert.deepEqual(await h.storage.get('report-channel'), configured);
+  assert.match(h.messages.at(-1).body.text, /siz administrator/);
+  h.api.call = async (method, body) => method === 'getChatMember' && body.user_id === 999 ? { status: 'administrator', can_post_messages: false } : normalCall(method, body);
+  await h.message(1, '/reportchannel @different_channel');
+  assert.deepEqual(await h.storage.get('report-channel'), configured);
+  assert.match(h.messages.at(-1).body.text, /xabar joylash huquqini/);
 });
