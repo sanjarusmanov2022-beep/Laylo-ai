@@ -132,3 +132,6 @@ Qayta yuborish vazifalari ham saqlanadigan navbatdan o‘tadi. Bir xil Telegram 
 
 
 Mijozning bosh menyusida ham Hisobotni qayta yuborish tugmasi bor. Bitta tugallangan haqiqiy javob bo‘lsa o‘sha hisobot kanalga qayta yuboriladi; ikki rol tugallangan bo‘lsa tanlash so‘raladi. Faqat shu mijozning javoblari olinadi. So‘rovnoma keyin yopilgan bo‘lsa ham eski tugallangan hisobotni olish mumkin. Hali tugallanmagan bo‘lsa, avval yakunlash tushuntiriladi. Sinov menyusida shu tugma sinovlar kanalga chiqmasligini tushuntiradi va egaga haqiqiy hisobotlar ro‘yxatini ochadi.
+
+
+Hisobotni qayta yuborish tugmasi /start dagi yozuv tanlash oynasida ham ko‘rinadi. /menu bosh menyuni ochadi; /reports oddiy mijozning o‘z hisoboti bo‘yicha qayta yuborishni, egaga esa haqiqiy PDF hisobotlar ro‘yxatini ochadi. Telegramning umumiy Menu buyruqlariga menu va reports qo‘shilgan; admin buyruqlari faqat egaga tegishli chat scope ichida ko‘rsatiladi.

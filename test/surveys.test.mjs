@@ -1199,3 +1199,25 @@ test('Customers with both roles choose their own report and cannot retrieve anot
   assert.equal(h.messages.filter(m=>m.method==='sendDocument').length,before);
   assert.match(h.messages.at(-1).body.text,/hisobot topilmadi/);
 });
+
+
+test('A brand new non-owner sees report resend on the first /start screen before choosing script',async()=>{
+ const h=harness(definitions,undefined,false);
+ await h.message(320,'/start');
+ assert.ok(h.buttons(320).some(b=>b.callback_data==='script:latin'));
+ assert.ok(h.buttons(320).some(b=>b.callback_data==='script:cyrillic'));
+ assert.ok(h.buttons(320).some(b=>b.callback_data==='myreports'));
+ assert.ok(!h.buttons(320).some(b=>b.callback_data?.startsWith('a:')));
+ await h.press(320,'Hisobotni qayta yuborish');
+ assert.match(h.messages.at(-1).body.text,/Hali yakunlangan/);
+ assert.equal(h.messages.filter(m=>m.method==='sendDocument').length,0);
+});
+test('Public /reports and /menu commands work from a script chooser and never expose admin reports',async()=>{
+ const h=harness(definitions,undefined,false);
+ await h.message(321,'/start');await h.message(321,'/reports');
+ assert.match(h.messages.at(-1).body.text,/Hali yakunlangan/);
+ assert.ok(!h.buttons(321).some(b=>b.callback_data?.startsWith('a:')));
+ await h.message(321,'/menu');await h.press(321,'Кириллча');
+ assert.ok(h.buttons(321).some(b=>b.callback_data==='myreports'));
+ await h.message(321,'/reports');assert.match(h.messages.at(-1).body.text,/Ҳали якунланган/);
+});

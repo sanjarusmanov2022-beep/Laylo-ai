@@ -16,6 +16,8 @@ await api.call('setWebhook', {
 });
 const commands = [
   { command: 'start', description: 'So‘rovnomalar menyusi' },
+  { command: 'menu', description: 'Bosh menyuni ochish' },
+  { command: 'reports', description: 'Hisobotni kanalga qayta yuborish' },
   { command: 'survey', description: 'So‘rovnomani davom ettirish' },
   { command: 'script', description: 'Lotin / Кирилл — yozuvni tanlash' },
   { command: 'cancel', description: 'Tanaffus qilish' },
@@ -24,7 +26,7 @@ const commands = [
 await api.call('setMyCommands', { commands });
 await api.call('setMyCommands', {
   scope: { type: 'chat', chat_id: Number(process.env.TELEGRAM_OWNER_ID) },
-  commands: [...commands, { command: 'admin', description: 'Admin menyusi' }, { command: 'reportchannel', description: 'Hisobotlar kanalini sozlash' }, { command: 'report', description: 'So‘rovnomalar hisoboti' }, { command: 'export', description: 'Javoblarni CSV faylida olish' }, { command: 'newsurvey', description: 'Yangi so‘rovnoma yaratish' }],
+  commands: [...commands, { command: 'pdf', description: 'Saqlangan PDF hisobotlar' }, { command: 'admin', description: 'Admin menyusi' }, { command: 'reportchannel', description: 'Hisobotlar kanalini sozlash' }, { command: 'report', description: 'So‘rovnomalar hisoboti' }, { command: 'export', description: 'Javoblarni CSV faylida olish' }, { command: 'newsurvey', description: 'Yangi so‘rovnoma yaratish' }],
 });
 const webhook = await api.call('getWebhookInfo', {});
 if (webhook.url !== endpoint.href) throw new Error('Webhook verification failed.');

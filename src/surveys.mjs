@@ -188,6 +188,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     await storage.put(`script-next:${await actorKey(chat)}`, target);
     return api.call('sendMessage', { chat_id: chat, text: 'Qaysi yozuv sizga qulay?\nҚайси ёзув сизга қулай?', reply_markup: { inline_keyboard: [
       [{ text: 'Lotincha', callback_data: 'script:latin' }, { text: 'Кириллча', callback_data: 'script:cyrillic' }],
+      [{ text: '📨 Hisobotni qayta yuborish / Ҳисоботни қайта юбориш', callback_data: 'myreports' }],
     ] } });
   }
   async function scriptAction(chat, data, owner) {
@@ -727,6 +728,15 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const [commandWithBot, arg] = input.split(/\s+/);
     const command = commandWithBot?.split('@')[0];
     if (!callback) {
+      if (command === '/reports') {
+        await storage.delete('script-next:'+baseActor);
+        if (owner) return pdfList(chat);
+        return customerReports(chat,baseActor,update.update_id);
+      }
+      if (command === '/menu') {
+        await storage.delete('script-next:'+baseActor);
+        return menu(chat,owner && !preview,preview);
+      }
       if (owner && command === '/pdf') {
         if (!arg) return pdfList(chat);
         const entries = (await completedPdfEntries()).filter(e=>e.session.token===arg);
