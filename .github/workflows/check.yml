@@ -13,5 +13,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test test/surveys.test.mjs
+      - run: node --test test/surveys.test.mjs test/russian-localization.test.mjs
       - run: npx --yes wrangler@4.166.0 deploy --dry-run

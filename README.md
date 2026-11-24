@@ -149,3 +149,12 @@ src/locale-ru.mjs ichidagi statik katalog asosiy 84 ta xodim va 67 ta rahbar sav
 Tugma orqali tanlangan ruscha variantlar umumiy asl variant qiymati bilan saqlanadi. Ruscha va o‘zbekcha qatnashuvchilar bir statistika ichida hisoblanadi, mezon va ballar o‘zgarmaydi. Ruscha yozib yuborilgan aniq variant ham asl qiymatga moslanadi; erkin matn esa asl holida qoladi. 3,5 млн сум, 3,5 млн. сум va 5 тыс. сум summalari UZS sifatida qabul qilinadi.
 
 Telegramning chatga tegishli Menu buyruqlari ham tanlangan tilga moslanadi; admin buyruqlari faqat egasi uchun qo‘shiladi. Ruscha yakunlangan javobning kanal posti va PDFi russian qiymati bo‘yicha chiqadi, keyingi til almashtirish navbatdagi hisobot tilini o‘zgartirmaydi. CSVda ruscha respondentning savol va variant nomlari ruscha chiqariladi, asl kanonik qiymat bazada saqlanadi; sarlavhalar esa eksport olayotgan egasining tilida bo‘ladi. Kanal brendi, HR_hisobot fayl nomi, URL va texnik IDlar o‘zgartirilmaydi.
+
+
+## Ruscha rejimning regressiya auditi
+
+Ruscha sektor savollari rol nomi bilan parcha-parcha yig‘ilmaydi: har bir rol uchun to‘liq gap tarjima qilinadi. Til almashtirish tugmasi ham ruscha chiqariladi; faqat boshlang‘ich tanlovdagi til nomlari o‘z yozuvida saqlanadi. Yoshga qaytish, maxfiylik, ish jadvali va imtiyozlar atamalari HR ma’nosiga mos tahrirlangan. Statistikadagi variantlar, jumladan raqam bilan boshlanuvchi muddatlar, biriktirishdan oldin alohida tarjima qilinadi. Bot buyruqlari, email, URL, kanal username va hisobot IDlari tarjima qilinmaydi.
+
+test/russian-localization.test.mjs o‘nta turli sharoitda ikki rolni to‘liq tekshiradi: 20 ta sintetik so‘rovnoma, 1 510 ta savol, 2 500 dan ortiq ekran/xabar va 20 ta PDF. Ism/kod, ixtiyoriy yosh, ochiq/maxfiy ishxona, barcha sektorlar, xato kiritish, ko‘p tanlov cheklovi, tanaffus, orqaga qaytish, til almashtirish, barcha savollar, kanal posti, PDF va admin eksportlari qamrab olinadi. Ruscha ekranlarda lotincha yoki o‘zbek kiril harflarida qolgan UI so‘zlari tekshiriladi; brend, texnik belgi, URL va test foydalanuvchisi kiritgan kompaniya nomi bundan ajratiladi. Sektor ekranining to‘liq ruscha matni va til tugmasi uchun alohida regressiya tekshiruvi bor.
+
+GitHub tekshiruvi odatiy testlar bilan ushbu auditni ham bajaradi. Testlar Telegram va saqlash uchun maketlardan foydalanadi; haqiqiy qatnashuvchilar va kanalga sinov posti qo‘shilmaydi. Yangi UI matni yoki savol kiritilganda ruscha katalog va audit ham yangilanishi kerak.

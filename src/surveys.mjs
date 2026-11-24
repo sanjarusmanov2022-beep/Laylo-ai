@@ -187,7 +187,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   }
   async function messagePayload(chat, text, keyboard) {
     const script = await getScript(chat) ?? 'latin';
-    const rows = keyboard?.map(row => row.map(b => ({ ...b, text: b.callback_data?.startsWith('script:') ? b.text : toScript(b.text, script) })));
+    const rows = keyboard?.map(row => row.map(b => ({ ...b, text: ['script:latin','script:cyrillic','script:russian'].includes(b.callback_data) ? b.text : toScript(b.text, script) })));
     return { chat_id: chat, text: toScript(text, script), link_preview_options: { is_disabled: true }, ...(rows ? { reply_markup: { inline_keyboard: rows } } : {}) };
   }
   const send = async (chat, text, keyboard) => api.call('sendMessage', await messagePayload(chat, text, keyboard));
@@ -297,7 +297,9 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       text = '🏢 Qaysi korxona yoki tashkilotda ishlaysiz?\n\nIshxonangiz nomini yozishingiz mumkin. Ko‘rsatsangiz, hisobotda va kanalda chiqadi.\n\nNomini oshkor qilish ixtiyoriy. Istamasangiz, «Ishxonam nomi sir qolsin»ni bosing.';
       keyboard = [[button('🔒 Ishxonam nomi sir qolsin', session, 'workplace_private')], [button('⬅️ Yoshga qaytish', session, 'profile_back')]];
     } else if (session.stage === 'sector') {
-      text = '🏛 ' + (survey.id === 'employers' ? 'Korxonangiz' : 'Ishxonangiz') + ' qaysi sektorga kiradi?\n\nMos variantni tanlang. Oshkor qilishni istamasangiz, oxirgi variantni bosing.';
+      text = survey.id === 'employers'
+        ? '🏛 Korxonangiz qaysi sektorga kiradi?\n\nMos variantni tanlang. Oshkor qilishni istamasangiz, oxirgi variantni bosing.'
+        : '🏛 Ishxonangiz qaysi sektorga kiradi?\n\nMos variantni tanlang. Oshkor qilishni istamasangiz, oxirgi variantni bosing.';
       keyboard = Object.entries(sectorLabels).map(([value, label]) => [button(label, session, 'sector_' + value)]);
       keyboard.push([button(survey.id === 'employees' ? '⬅️ Ishxona nomiga qaytish' : '⬅️ Yoshga qaytish', session, 'profile_back')]);
     } else if (session.stage === 'review') {
@@ -405,16 +407,16 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const selected = id === 'all' ? [...surveys.values()] : [surveys.get(id)].filter(Boolean);
     if (!selected.length) return send(chat, 'So‘rovnoma topilmadi.');
     for (const survey of selected) {
+      const reportScript = await getScript(chat) ?? 'latin';
       const stats = surveyStats(survey, await sessionList(survey.id));
       const lines = [survey.title, `Boshlagan — ${stats.started}`, `Yakunlagan — ${stats.completed}`, `Davom etayotgan — ${stats.unfinished}`, '\nFoizlar har bir savolga javob bergan, so‘rovnomani yakunlaganlar orasida hisoblandi. Ko‘p tanlovli savolda foizlar yig‘indisi 100 dan oshishi mumkin.'];
       for (const q of stats.questions) {
         lines.push(`\n${q.question.id}. ${q.question.text}`, `Javob — ${q.answered} · O‘tkazilgan — ${q.skipped}`);
-        lines.push(...q.choices.map(c => `${c.label} — ${c.count} (${c.percent}%)`));
+        lines.push(...q.choices.map(c => `${toScript(c.label, reportScript)} — ${c.count} (${c.percent}%)`));
         if (q.custom) lines.push(`Yozma javob — ${q.custom}`);
         for (const m of q.money) lines.push(`${m.currency} · ${m.count} javob · eng kam ${m.min.toLocaleString('en-US')} · mediana ${m.median.toLocaleString('en-US')} · eng ko‘p ${m.max.toLocaleString('en-US')}`);
       }
       let chunk = '';
-      const reportScript = await getScript(chat) ?? 'latin';
       for (const rawLine of lines) {
         const line = toScript(rawLine, reportScript);
         if ((chunk + '\n' + line).length > 3500) { await send(chat, chunk); chunk = ''; }
@@ -442,7 +444,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const form = new FormData();
     form.set('chat_id', String(chat));
     form.set('document', new Blob([bytes], { type: 'text/csv;charset=utf-8' }), `laylo-${id}.csv`);
-    form.set('caption', 'Yozma javoblar, sonlar va tanlangan variantlar. Tugallanmagan javoblar alohida belgilangan.');
+    form.set('caption', toScript('Yozma javoblar, sonlar va tanlangan variantlar. Tugallanmagan javoblar alohida belgilangan.', exportScript));
     return api.call('sendDocument', form);
   }
 
