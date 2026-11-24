@@ -1156,3 +1156,46 @@ test('Participant resends only their completed report to the channel and receive
   await h.message(282,'/pdf '+h.sessions()[0].token);
   assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='282').length,0);
 });
+
+
+test('Customer home always exposes report resend and explains when no completed response exists',async()=>{
+  const h=harness();await h.message(310,'/start');
+  assert.ok(h.buttons(310).some(b=>b.text.includes('Hisobotni qayta yuborish')));
+  await h.press(310,'Hisobotni qayta yuborish');
+  assert.match(h.messages.at(-1).body.text,/Hali yakunlangan/);
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument').length,0);
+});
+test('Returning customer can resend an old completed survey from home even when that survey is closed',async()=>{
+  const mini={...definitions[0],questions:[{id:1,section:1,type:'text',text:'Fikringiz?'}]};const h=harness([mini]);
+  await h.message(1,'/reportchannel @reports_test');await h.message(311,'/start employees');await h.press(311,'Boshlash');await h.message(311,'789-856-311');await h.press(311,'Yoshni o‘tkazib');await h.message(311,'Oldingi fikrim');await h.press(311,'Javoblarni yuborish');
+  await h.storage.put('open:employees',false);await h.message(311,'/start');
+  assert.ok(h.buttons(311).some(b=>b.callback_data==='myreports'));
+  const before=h.messages.filter(m=>m.method==='sendDocument').length;
+  const update=await h.press(311,'Hisobotni qayta yuborish');await h.bot.handle(update);
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument').length,before+1);
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument'&&m.body.get('chat_id')==='311').length,0);
+  assert.equal(surveyStats(mini,h.sessions()).completed,1);
+});
+test('Owner preview shows the resend entry but does not publish test responses and offers actual reports',async()=>{
+  const h=harness();await h.message(1,'/reportchannel @reports_test');await h.message(1,'/admin');await h.press(1,'Mijoz rejimi');
+  assert.ok(h.buttons(1).some(b=>b.text.includes('Hisobotni qayta yuborish')));
+  const before=h.messages.filter(m=>m.body.chat_id===-100123456).length;
+  await h.press(1,'Hisobotni qayta yuborish');
+  assert.match(h.messages.at(-1).body.text,/Sinov hisobotlari kanalga yuborilmaydi/);
+  assert.ok(h.buttons(1).some(b=>b.callback_data==='a:pdfs:all'));
+  assert.equal(h.messages.filter(m=>m.body.chat_id===-100123456).length,before);
+});
+test('Customers with both roles choose their own report and cannot retrieve another participant token',async()=>{
+  const mini=definitions.map(s=>({...s,questions:[{id:1,section:1,type:'text',text:'Fikringiz?'}]}));const h=harness(mini);
+  await h.message(1,'/reportchannel @reports_test');
+  for(const [user,roles] of [[312,['employees','employers']],[313,['employees']]]) for(const id of roles){
+    await h.message(user,'/start '+id);await h.press(user,'Boshlash');await h.message(user,'789-856-'+user);await h.press(user,'Yoshni o‘tkazib');await h.message(user,'Fikrim');await h.press(user,'Javoblarni yuborish');
+  }
+  await h.message(312,'/start');await h.press(312,'Hisobotni qayta yuborish');
+  assert.equal(h.buttons(312).filter(b=>b.callback_data?.startsWith('myreport:')).length,2);
+  const alien=h.sessions().find(s=>s.publicIdentity.value==='789-856-313');
+  const before=h.messages.filter(m=>m.method==='sendDocument').length;
+  await h.bot.handle({update_id:40000,callback_query:{id:'cross-user-report',from:{id:312},message:{chat:{id:312,type:'private'}},data:'myreport:employees:'+alien.token}});
+  assert.equal(h.messages.filter(m=>m.method==='sendDocument').length,before);
+  assert.match(h.messages.at(-1).body.text,/hisobot topilmadi/);
+});

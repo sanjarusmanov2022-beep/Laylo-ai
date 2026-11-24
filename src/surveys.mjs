@@ -246,12 +246,50 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const rows = [];
     for (const survey of surveys.values()) if (preview || await isOpen(survey.id)) rows.push([{ text: survey.id === 'employees' ? '👤 Xodim' : survey.id === 'employers' ? '👔 Rahbar / ish beruvchi' : survey.title.slice(0, 60), callback_data: preview ? `a:trypreview:${survey.id}` : `role:${survey.id}` }]);
     const hasSurveys = rows.length > 0;
+    rows.push([{ text: '📨 Hisobotni qayta yuborish', callback_data: preview ? 'a:previewreports' : 'myreports' }]);
     rows.push(scriptButton('menu'));
     if (preview) {
       rows.push([{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }]);
       return send(chat, '🧪 Mijoz rejimi · SINOV\n\nMijozga beriladigan savollarni o‘zingiz sinab ko‘rasiz. Xodim yoki Rahbarni tanlang.\n\nSinov javoblari haqiqiy qatnashuvchilar soni, hisobot va CSV fayliga qo‘shilmaydi. Har ikki rolni alohida tekshirish va boshidan boshlash mumkin.', rows);
     }
     return send(chat, hasSurveys ? 'Assalomu alaykum! 👋 Men Laylo, so‘rovnoma botiman.\n\nFikrlaringizni o‘rganib, kelajakda yaxshi ish sharoiti yaratmoqchimiz. Iltimos, chin dildan javob bering.\n\nO‘zingizga mos bo‘limni tanlang.' : 'Hozircha ochiq so‘rovnoma yo‘q. Keyinroq qayta kiring.', rows);
+  }
+
+
+  async function previewReportNotice(chat) {
+    return send(chat,'🧪 Bu mijoz ko‘rinishidagi SINOV rejimi.\n\nSinov hisobotlari kanalga yuborilmaydi va haqiqiy qatnashuvchilar soniga qo‘shilmaydi. Haqiqiy tugallangan hisobotni kanalga qayta yuborish uchun quyidagi ro‘yxatdan tanlang.',[
+      [{text:'📑 Haqiqiy hisobotlar',callback_data:'a:pdfs:all'}],
+      [{text:'👥 Sinov rollariga qaytish',callback_data:'a:preview'}],
+    ]);
+  }
+  async function resendCustomerReport(chat,actor,survey,session,updateId) {
+    const channel = await storage.get('report-channel'), channelLink = reportChannelLink(channel);
+    if (!channel) return send(chat,'Hisobotlar kanali hozircha ulanmagan. Javoblaringiz saqlangan.');
+    if ((!Number.isSafeInteger(session.lastUpdate) || updateId>session.lastUpdate) && (!session.lastChannelResendAt || Date.now()-session.lastChannelResendAt>=60_000)) {
+      const deliveryKey = 'participant:'+session.token+':'+updateId;
+      session.lastChannelResendAt=Date.now(); session.lastUpdate=updateId; session.revision++;
+      await storage.put({[sessionKey(survey.id,actor)]:session,['channel-report:'+deliveryKey]:{survey,session:structuredClone(session),insights:buildSurveyInsights(survey,session),deliveryKey,deliveryChatId:channel.id,attempts:0,nextAttemptAt:0}});
+      await scheduleChannelReports();await flushChannelReports(true);
+    }
+    return send(chat,'📊 Hisobotingizni kanalda ko‘rasiz. Hisobotdagi belgingiz: '+publicIdentity(session).value+(channelLink?'\n\n'+channelLink.username+'\n'+channelLink.url:''),[
+      ...(channelLink?[[{text:'📊 Hisobotni kanalda ko‘rish',url:channelLink.url}]]:[]),
+      [{text:'Bosh menyu',callback_data:'home'}],
+    ]);
+  }
+  async function customerReports(chat,actor,updateId,id,token) {
+    const entries=[];
+    for (const survey of surveys.values()) {
+      const session=await storage.get(sessionKey(survey.id,actor));
+      if (session?.stage==='done' && !session.preview) entries.push({survey,session});
+    }
+    if (!entries.length) return send(chat,'Hali yakunlangan so‘rovnomangiz yo‘q. Avval Xodim yoki Rahbar savollarini tugatib, «Javoblarni yuborish»ni bosing. Shundan keyin hisobotni kanalga qayta yubora olasiz.',[[{text:'👥 So‘rovnomani tanlash',callback_data:'home'}]]);
+    if (id) {
+      const entry=entries.find(e=>e.survey.id===id && e.session.token===token);
+      if (!entry) return send(chat,'Bu hisobot topilmadi. Bosh menyudagi «Hisobotni qayta yuborish» tugmasini bosing.');
+      return resendCustomerReport(chat,actor,entry.survey,entry.session,updateId);
+    }
+    if (entries.length===1) return resendCustomerReport(chat,actor,entries[0].survey,entries[0].session,updateId);
+    return send(chat,'📨 Qaysi hisobotingizni kanalga qayta yuboramiz?',entries.map(({survey,session})=>[{text:(survey.id==='employees'?'👤 Xodim':survey.id==='employers'?'👔 Rahbar':survey.title.slice(0,30))+' · '+publicIdentity(session).value.slice(0,35),callback_data:'myreport:'+survey.id+':'+session.token}]));
   }
 
   async function prompt(chat, survey, session, editMessageId) {
@@ -290,7 +328,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), 'laylo-preview-' + survey.id + '-' + session.token + '.pdf');
         form.set('caption', toScript('🧪 SINOV · PDF tahlil. Asosiy hisobot va kanalga qo‘shilmaydi.', script));
         await api.call('sendDocument', form);
-        return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')]);
+        return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [[{text:'📨 Hisobotni qayta yuborish',callback_data:'a:previewreports'}], ...previewNavigation(survey.id), scriptButton('menu')]);
       }
       const channel = await storage.get('report-channel');
       const thanks = survey.thanks ?? 'Rahmat! Javoblaringiz saqlandi ✅';
@@ -589,6 +627,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   }
 
   async function adminAction(chat, action, id, token, requestId) {
+    if (action === 'previewreports') return previewReportNotice(chat);
     if (action === 'pdfs') return pdfList(chat,token);
     if (action === 'pdf' || action === 'pdfchannel') return savedPdf(chat,id,token,action==='pdfchannel',requestId);
     if (action === 'channel') return channelSettings(chat);
@@ -676,6 +715,11 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const baseActor = await actorKey(user.id);
     const preview = owner && (await storage.get(`preview-mode:${baseActor}`)) === true;
     const actor = preview ? `preview:${baseActor}` : baseActor;
+    if (data==='myreports' || data.startsWith('myreport:')) {
+      if (preview) return previewReportNotice(chat);
+      const [,id,token]=data.split(':');
+      return customerReports(chat,baseActor,update.update_id,id,token);
+    }
     if (data.startsWith('resume:')) return begin(chat, actor, data.slice(7));
     if (data.startsWith('role:')) return begin(chat, actor, data.slice(5));
     if (data === 'home') return menu(chat, owner && !preview, preview);
@@ -755,17 +799,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (callback) {
       const [prefix, , token, revision, action] = data.split(':');
       if (prefix !== 's' || token !== session.token || Number(revision) !== session.revision) return;
-      if (action === 'resendreport' && session.stage === 'done' && !preview) {
-        const channel = await storage.get('report-channel'), channelLink = reportChannelLink(channel);
-        if (!channel) return send(chat,'Hisobotlar kanali hozircha ulanmagan. Javoblaringiz saqlangan.');
-        if (!session.lastChannelResendAt || Date.now() - session.lastChannelResendAt >= 60_000) {
-          const deliveryKey = 'participant:' + session.token + ':' + update.update_id;
-          session.lastChannelResendAt = Date.now(); session.lastUpdate = update.update_id; session.revision++;
-          await storage.put({ [sessionKey(id,actor)]:session, ['channel-report:' + deliveryKey]:{survey,session:structuredClone(session),insights:buildSurveyInsights(survey,session),deliveryKey,deliveryChatId:channel.id,attempts:0,nextAttemptAt:0} });
-          await scheduleChannelReports(); await flushChannelReports(true);
-        }
-        return send(chat,'📊 Hisobotingizni kanalda ko‘rasiz. Hisobotdagi belgingiz: '+publicIdentity(session).value+(channelLink?'\n\n'+channelLink.username+'\n'+channelLink.url:''),channelLink?[[{text:'📊 Hisobotni kanalda ko‘rish',url:channelLink.url}]]:undefined);
-      }
+      if (action === 'resendreport' && session.stage === 'done' && !preview) return resendCustomerReport(chat,actor,survey,session,update.update_id);
       if (session.paused || session.stage === 'done') return;
       if (action === 'pause') { session.paused = true; await storage.put(sessionKey(id, actor), session); return send(chat, 'Javoblaringiz saqlandi. Tayyor bo‘lganda davom ettirish tugmasini bosing.', pausedKeyboard(id, preview, owner)); }
       if (action === 'begin' && session.stage === 'intro') { session.stage = 'name'; session.revision++; return persist(chat, actor, survey, session, update.update_id); }

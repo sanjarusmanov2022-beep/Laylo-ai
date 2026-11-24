@@ -129,3 +129,6 @@ Admin menyusidagi PDF hisobotlar yoki /pdf saqlangan haqiqiy yakunlangan javobla
 Oddiy qatnashuvchi yakunda Hisobotni qayta yuborish tugmasini bosishi mumkin. Faqat o‘zining yakunlangan javobi kanalga qayta yuboriladi; shaxsiy chatiga PDF berilmaydi, kanal havolasi ko‘rsatiladi. Takroriy bosishlar 60 soniya ichida yangi post yaratmaydi. Kanalni ko‘rish uchun obuna bo‘lishni Telegram orqali majburiy tekshirish yo‘q.
 
 Qayta yuborish vazifalari ham saqlanadigan navbatdan o‘tadi. Bir xil Telegram yangilanishi takrorlansa yangi nusxa yaratmaydi; muvaffaqiyatli yuborilgan post fayl xatosida takrorlanmaydi. Kanal almashtirilsa yangi kanal havolasi bilan post qayta tayyorlanadi.
+
+
+Mijozning bosh menyusida ham Hisobotni qayta yuborish tugmasi bor. Bitta tugallangan haqiqiy javob bo‘lsa o‘sha hisobot kanalga qayta yuboriladi; ikki rol tugallangan bo‘lsa tanlash so‘raladi. Faqat shu mijozning javoblari olinadi. So‘rovnoma keyin yopilgan bo‘lsa ham eski tugallangan hisobotni olish mumkin. Hali tugallanmagan bo‘lsa, avval yakunlash tushuntiriladi. Sinov menyusida shu tugma sinovlar kanalga chiqmasligini tushuntiradi va egaga haqiqiy hisobotlar ro‘yxatini ochadi.
