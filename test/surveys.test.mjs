@@ -1,7 +1,8 @@
+import { buildSurveyInsights, renderSurveyInsights } from '../src/survey-insights.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { createSurveyBot, parseAmount, surveyStats, validateSurvey, toScript } from '../src/surveys.mjs';
+import { createSurveyBot, parseAmount, surveyStats, validateSurvey, toScript, parsePublicIdentity } from '../src/surveys.mjs';
 import worker, { SurveyStore } from '../src/survey-worker.mjs';
 
 const definitions = await Promise.all(['employees', 'employers'].map(async id => JSON.parse(await readFile(new URL(`../config/surveys/${id}.json`, import.meta.url), 'utf8'))));
@@ -70,7 +71,7 @@ test('Roles, private admin access, duplicate and forged callbacks, and resume af
   assert.equal(h.messages.slice(before).filter(m => m.method !== 'answerCallbackQuery').length, 0);
   await h.press(222, 'Xodim');
   await h.press(222, 'Boshlash');
-  await h.press(222, 'Ismsiz'); await h.press(222, 'Yoshni o‘tkazib');
+  await h.message(222, 'Test respondent'); await h.press(222, 'Yoshni o‘tkazib');
   const update = await h.press(222, '2–5 oy');
   assert.equal(h.sessions()[0].index, 1);
   await h.bot.handle(update);
@@ -95,7 +96,7 @@ test('Participants finish both roles independently, and reports/export include o
     const survey = definitions[i % 2];
     await h.message(user, `/start ${survey.id}`);
     await h.press(user, 'Boshlash');
-    await h.press(user, 'Ismsiz'); await h.press(user, 'Yoshni o‘tkazib');
+    await h.message(user, 'Test respondent'); await h.press(user, 'Yoshni o‘tkazib');
     for (const q of survey.questions) {
       if (q.type === 'single') await h.press(user, q.options[0].slice(0, 30));
       else if (q.type === 'multi') {
@@ -132,7 +133,7 @@ test('Multiple choice needs three choices, back restores answers, and closed sur
     { id: 2, section: 1, text: 'Son', type: 'number' },
   ] };
   const h = harness([mini]);
-  await h.message(22, '/start mini'); await h.press(22, 'Boshlash'); await h.press(22, 'Ismsiz'); await h.press(22, 'Yoshni o‘tkazib');
+  await h.message(22, '/start mini'); await h.press(22, 'Boshlash'); await h.message(22, 'Test respondent'); await h.press(22, 'Yoshni o‘tkazib');
   await h.press(22, '1.'); await h.press(22, 'Davom etish');
   assert.equal(h.sessions()[0].index, 0);
   await h.press(22, '2.'); await h.press(22, '3.'); await h.press(22, 'Davom etish');
@@ -153,7 +154,7 @@ test('Skipped answers do not inflate percentages and uncompleted answers are mar
   const mini = { id: 'mini', title: 'Test', sections: ['Savollar'], questions: [{ id: 1, section: 1, type: 'single', text: 'Tanlang', options: ['Ha', 'Yo‘q'] }] };
   const h = harness([mini]);
   for (const user of [10, 20, 30]) {
-    await h.message(user, '/start mini'); await h.press(user, 'Boshlash'); await h.press(user, 'Ismsiz'); await h.press(user, 'Yoshni o‘tkazib');
+    await h.message(user, '/start mini'); await h.press(user, 'Boshlash'); await h.message(user, 'Test respondent'); await h.press(user, 'Yoshni o‘tkazib');
     if (user === 30) continue;
     await h.press(user, user === 10 ? '1.' : 'O‘tkazib'); await h.press(user, 'yuborish');
   }
@@ -194,7 +195,7 @@ test('Owner client mode completes both real questionnaires without entering repo
   assert.match(h.messages.at(-1).body.text, /SINOV/);
   for (const survey of definitions) {
     await h.press(1, survey.id === 'employees' ? 'Xodim' : 'Rahbar');
-    await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib');
+    await h.press(1, 'Boshlash'); await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib');
     for (const q of survey.questions) {
       assert.match(h.messages.at(-1).body.text, /Mijoz rejimi · SINOV/);
       if (q.type === 'single') await h.press(1, '1.');
@@ -226,11 +227,11 @@ test('Owner client mode completes both real questionnaires without entering repo
 
 test('Client preview resets, resumes after restart and leaves real owner responses intact', async () => {
   const h = harness();
-  await h.message(1, '/start employees'); await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib');
+  await h.message(1, '/start employees'); await h.press(1, 'Boshlash'); await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib');
   await h.press(1, '2–5 oy');
   const real = structuredClone(h.sessions()[0]);
   await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim');
-  await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
+  await h.press(1, 'Boshlash'); await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
   await h.press(1, 'Keyinroq'); await h.message(1, '/survey');
   assert.match(h.messages.at(-1).body.text, /Savol 2[/]57/);
   const restarted = harness(definitions, h.data);
@@ -256,7 +257,7 @@ test('Preview is owner only, clears survey drafts and can inspect closed questio
   await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi');
   assert.equal(await h.storage.get('draft'), null);
   await h.storage.put('open:employees', false);
-  await h.press(1, 'Xodim'); await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib');
+  await h.press(1, 'Xodim'); await h.press(1, 'Boshlash'); await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib');
   assert.match(h.messages.at(-1).body.text, /Savol 1[/]57/);
   await h.message(22, '/start employees');
   assert.match(h.messages.at(-1).body.text, /hozir yopiq/);
@@ -269,7 +270,7 @@ test('Both roles ask name then age separately and export the supplied profile fi
   for (const [index, survey] of short.entries()) {
     const user = 70 + index;
     await h.message(user, '/start ' + survey.id); await h.press(user, 'Boshlash');
-    assert.match(h.messages.at(-1).body.text, /Ismingiz nima/);
+    assert.match(h.messages.at(-1).body.text, /nom yoki raqam|Korxonangizni hisobotda/);
     await h.message(user, 'Aziza');
     assert.match(h.messages.at(-1).body.text, /Yoshingiz nechada/);
     for (const invalid of ['yigirma', '3.5', '-1', '0', '121', '28 yosh']) {
@@ -282,36 +283,37 @@ test('Both roles ask name then age separately and export the supplied profile fi
     else await h.message(user, 'Javob');
     await h.press(user, 'Javoblarni yuborish');
   }
-  assert.ok(h.sessions().every(s => s.name === 'Aziza' && s.age === 28));
+  assert.ok(h.sessions().every(s => s.publicIdentity?.value === 'Aziza' && s.age === 28));
   await h.message(1, '/export');
   const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
   assert.match(csv, /Yosh [(]ixtiyoriy[)]/);
   assert.match(csv, /"Aziza","28","Yakunlangan"/);
 });
 
-test('Name and age can be skipped independently and age step survives a restart', async () => {
+test('Identity is mandatory, can be changed to a private code, and age remains optional after restart', async () => {
   const h = harness();
   await h.message(88, '/start employees'); await h.press(88, 'Boshlash');
+  assert.ok(!h.buttons(88).some(b => b.text.includes('Ismsiz')));
   await h.message(88, 'Ali');
   assert.equal(h.sessions()[0].stage, 'age');
   const restarted = harness(definitions, h.data);
   await restarted.message(88, '/survey');
   assert.match(restarted.messages.at(-1).body.text, /Yoshingiz nechada/);
-  await h.press(88, 'Ismga qaytish');
-  assert.match(h.messages.at(-1).body.text, /Ismingiz nima/);
-  await h.press(88, 'Ismsiz');
+  await h.press(88, 'Nom yoki raqamga qaytish');
+  await h.message(88, '');
+  assert.equal(h.sessions()[0].stage, 'name');
+  await h.message(88, '789-856-78');
+  assert.deepEqual(h.sessions()[0].publicIdentity, { kind: 'code', value: '789-856-78' });
   assert.equal(h.sessions()[0].name, undefined);
-  assert.match(h.messages.at(-1).body.text, /Yoshingiz nechada/);
   await h.press(88, 'Yoshni o‘tkazib');
   assert.equal(h.sessions()[0].age, undefined);
   assert.match(h.messages.at(-1).body.text, /Savol 1[/]57/);
 });
 
-
 test('Benefits allow four or more selections, show a count, and commit all selected options', async () => {
   const benefits = { ...definitions[0], questions: [{ ...definitions[0].questions[8], id: 1 }] };
   const h = harness([benefits]);
-  await h.message(99, '/start employees'); await h.press(99, 'Boshlash'); await h.press(99, 'Ismsiz'); await h.press(99, 'Yoshni o‘tkazib');
+  await h.message(99, '/start employees'); await h.press(99, 'Boshlash'); await h.message(99, 'Test respondent'); await h.press(99, 'Yoshni o‘tkazib');
   for (const n of [1, 2, 3, 4]) await h.press(99, n + '.');
   assert.equal(h.sessions()[0].index, 0);
   assert.equal(h.sessions()[0].pending.length, 4);
@@ -346,7 +348,7 @@ test('New participants select a script before a deep-linked survey; display choi
     await h.press(user, script);
     assert.ok(h.buttons(user).some(b => b.text.includes(user === 64 ? 'Бошлаш' : 'Boshlash')));
     await h.press(user, user === 64 ? 'Бошлаш' : 'Boshlash');
-    await h.press(user, user === 64 ? 'Исмсиз' : 'Ismsiz');
+    await h.message(user, '789-856-' + user);
     await h.press(user, user === 64 ? 'Ёшни ўтказиб' : 'Yoshni o‘tkazib');
     assert.match(h.messages.at(-1).body.text, user === 64 ? /Иш жойингизда/ : /Ish joyingizda/);
     for (const n of [1, 2, 3, 4]) await h.press(user, n + '.');
@@ -370,7 +372,7 @@ test('Switching script mid-question preserves selections, session and stored pre
   const mini = { ...definitions[0], questions: [{ ...definitions[0].questions[8], id: 1 }] };
   const h = harness([mini], undefined, false);
   await h.message(66, '/start'); await h.press(66, 'Lotincha'); await h.press(66, 'Xodim');
-  await h.press(66, 'Boshlash'); await h.press(66, 'Ismsiz'); await h.press(66, 'Yoshni o‘tkazib');
+  await h.press(66, 'Boshlash'); await h.message(66, 'Test respondent'); await h.press(66, 'Yoshni o‘tkazib');
   await h.press(66, '1.'); await h.press(66, '2.');
   const before = structuredClone(h.sessions()[0]);
   await h.press(66, '🔤'); await h.press(66, 'Кириллча');
@@ -422,8 +424,9 @@ test('Configured channel receives one complete response file after submit, not w
   assert.ok(h.buttons(55).some(b => b.url === 'https://t.me/reports_test'));
   const reports = h.messages.filter(m => m.method === 'sendDocument' && m.body.get('chat_id') === '-100123456');
   assert.equal(reports.length, 1);
-  assert.match(reports[0].body.get('caption'), /Aziza/);
-  assert.match(reports[0].body.get('caption'), /Yosh: 28/);
+  const summary = h.messages.findLast(m => m.method === 'sendMessage' && m.body.chat_id === -100123456 && m.body.text?.includes('Xulosa, baho va tavsiyalar'));
+  assert.match(summary.body.text, /Aziza/);
+  assert.match(summary.body.text, /Yosh: 28/);
   const csv = await reports[0].body.get('document').text();
   assert.match(csv, /Tushlik bepul beriladi/);
   assert.match(csv, /Yo‘l xarajatlari qoplanadi/);
@@ -439,7 +442,7 @@ test('Client preview never sends respondent data to the reports channel', async 
   const h = harness([mini]);
   await h.message(1, '/reportchannel @reports_test'); await h.message(1, '/admin');
   await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim'); await h.press(1, 'Boshlash');
-  await h.press(1, 'Ismsiz'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
+  await h.message(1, 'Test respondent'); await h.press(1, 'Yoshni o‘tkazib'); await h.press(1, '1.');
   await h.press(1, 'Davom etish'); await h.press(1, 'Javoblarni yuborish');
   assert.equal(h.messages.filter(m => m.method === 'sendDocument').length, 0);
   assert.ok(!h.messages.at(-1).body.text.includes('@reports_test'));
@@ -452,7 +455,7 @@ test('Failed channel delivery remains queued across restarts and retries without
   await h.message(1, '/reportchannel @reports_test');
   const normalCall = h.api.call;
   h.api.call = async (method, body) => { if (method === 'sendDocument') throw new Error('Temporary outage'); return normalCall(method, body); };
-  await h.message(57, '/start mini'); await h.press(57, 'Boshlash'); await h.press(57, 'Ismsiz'); await h.press(57, 'Yoshni o‘tkazib');
+  await h.message(57, '/start mini'); await h.press(57, 'Boshlash'); await h.message(57, 'Test respondent'); await h.press(57, 'Yoshni o‘tkazib');
   await h.message(57, 'Saqlanadigan javob'); await h.press(57, 'Javoblarni yuborish');
   assert.equal(h.sessions()[0].stage, 'done');
   assert.equal(h.sessions()[0].answers[1].text, 'Saqlanadigan javob');
@@ -485,4 +488,116 @@ test('Only owner can configure a channel, both admins are verified and forwarded
   await h.message(1, '/reportchannel @different_channel');
   assert.deepEqual(await h.storage.get('report-channel'), configured);
   assert.match(h.messages.at(-1).body.text, /xabar joylash huquqini/);
+});
+
+
+test('Survey indices distinguish reported conditions, skip unknowns, and do not depend on identity or salary', () => {
+  const positive = { answers: Object.fromEntries(definitions[0].questions.filter(q => q.options).map(q => [q.id, { choices: [q.options[0]] }])) };
+  const high = buildSurveyInsights(definitions[0], positive);
+  assert.equal(high.company.score, 10); assert.equal(high.employee.score, 10);
+  const lowValues = { 8: 'Deyarli hech qachon', 15: 'Yo‘q', 16: 'Ikkalasi ham mavjud emas', 23: 'Har kuni', 24: 'To‘lanmaydi', 28: 'Yo‘q', 29: 'Yo‘q', 30: 'Deyarli hech qachon', 31: 'Yo‘q', 32: 'Juda yomon', 33: 'Deyarli hech qachon', 34: 'Deyarli hech qachon', 41: 'Yo‘q' };
+  const negative = { answers: Object.fromEntries(Object.entries(lowValues).map(([id, value]) => [id, { choices: [value] }])) };
+  negative.answers[43] = { choices: ['Bepul tushlik.'] };
+  const low = buildSurveyInsights(definitions[0], negative);
+  assert.ok(low.company.score <= 1); assert.ok(low.employee.score <= 1);
+  assert.ok(low.company.recommendations.length > 0); assert.ok(low.employee.recommendations.length > 0);
+  assert.match(renderSurveyInsights(low), /Korxona uchun tavsiyalar/);
+  assert.match(renderSurveyInsights(low), /Xodim uchun tavsiyalar/);
+  const blank = buildSurveyInsights(definitions[0], { answers: { 41: { choices: ['Bilmayman'] } } });
+  assert.equal(blank.company.score, null); assert.equal(blank.employee.score, null);
+  const changedIdentity = structuredClone(positive);
+  changedIdentity.name = 'Other name'; changedIdentity.age = 70; changedIdentity.answers[6] = { amount: 1_000_000_000, currency: 'USD' };
+  assert.deepEqual(buildSurveyInsights(definitions[0], changedIdentity), high);
+});
+
+test('Employer reports do not invent employee satisfaction and include company and staff recommendations', () => {
+  const session = { answers: {
+    18: { choices: ['Har doim vaqtida'] }, 26: { choices: ['Hech qachon'] },
+    27: { choices: ['Qo‘shimcha ishlanmaydi'] }, 34: { choices: ['Ha'] },
+  } };
+  const insights = buildSurveyInsights(definitions[1], session);
+  assert.equal(insights.company.score, 10);
+  assert.equal(insights.employee.score, null);
+  assert.match(insights.employee.conclusion, /uning o‘z javoblari/);
+  assert.ok(insights.company.recommendations.length); assert.ok(insights.employee.recommendations.length);
+  assert.equal(buildSurveyInsights({ id: 'custom' }, session), null);
+});
+
+test('Cyrillic respondent reports retain their own script through delayed delivery and include separate recommendations', async () => {
+  const h = harness(definitions, undefined, false);
+  await h.message(1, '/reportchannel @reports_test');
+  const normalCall = h.api.call;
+  h.api.call = async (method, body) => { if (method === 'sendDocument') throw new Error('Retry'); return normalCall(method, body); };
+  await h.message(78, '/start employees'); await h.press(78, 'Кириллча'); await h.press(78, 'Бошлаш');
+  await h.message(78, '789-856-78'); await h.press(78, 'Ёшни ўтказиб');
+  for (const q of definitions[0].questions) {
+    if (q.type === 'single') await h.press(78, '1.');
+    else if (q.type === 'multi') {
+      for (let n = 0; n < (q.choose ?? 1); n++) await h.press(78, (n + 1) + '.');
+      await h.press(78, 'Давом этиш');
+    } else await h.message(78, q.type === 'money' ? '3,5 млн сўм' : 'Яхши');
+  }
+  await h.press(78, 'Жавобларни юбориш');
+  const session = h.sessions()[0];
+  assert.equal(session.script, 'cyrillic');
+  const summary = h.messages.findLast(m => m.method === 'sendMessage' && m.body.chat_id === -100123456 && m.body.text?.includes('Хулоса, баҳо'));
+  assert.ok(summary); assert.match(summary.body.text, /Корхона учун тавсиялар/); assert.match(summary.body.text, /Ходим учун тавсиялар/);
+  assert.ok(summary.body.text.includes(session.token)); assert.ok(summary.body.text.length <= 4096);
+  await h.message(78, '/script'); await h.press(78, 'Lotincha');
+  const restarted = harness(definitions, h.data, false);
+  await restarted.bot.flushChannelReports(true);
+  assert.equal(restarted.messages.filter(m => m.method === 'sendMessage' && m.body.chat_id === -100123456).length, 0);
+  const sent = restarted.messages.find(m => m.method === 'sendDocument').body;
+  assert.match(sent.get('caption'), /барча савол-жавоблар/iu);
+  const csv = await sent.get('document').text();
+  assert.match(csv, /Сўровнома/); assert.match(csv, /Тушлик бепул берилади/); assert.match(csv, /Яхши/);
+  assert.ok(csv.includes(session.token));
+});
+
+
+test('Private report codes are required and reserved per role; forged skip cannot bypass identity', async () => {
+  const h = harness();
+  assert.deepEqual(parsePublicIdentity('789-456-85'), { kind: 'code', value: '789-456-85' });
+  assert.deepEqual(parsePublicIdentity('KORA GROUP'), { kind: 'name', value: 'KORA GROUP' });
+  assert.equal(parsePublicIdentity(''), null); assert.equal(parsePublicIdentity('🙂'), null);
+  for (const user of [81, 82]) { await h.message(user, '/start employers'); await h.press(user, 'Boshlash'); }
+  const s = h.sessions()[0];
+  await h.bot.handle({ update_id: 9000, callback_query: { id: 'old-skip', from: { id: 81 }, message: { chat: { id: 81, type: 'private' } }, data: 's:employers:' + s.token + ':' + s.revision + ':skip' } });
+  assert.equal(h.sessions()[0].stage, 'name');
+  await h.message(81, '789-456-85');
+  await h.message(82, '78945685');
+  assert.equal(h.sessions()[1].stage, 'name');
+  assert.match(h.messages.at(-1).body.text, /raqam allaqachon band/);
+  await h.message(82, '789-456-86');
+  assert.equal(h.sessions()[1].stage, 'age');
+});
+
+test('Older unfinished anonymous sessions must provide a public name or code while keeping prior answers', async () => {
+  const h = harness();
+  await h.message(83, '/start employees'); await h.press(83, 'Boshlash'); await h.message(83, 'Ali'); await h.press(83, 'Yoshni o‘tkazib');
+  await h.press(83, '1.');
+  const [key, session] = [...h.data].find(([key]) => key.startsWith('session:'));
+  delete session.publicIdentity; delete session.name;
+  await h.storage.put(key, session);
+  await h.message(83, '/survey');
+  assert.match(h.messages.at(-1).body.text, /nom yoki raqam/);
+  await h.message(83, '789-856-83');
+  assert.equal(h.sessions()[0].index, 1);
+  assert.equal(h.sessions()[0].stage, 'questions');
+  assert.equal(h.sessions()[0].answers[1].choices[0], '2 oydan kam');
+});
+
+test('Company code is used in channel report and CSV without disclosing Telegram names', async () => {
+  const mini = { ...definitions[1], questions: [definitions[1].questions[0]] };
+  const h = harness([mini]);
+  await h.message(1, '/reportchannel @reports_test');
+  await h.message(84, '/start employers'); await h.press(84, 'Boshlash');
+  assert.match(h.messages.at(-1).body.text, /Korxona nomini/);
+  await h.message(84, '789-456-85'); await h.press(84, 'Yoshni o‘tkazib'); await h.message(84, '2 yil'); await h.press(84, 'Javoblarni yuborish');
+  const summary = h.messages.findLast(m => m.body.chat_id === -100123456 && m.body.text?.includes('Xulosa, baho'));
+  assert.match(summary.body.text, /789-456-85 raqami hisoboti/);
+  assert.ok(!summary.body.text.includes('Telegram name never stored'));
+  const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
+  assert.match(csv, /789-456-85/);
+  assert.ok(!csv.includes('Telegram name never stored'));
 });

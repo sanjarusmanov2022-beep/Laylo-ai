@@ -8,7 +8,7 @@ Telegram orqali xodimlar va rahbarlar fikrini yig‘adi. Xodimlar uchun 57 ta, r
 
 Yozuv tanlangach rol tanlash tugmalari ochiladi. Ko‘p tanlovli savolda mos variantlar bittadan belgilanadi: belgi va tanlanganlar soni ko‘rinadi, so‘ng **Davom etish** bosiladi. Imtiyozlar savolida 3–4 ta yoki barcha variantni tanlash mumkin; «eng muhim 3 ta» deb so‘ralgan savollarda 3 ta cheklovi saqlanadi.
 
-Variantli savollar tugma bilan, boshqa savollar matn yoki raqam bilan javoblanadi. Ism va yosh avval alohida savollar bilan so‘raladi; ikkalasiga javob berish ham ixtiyoriy. Yosh 1–120 oralig‘ida butun son sifatida tekshiriladi va CSV fayliga alohida ustunda yoziladi. Har bir javob saqlanadi. Orqaga qaytish, o‘tkazib yuborish va /survey orqali davom etish mumkin.
+Variantli savollar tugma bilan, boshqa savollar matn yoki raqam bilan javoblanadi. Avval hisobotda ko‘rinadigan ism/korxona nomi yoki foydalanuvchi tanlagan maxfiy raqam so‘raladi. Bu maydon majburiy; nomsiz va raqamsiz davom etilmaydi. Xodim o‘z ismini yoki raqamini, rahbar korxona nomini yoki raqamini kiritadi. Yosh alohida so‘raladi va ixtiyoriy. Yosh 1–120 oralig‘ida butun son sifatida tekshiriladi va CSV fayliga alohida ustunda yoziladi. Har bir javob saqlanadi. Orqaga qaytish, o‘tkazib yuborish va /survey orqali davom etish mumkin.
 
 ## Egasi
 
@@ -16,13 +16,25 @@ Variantli savollar tugma bilan, boshqa savollar matn yoki raqam bilan javoblanad
 
 Admin menyusidagi **🧪 Mijoz rejimi** xodim va rahbar savollarini egasiga sinash imkonini beradi. Sinov jarayoni va javoblari alohida saqlanadi: ishtirokchilar soni, hisobot, CSV va yakunlanganlik bildirishnomalariga qo‘shilmaydi. Har bir savolda rolni tanlash, boshidan boshlash va admin menyusiga qaytish tugmalari bor. `/admin` yoki `/start` sinov rejimidan chiqaradi. Yopiq so‘rovnomalarni ham egasi sinashi mumkin.
 
-Hisobot foizlari savolga javob bergan va so‘rovnomani yakunlaganlar sonidan olinadi. Ko‘p tanlovli foizlar 100 dan oshishi mumkin. CSV faylida tugallanmagan javoblar belgilangan. Yozma javoblar asl holida saqlanadi. Pul summalari valyuta bo‘yicha hisoblanadi. `3,5 mln` kabi javobda valyuta ko‘rsatilmasa, UZS olinadi.
+Hisobot foizlari savolga javob bergan va so‘rovnomani yakunlaganlar sonidan olinadi. Ko‘p tanlovli foizlar 100 dan oshishi mumkin. CSV faylida tugallanmagan javoblar belgilangan. Yozma javoblar bazada asl holida saqlanadi. Kanal hisobotining matni va shaxsiy CSV fayli qatnashuvchi yakunlash paytida tanlagan lotin yoki kiril yozuvida chiqariladi; keyin yozuvni almashtirish navbatdagi tayyor hisobot yozuvini o‘zgartirmaydi. Pul summalari valyuta bo‘yicha hisoblanadi. `3,5 mln` kabi javobda valyuta ko‘rsatilmasa, UZS olinadi.
+
+## Xulosa, baho va tavsiyalar
+
+Har bir yakunlangan asosiy so‘rovnomaga korxona va xodim uchun alohida xulosa hamda tavsiyalar qo‘shiladi. Korxona sharoitlari va xodimning ish tajribasi/qoniqishi 0–10 oralig‘idagi so‘rovnoma indekslari bilan ko‘rsatiladi. Baholar ism, yosh yoki mutlaq maosh summasiga bog‘liq emas. Qoidalar `src/survey-insights.mjs` ichida versiyalangan.
+
+Kamida uchta tanilgan ko‘rsatkichga javob bo‘lishi kerak; kam bo‘lsa «Ma’lumot yetarli emas» chiqadi. O‘tkazilgan, noma’lum va erkin matndan aniq aniqlanmaydigan javoblar 0 sifatida hisoblanmaydi. Xodim so‘rovnomasida ish sharoiti uchun 12, ish tajribasi/qoniqishi uchun 7 ko‘rsatkich bor. Maoshni vaqtida to‘lash, qo‘shimcha ishni qoplash, dam olish va adolat ko‘rsatkichlari ikki vaznga, boshqalari bir vaznga ega. Rahbar so‘rovnomasida jarayonlar bo‘yicha 4 ko‘rsatkich bor; xodimning o‘z javobisiz uning qoniqishi baholanmaydi. Bular respondent javoblari asosidagi indekslar.
+
+Kanalda avval xulosa, baholar va tavsiyalar matni, keyin barcha javoblar fayli chiqadi. Fayl vaqtincha yuborilmasa, yuborilgan xulosa qayta takrorlanmaydi. Sinov rejimi shu tahlilni egasining shaxsiy chatida ko‘rsatadi, kanalga yubormaydi.
+
+## Nom yoki maxfiy raqam
+
+`789-456-85` kabi foydalanuvchi tanlagan raqam kanal sarlavhasida «789-456-85 raqami hisoboti» deb ko‘rsatiladi. Raqam tanlansa, Telegramdagi ism olinmaydi va kanalda berilmaydi. Oddiy so‘rovnomada bir xil raqam (bo‘shliq va tire hisobga olinmasdan) bir rol ichida ikki kishiga band qilinmaydi; sinov rejimi haqiqiy raqamlarni band qilmaydi. Eski tugallanmagan nomsiz jarayonlar oldingi javoblarini saqlagan holda majburiy belgi kiritishga yo‘naltiriladi. Maxfiy qolishi kerak bo‘lgan ismlarni erkin matnli javoblarga ham kiritmaslik kirish qismida tushuntiriladi.
 
 ## Hisobotlar kanali yoki guruhi
 
 Admin menyusidagi **📨 Hisobotlar kanali** → **Kanalni ulash** orqali @username, t.me havolasi yoki yopiq kanaldan forward qilingan xabarni yuboring. Egasi ham, Laylo ham shu kanalda administrator bo‘lishi, Layloda xabar joylash huquqi bo‘lishi kerak. Faqat egasi ulanishni o‘zgartira oladi. `/reportchannel @username` ham ishlaydi. Kanal ulanmaguncha odatiy admin hisobotlari va CSV ishlashda davom etadi.
 
-Ulangandan keyin har bir yakunlangan yangi so‘rovnoma kanalga qisqa ma’lumot (ixtiyoriy ism va yosh, so‘rovnoma, sana, javob raqami) va barcha savol-javoblar CSV fayli bilan yuboriladi. Telegram ID faylga qo‘shilmaydi. Qatnashuvchiga yakunda ochiq hisobotlar kanalining @username, t.me havolasi va kanalni ochish tugmasi ko‘rsatiladi. Sinov rejimidagi javoblar yuborilmaydi. Yakunlanmagan javoblar asosiy bazada saqlanadi, kanalga yuborilmaydi. Kanalning o‘z ruxsatlari undagi hisobotlarni kim ko‘rishini belgilaydi.
+Ulangandan keyin har bir yakunlangan yangi so‘rovnoma kanalga qisqa ma’lumot (nom yoki maxfiy raqam, ixtiyoriy yosh, so‘rovnoma, sana) va barcha savol-javoblar CSV fayli bilan yuboriladi. Telegram ID faylga qo‘shilmaydi. Qatnashuvchiga yakunda ochiq hisobotlar kanalining @username, t.me havolasi va kanalni ochish tugmasi ko‘rsatiladi. Sinov rejimidagi javoblar yuborilmaydi. Yakunlanmagan javoblar asosiy bazada saqlanadi, kanalga yuborilmaydi. Kanalning o‘z ruxsatlari undagi hisobotlarni kim ko‘rishini belgilaydi.
 
 Yuboriladigan hisobot tugallangan javob bilan birga atomik saqlanadi. Vaqtinchalik xatoda navbat saqlanadi; Cloudflare Durable Object alarm orqali qayta urinadi. Admin menyusidan ham qayta yuborishga urinish mumkin. Ulanish o‘chirilsa, navbat kutadi; keyin ulangan kanalga yuboriladi. Telegramdan muvaffaqiyatli javob olingan hisobot qayta tugma bosilganda takrorlanmaydi.
 

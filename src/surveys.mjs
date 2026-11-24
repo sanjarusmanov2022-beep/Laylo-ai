@@ -1,3 +1,4 @@
+import { buildSurveyInsights, renderSurveyInsights } from './survey-insights.mjs';
 const encoder = new TextEncoder();
 
 const latinLetters = { a:'а', b:'б', d:'д', f:'ф', g:'г', h:'ҳ', i:'и', j:'ж', k:'к', l:'л', m:'м', n:'н', o:'о', p:'п', q:'қ', r:'р', s:'с', t:'т', u:'у', v:'в', x:'х', y:'й', z:'з', c:'с', w:'в' };
@@ -9,8 +10,8 @@ function letterCase(value, original, word) {
 }
 export function toScript(text, script = 'latin') {
   // Keep links, email addresses, bot handles, commands and technical identifiers intact.
-  return String(text).replace(/https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[a-z]{2,}|@[\w]+|\/[a-z][a-z0-9_]*|\b(?:CSV|KPI|UZS|USD|EUR|ID|API|SHA)\b|[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ'’‘ʻʼ]+/gu, word => {
-    if (/^(?:https?:|@|\/)|@/.test(word) || /^(CSV|KPI|UZS|USD|EUR|ID|API|SHA)$/.test(word)) return word;
+  return String(text).replace(/\b[a-f0-9]{10}\b|https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[a-z]{2,}|@[\w]+|\/[a-z][a-z0-9_]*|\b(?:CSV|KPI|UZS|USD|EUR|ID|API|SHA)\b|[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ'’‘ʻʼ]+/gu, word => {
+    if (/^[a-f0-9]{10}$/.test(word) || /^(?:https?:|@|\/)|@/.test(word) || /^(CSV|KPI|UZS|USD|EUR|ID|API|SHA)$/.test(word)) return word;
     if (script === 'latin') return word.replace(/[А-Яа-яЁёЎўҚқҒғҲҳ]/gu, (char, offset) => {
       const lower = char.toLowerCase();
       const value = lower === 'е' ? (offset === 0 || /[аеиоуэюяёъь]/i.test(word[offset - 1]) ? 'ye' : 'e') : (cyrillicLetters[lower] ?? char);
@@ -50,6 +51,19 @@ export function parseAmount(input) {
   if (!Number.isFinite(amount) || amount < 0 || amount > 1e15) return null;
   const currency = ['usd', 'dollar', '$'].includes(match[3]) ? 'USD' : ['eur', 'yevro', '€'].includes(match[3]) ? 'EUR' : 'UZS';
   return { amount, currency };
+}
+
+
+export function parsePublicIdentity(input) {
+  const value = String(input ?? '').trim().normalize('NFKC').replace(/[–—]/g, '-');
+  if (/^[0-9][0-9 -]{0,39}$/.test(value)) return { kind: 'code', value };
+  if (value.length >= 2 && value.length <= 80 && /\p{L}/u.test(value) && !/[\n\r\x00-\x1f]/.test(value)) return { kind: 'name', value };
+  return null;
+}
+function publicIdentity(session) { return session.publicIdentity ?? parsePublicIdentity(session.name) ?? { kind: 'unknown', value: 'Ko‘rsatilmagan' }; }
+function identityHeading(survey, session) {
+  const identity = publicIdentity(session);
+  return identity.kind === 'code' ? '🔢 ' + identity.value + ' raqami hisoboti' : (survey.id === 'employers' ? '🏢 ' : '👤 ') + identity.value + ' hisoboti';
 }
 
 function randomId() { return crypto.randomUUID().replaceAll('-', '').slice(0, 10); }
@@ -190,24 +204,29 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     let text;
     let keyboard;
     if (session.stage === 'intro') {
-      text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nJavoblar so‘rovnoma egasiga va u belgilagan hisobotlar kanali yoki guruhiga yuboriladi. Telegram texnik identifikatorni botga uzatadi. Biz uning o‘rniga tasodifiy maxfiy kalit bilan hosil qilingan belgini saqlaymiz. Avval ism va yosh alohida so‘raladi; ikkalasini ham o‘tkazib yuborish mumkin. Ish joyi nomi yoki boshqa odamlarning shaxsiy ma'lumotlarini yozishingiz shart emas.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
+      text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nHisobotni tanishingiz uchun ism, korxona nomi yoki o‘zingiz tanlagan maxfiy raqam kiritish shart. Yoshingizni ko‘rsatish ixtiyoriy. Tanlagan nom yoki raqam va javoblaringiz so‘rovnoma egasiga hamda hisobotlar kanaliga yuboriladi. Maxfiy qolishini istagan ismlarni boshqa yozma javoblarga ham kiritmang.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
       keyboard = [[button('Boshlash ✅', session, 'begin')], [{ text: 'Bosh menyu', callback_data: 'home' }]];
     } else if (session.stage === 'name') {
-      text = '👤 Ismingiz nima?\n\nIsmingizni xabar qilib yozing. Ism yozish ixtiyoriy; istamasangiz, pastdagi tugmani bosing.';
-      keyboard = [[button('Ismsiz davom etish', session, 'skip')]];
+      text = survey.id === 'employers'
+        ? '🏢 Korxonangizni hisobotda qanday ko‘rsatamiz?\n\nKorxona nomini YOKI o‘zingiz tanlagan maxfiy raqamni yozing.\nMasalan: KORA GROUP yoki 789-456-85.\n\nKanalda aynan shu nom yoki raqam ko‘rinadi. Nom yoki raqam kiritish shart.'
+        : '👤 Hisobotda qanday nom yoki raqam bilan ko‘rinasiz?\n\nIsm-familiyangizni YOKI o‘zingiz tanlagan maxfiy raqamni yozing.\nMasalan: Ali Valiyev yoki 789-856-78.\n\nKanalda aynan shu nom yoki raqam ko‘rinadi. Nom yoki raqam kiritish shart.';
+      keyboard = [];
     } else if (session.stage === 'age') {
       text = '🎂 Yoshingiz nechada?\n\nYoshingizni raqam bilan yozing. Masalan: 28. Javob berish ixtiyoriy.';
-      keyboard = [[button('Yoshni o‘tkazib yuborish', session, 'skip')], [button('⬅️ Ismga qaytish', session, 'back')]];
+      keyboard = [[button('Yoshni o‘tkazib yuborish', session, 'skip')], [button('⬅️ Nom yoki raqamga qaytish', session, 'back')]];
     } else if (session.stage === 'review') {
       const answered = Object.values(session.answers).filter(Boolean).length;
       text = `Savollar tugadi ✅\n\nJavob berilgan — ${answered}\nO‘tkazilgan — ${survey.questions.length - answered}\n\n«Yuborish»ni bosing. Savollarni ko‘rib chiqish uchun orqaga qaytishingiz mumkin.`;
       keyboard = [[button('Javoblarni yuborish ✅', session, 'submit')], [button('⬅️ Oldingi savol', session, 'back')]];
     } else if (session.stage === 'done') {
-      if (session.preview) return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')]);
+      if (session.preview) {
+        const analysis = renderSurveyInsights(buildSurveyInsights(survey, session));
+        return send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.' + (analysis ? '\n\n' + identityHeading(survey, session) + '\n\n' + analysis : ''), [...previewNavigation(survey.id), scriptButton('menu')]);
+      }
       const channel = await storage.get('report-channel');
       const thanks = survey.thanks ?? 'Rahmat! Javoblaringiz saqlandi ✅';
       const channelUrl = channel?.username ? `https://t.me/${channel.username}` : null;
-      return send(chat, thanks + (channelUrl ? `\n\n📊 Hisobotni shu kanalda olasiz:\n@${channel.username}\n${channelUrl}` : ''), [
+      return send(chat, thanks + '\n\nHisobotdagi belgingiz: ' + publicIdentity(session).value + (channelUrl ? `\n\n📊 Hisobotni shu kanalda olasiz:\n@${channel.username}\n${channelUrl}` : ''), [
         ...(channelUrl ? [[{ text: '📊 Hisobotlar kanalini ochish', url: channelUrl }]] : []),
         scriptButton('menu'),
       ]);
@@ -252,6 +271,11 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (!isPreviewActor(actor) && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
     let session = await storage.get(sessionKey(id, actor));
     if (!session) session = { survey: id, token: randomId(), revision: 0, stage: 'intro', index: 0, answers: {}, paused: false };
+    if (publicIdentity(session).kind === 'unknown' && !['intro', 'name', 'done'].includes(session.stage)) {
+      session.identityReturnStage = session.stage;
+      session.stage = 'name';
+      session.revision++;
+    }
     session.preview = isPreviewActor(actor);
     session.paused = false;
     await storage.put(sessionKey(id, actor), session);
@@ -297,12 +321,12 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   }
 
   async function exportCsv(chat, id = 'all') {
-    const rows = [['So‘rovnoma', 'Javob raqami', 'Ism (ixtiyoriy)', 'Yosh (ixtiyoriy)', 'Holat', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
+    const rows = [['So‘rovnoma', 'Javob raqami', 'Nom yoki maxfiy raqam', 'Yosh (ixtiyoriy)', 'Holat', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
     for (const survey of surveys.values()) {
       if (id !== 'all' && survey.id !== id) continue;
       const sessions = (await sessionList(survey.id)).filter(s => s.stage !== 'intro');
       for (const [i, session] of sessions.entries()) for (const q of survey.questions) rows.push([
-        survey.title, i + 1, session.name ?? '', session.age ?? '', session.stage === 'done' ? 'Yakunlangan' : 'Tugallanmagan', q.id, q.text,
+        survey.title, i + 1, publicIdentity(session).value, session.age ?? '', session.stage === 'done' ? 'Yakunlangan' : 'Tugallanmagan', q.id, q.text,
         session.stage === 'done' || Object.hasOwn(session.answers, q.id) ? display(session.answers[q.id]) : 'Hali yetib kelmagan',
         session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '',
       ]);
@@ -331,7 +355,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   async function channelSettings(chat) {
     const channel = await storage.get('report-channel');
     const pending = (await listStored(storage, 'channel-report:')).length;
-    return send(chat, '📨 Hisobotlar kanali\n\n' + (channel ? 'Ulangan: ' + channel.title + (channel.username ? '\n@' + channel.username : '') : 'Hozircha kanal ulanmagan.') + '\n\nSo‘rovnoma tugaganda ism, yosh, yo‘nalish va barcha javoblar yozilgan CSV shu kanalga yuboriladi. Sinov javoblari yuborilmaydi.\nYuborishni kutayotgan hisobotlar: ' + pending, [
+    return send(chat, '📨 Hisobotlar kanali\n\n' + (channel ? 'Ulangan: ' + channel.title + (channel.username ? '\n@' + channel.username : '') : 'Hozircha kanal ulanmagan.') + '\n\nSo‘rovnoma tugaganda nom yoki maxfiy raqam, xulosa, 10 ballik baho, tavsiyalar va barcha javoblar yozilgan fayl shu kanalga yuboriladi. Sinov javoblari yuborilmaydi.\nYuborishni kutayotgan hisobotlar: ' + pending, [
       [{ text: channel ? 'Kanalni almashtirish' : 'Kanalni ulash', callback_data: 'a:channelsetup' }],
       ...(channel ? [[{ text: 'Qayta yuborishga urinish', callback_data: 'a:channelretry' }, { text: 'Kanalni uzish', callback_data: 'a:channeloff' }]] : []),
       [{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }],
@@ -374,16 +398,24 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (!force && (job.nextAttemptAt ?? 0) > Date.now()) continue;
       if (await storage.get('report-sent:' + job.session.token)) { await storage.delete(key); continue; }
       const { survey, session } = job;
-      const rows = [['So‘rovnoma', 'Javob raqami', 'Ism (ixtiyoriy)', 'Yosh (ixtiyoriy)', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
-      for (const q of survey.questions) rows.push([survey.title, session.token, session.name ?? '', session.age ?? '', q.id, q.text, display(session.answers[q.id]), session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '']);
-      const csv = '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+      const script = session.script ?? 'latin';
+      const insights = job.insights ?? buildSurveyInsights(survey, session);
+      const rows = [['So‘rovnoma', 'Javob raqami', 'Nom yoki maxfiy raqam', 'Yosh (ixtiyoriy)', 'Savol raqami', 'Savol', 'Javob', 'Summa', 'Valyuta']];
+      for (const q of survey.questions) rows.push([survey.title, session.token, publicIdentity(session).value, session.age ?? '', q.id, q.text, display(session.answers[q.id]), session.answers[q.id]?.amount ?? '', session.answers[q.id]?.currency ?? '']);
+      const csv = '\uFEFF' + rows.map(row => row.map(value => csvCell(typeof value === 'string' ? toScript(value, script) : value)).join(',')).join('\r\n');
       const date = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tashkent', dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.completedAt));
-      const caption = '✅ Yangi so‘rovnoma yakunlandi\n\n' + survey.title + '\nIsm: ' + (session.name ?? 'Ko‘rsatilmagan') + '\nYosh: ' + (session.age ?? 'Ko‘rsatilmagan') + '\nJavob berilgan: ' + Object.values(session.answers).filter(Boolean).length + '/' + survey.questions.length + '\nSana: ' + date + ' (Toshkent)\nJavob raqami: ' + session.token + '\n\nBarcha savollar va javoblar faylda.';
+      const caption = identityHeading(survey, session) + '\n\n' + survey.title + '\nYosh: ' + (session.age ?? 'Ko‘rsatilmagan') + '\nJavob berilgan: ' + Object.values(session.answers).filter(Boolean).length + '/' + survey.questions.length + '\nSana: ' + date + ' (Toshkent)\nJavob raqami: ' + session.token + '\n\nBarcha savollar va javoblar faylda.';
       const form = new FormData();
       form.set('chat_id', String(channel.id));
-      form.set('caption', toScript(caption, await getScript(ownerId) ?? 'latin'));
+      form.set('caption', toScript(insights ? '📎 ' + publicIdentity(session).value + ' — barcha savol-javoblar\nHisobot ID: ' + session.token : caption, script));
       form.set('document', new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'laylo-' + survey.id + '-' + session.token + '.csv');
       try {
+        if (insights && !job.summaryMessageId) {
+          const report = caption.replace('\n\nBarcha savollar va javoblar faylda.', '') + '\n\n' + renderSurveyInsights(insights);
+          const summary = await api.call('sendMessage', { chat_id: channel.id, text: toScript(report, script), link_preview_options: { is_disabled: true } });
+          job.summaryMessageId = summary.message_id;
+          await storage.put(key, job);
+        }
         const sent = await api.call('sendDocument', form);
         await storage.put('report-sent:' + session.token, { chatId: channel.id, messageId: sent.message_id, sentAt: new Date().toISOString() });
         await storage.delete(key);
@@ -391,7 +423,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         job.attempts = (job.attempts ?? 0) + 1;
         job.nextAttemptAt = Date.now() + Math.min(60_000 * 2 ** Math.min(job.attempts - 1, 6), 3_600_000);
         await storage.put(key, job);
-        if (job.attempts === 1) await send(ownerId, 'Hisobotni kanalga yubora olmadim. Javoblar saqlangan, avtomatik qayta urinaman. Kanal huquqlarini «Hisobotlar kanali» menyusidan tekshirishingiz mumkin.', adminKeyboard()).catch(() => {});
+        if (job.attempts === 1) await send(ownerId, 'Hisobotni kanalga to‘liq yubora olmadim. Javoblar saqlangan, avtomatik qayta urinaman. Kanal huquqlarini «Hisobotlar kanali» menyusidan tekshirishingiz mumkin.', adminKeyboard()).catch(() => {});
       }
     }
     await scheduleChannelReports();
@@ -528,6 +560,10 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const session = survey && await storage.get(sessionKey(id, actor));
     if (!session) return menu(chat, owner);
     if (!preview && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
+    if (publicIdentity(session).kind === 'unknown' && !['intro', 'name', 'done'].includes(session.stage)) {
+      session.identityReturnStage = session.stage; session.stage = 'name'; session.revision++;
+      return persist(chat, actor, survey, session, update.update_id);
+    }
     if (Number.isSafeInteger(session.lastUpdate) && update.update_id <= session.lastUpdate) return prompt(chat, survey, session);
     if (callback) {
       const [prefix, , token, revision, action] = data.split(':');
@@ -535,10 +571,10 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (session.paused || session.stage === 'done') return;
       if (action === 'pause') { session.paused = true; await storage.put(sessionKey(id, actor), session); return send(chat, 'Javoblaringiz saqlandi. /survey orqali davom etishingiz mumkin.'); }
       if (action === 'begin' && session.stage === 'intro') { session.stage = 'name'; session.revision++; return persist(chat, actor, survey, session, update.update_id); }
-      if (action === 'skip' && ['name', 'age'].includes(session.stage)) {
-        const field = session.stage;
-        delete session[field];
-        session.stage = field === 'name' ? 'age' : 'questions';
+      if (action === 'skip' && session.stage === 'name') return send(chat, 'Nom yoki maxfiy raqam kiritish shart. Masalan: 789-856-78.');
+      if (action === 'skip' && session.stage === 'age') {
+        delete session.age;
+        session.stage = 'questions';
         session.revision++;
         return persist(chat, actor, survey, session, update.update_id);
       }
@@ -549,9 +585,11 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (action === 'submit' && session.stage === 'review') {
         session.stage = 'done'; session.revision++;
         session.completedAt = new Date().toISOString();
+        session.script = await getScript(chat) ?? 'latin';
+        session.insights = buildSurveyInsights(survey, session);
         session.lastUpdate = update.update_id;
         const record = { [sessionKey(id, actor)]: session };
-        if (!session.preview && await storage.get('report-channel')) record[`channel-report:${id}:${session.token}`] = { survey, session: structuredClone(session), attempts: 0, nextAttemptAt: Date.now() };
+        if (!session.preview && await storage.get('report-channel')) record[`channel-report:${id}:${session.token}`] = { survey, session: structuredClone(session), insights: session.insights, attempts: 0, nextAttemptAt: Date.now() };
         await storage.put(record);
         await scheduleChannelReports();
         await prompt(chat, survey, session);
@@ -586,12 +624,27 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       return;
     }
     if (session.paused || session.stage === 'done' || session.stage === 'intro' || session.stage === 'review') return prompt(chat, survey, session);
-    if (!input || input.length > 1000) return send(chat, 'Javobingizni 1000 belgigacha matnda yozing yoki variantni tanlang.');
     if (session.stage === 'name') {
-      if (input.length > 80) return send(chat, 'Ismni 80 belgigacha yozing yoki o‘tkazing.');
-      session.name = input; session.stage = 'age'; session.revision++;
+      const identity = parsePublicIdentity(input);
+      if (!identity) return send(chat, 'Nom yoki maxfiy raqam kiriting. Nom 2–80 belgidan, raqam esa ko‘pi bilan 40 ta raqam, bo‘shliq yoki tiredan iborat bo‘lsin. Masalan: 789-856-78.');
+      const codeKey = value => `public-code:${survey.id}:${value.replace(/[ -]/g, '')}`;
+      if (identity.kind === 'code' && !preview) {
+        const reserved = await storage.get(codeKey(identity.value));
+        if (reserved && reserved !== session.token) return send(chat, 'Bu maxfiy raqam allaqachon band. O‘zingiz taniydigan boshqa raqam kiriting.');
+        await storage.put(codeKey(identity.value), session.token);
+      }
+      if (session.publicIdentity?.kind === 'code' && !preview && (identity.kind !== 'code' || codeKey(session.publicIdentity.value) !== codeKey(identity.value))) {
+        const oldKey = codeKey(session.publicIdentity.value);
+        if (await storage.get(oldKey) === session.token) await storage.delete(oldKey);
+      }
+      session.publicIdentity = identity;
+      delete session.name;
+      session.stage = session.identityReturnStage ?? 'age';
+      delete session.identityReturnStage;
+      session.revision++;
       return persist(chat, actor, survey, session, update.update_id);
     }
+    if (!input || input.length > 1000) return send(chat, 'Javobingizni 1000 belgigacha matnda yozing yoki variantni tanlang.');
     if (session.stage === 'age') {
       if (!/^[0-9]{1,3}$/.test(input) || Number(input) < 1 || Number(input) > 120) return send(chat, 'Yoshingizni 1 dan 120 gacha butun son bilan yozing. Masalan: 28. Yoki «Yoshni o‘tkazib yuborish» tugmasini bosing.');
       session.age = Number(input); session.stage = 'questions'; session.revision++;
