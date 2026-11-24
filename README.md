@@ -10,6 +10,8 @@ Telegram orqali xodimlar va rahbarlar fikrini yig‘adi. Xodimlar uchun 57 ta, r
 
 /admin menyusida qatnashuvchilar, savollar bo‘yicha son va foizlar, CSV eksport, havolalar, ochish-yopish va yangi so‘rovnoma yaratish tugmalari bor. Yangi savol uchun oddiy matn yuboring. Variantli savol shakli `Tushlik beriladimi? | Ha | Yo‘q`.
 
+Admin menyusidagi **🧪 Mijoz rejimi** xodim va rahbar savollarini egasiga sinash imkonini beradi. Sinov jarayoni va javoblari alohida saqlanadi: ishtirokchilar soni, hisobot, CSV va yakunlanganlik bildirishnomalariga qo‘shilmaydi. Har bir savolda rolni tanlash, boshidan boshlash va admin menyusiga qaytish tugmalari bor. `/admin` yoki `/start` sinov rejimidan chiqaradi. Yopiq so‘rovnomalarni ham egasi sinashi mumkin.
+
 Hisobot foizlari savolga javob bergan va so‘rovnomani yakunlaganlar sonidan olinadi. Ko‘p tanlovli foizlar 100 dan oshishi mumkin. CSV faylida tugallanmagan javoblar belgilangan. Yozma javoblar asl holida saqlanadi. Pul summalari valyuta bo‘yicha hisoblanadi. `3,5 mln` kabi javobda valyuta ko‘rsatilmasa, UZS olinadi.
 
 ## Bepul Cloudflare va GitHub

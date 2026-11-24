@@ -47,6 +47,7 @@ export async function listStored(storage, prefix) {
 }
 
 export function surveyStats(survey, sessions) {
+  sessions = sessions.filter(s => !s.preview);
   const completed = sessions.filter(s => s.stage === 'done');
   const started = sessions.filter(s => s.stage !== 'intro');
   return {
@@ -84,21 +85,33 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const bytes = await crypto.subtle.digest('SHA-256', encoder.encode(`${secret}:${userId}`));
     return Array.from(new Uint8Array(bytes), n => n.toString(16).padStart(2, '0')).join('');
   }
-  const sessionKey = (id, actor) => `session:${id}:${actor}`;
+  const isPreviewActor = actor => actor.startsWith('preview:');
+  const sessionKey = (id, actor) => isPreviewActor(actor) ? `preview-session:${id}:${actor.slice(8)}` : `session:${id}:${actor}`;
   const isOpen = async id => (await storage.get(`open:${id}`)) !== false;
-  const sessionList = async id => (await listStored(storage, `session:${id}:`)).map(([, session]) => session);
+  const sessionList = async id => (await listStored(storage, `session:${id}:`)).map(([, session]) => session).filter(session => !session.preview);
   const button = (text, session, action) => ({ text, callback_data: `s:${session.survey}:${session.token}:${session.revision}:${action}` });
   const adminKeyboard = () => [
     [{ text: '📊 Qatnashuvchilar va hisobot', callback_data: 'a:report:all' }],
     [{ text: '📥 Barcha javoblar · CSV', callback_data: 'a:export:all' }],
     [{ text: '📋 So‘rovnomalar va havolalar', callback_data: 'a:list' }],
-    [{ text: '➕ Yangi so‘rovnoma', callback_data: 'a:new' }, { text: '👀 Ishtirokchi ko‘rinishi', callback_data: 'a:preview' }],
+    [{ text: '🧪 Mijoz rejimi', callback_data: 'a:preview' }],
+    [{ text: '➕ Yangi so‘rovnoma', callback_data: 'a:new' }],
   ];
 
-  async function menu(chat, owner = false) {
+  const previewNavigation = id => [
+    [{ text: '🔄 Boshidan boshlash', callback_data: `a:resetpreview:${id}` }],
+    [{ text: '👥 Xodim / Rahbar tanlash', callback_data: 'a:preview' }],
+    [{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }],
+  ];
+
+  async function menu(chat, owner = false, preview = false) {
     if (owner) return send(chat, 'Laylo · Admin menyusi\n\nSo‘rovnomalar, qatnashuvchilar va natijalarni shu yerdan boshqarasiz.', adminKeyboard());
     const rows = [];
-    for (const survey of surveys.values()) if (await isOpen(survey.id)) rows.push([{ text: survey.id === 'employees' ? '👤 Xodim' : survey.id === 'employers' ? '👔 Rahbar / ish beruvchi' : survey.title.slice(0, 60), callback_data: `role:${survey.id}` }]);
+    for (const survey of surveys.values()) if (preview || await isOpen(survey.id)) rows.push([{ text: survey.id === 'employees' ? '👤 Xodim' : survey.id === 'employers' ? '👔 Rahbar / ish beruvchi' : survey.title.slice(0, 60), callback_data: preview ? `a:trypreview:${survey.id}` : `role:${survey.id}` }]);
+    if (preview) {
+      rows.push([{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }]);
+      return send(chat, '🧪 Mijoz rejimi · SINOV\n\nMijozga beriladigan savollarni o‘zingiz sinab ko‘rasiz. Xodim yoki Rahbarni tanlang.\n\nSinov javoblari haqiqiy qatnashuvchilar soni, hisobot va CSV fayliga qo‘shilmaydi. Har ikki rolni alohida tekshirish va boshidan boshlash mumkin.', rows);
+    }
     return send(chat, rows.length ? 'Assalomu alaykum! 👋 Men Laylo, so‘rovnoma botiman.\n\nFikrlaringizni o‘rganib, kelajakda yaxshi ish sharoiti yaratmoqchimiz. Iltimos, chin dildan javob bering.\n\nO‘zingizga mos bo‘limni tanlang.' : 'Hozircha ochiq so‘rovnoma yo‘q. Keyinroq qayta kiring.', rows);
   }
 
@@ -116,7 +129,9 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       text = `Savollar tugadi ✅\n\nJavob berilgan — ${answered}\nO‘tkazilgan — ${survey.questions.length - answered}\n\n«Yuborish»ni bosing. Savollarni ko‘rib chiqish uchun orqaga qaytishingiz mumkin.`;
       keyboard = [[button('Javoblarni yuborish ✅', session, 'submit')], [button('⬅️ Oldingi savol', session, 'back')]];
     } else if (session.stage === 'done') {
-      return send(chat, survey.thanks ?? 'Javoblaringiz saqlandi. Rahmat!');
+      return session.preview
+        ? send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', previewNavigation(survey.id))
+        : send(chat, survey.thanks ?? 'Javoblaringiz saqlandi. Rahmat!');
     } else {
       const q = survey.questions[session.index];
       const selected = session.pending ?? session.answers[q.id]?.choices ?? [];
@@ -133,6 +148,10 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (session.index > 0) navigation.unshift(button('⬅️ Orqaga', session, 'back'));
       keyboard.push(navigation, [button('⏸ Keyinroq davom etaman', session, 'pause')]);
     }
+    if (session.preview) {
+      text = '🧪 Mijoz rejimi · SINOV\n\n' + text;
+      keyboard.push(...previewNavigation(survey.id));
+    }
     const payload = { chat_id: chat, text, reply_markup: { inline_keyboard: keyboard } };
     if (editMessageId) {
       try { return await api.call('editMessageText', { ...payload, message_id: editMessageId }); }
@@ -144,9 +163,10 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   async function begin(chat, actor, id) {
     const survey = surveys.get(id);
     if (!survey) return send(chat, 'Bu so‘rovnoma topilmadi. /start orqali menyuni oching.');
-    if (!await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
+    if (!isPreviewActor(actor) && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
     let session = await storage.get(sessionKey(id, actor));
     if (!session) session = { survey: id, token: randomId(), revision: 0, stage: 'intro', index: 0, answers: {}, paused: false };
+    session.preview = isPreviewActor(actor);
     session.paused = false;
     await storage.put(sessionKey(id, actor), session);
     await storage.put(`active:${actor}`, id);
@@ -225,7 +245,18 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (action === 'report') return report(chat, id);
     if (action === 'export') return exportCsv(chat, id);
     if (action === 'list') return adminList(chat);
-    if (action === 'preview') return menu(chat);
+    if (['preview', 'trypreview', 'resetpreview', 'exitpreview', 'new'].includes(action)) {
+      const actor = await actorKey(ownerId);
+      const preview = action !== 'exitpreview' && action !== 'new';
+      await storage.put(`preview-mode:${actor}`, preview);
+      await storage.put('draft', null);
+      if (action === 'exitpreview') return menu(chat, true);
+      if (action === 'preview') return menu(chat, false, true);
+      if (action === 'trypreview' || action === 'resetpreview') {
+        if (action === 'resetpreview') await storage.delete(sessionKey(id, `preview:${actor}`));
+        return begin(chat, `preview:${actor}`, id);
+      }
+    }
     if (action === 'new') {
       await storage.put('draft', { id: `s${randomId()}`, questions: [], stage: 'title' });
       return send(chat, 'Yangi so‘rovnoma nomini yozing. Bekor qilish uchun /cancel.');
@@ -282,23 +313,28 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       const [, action, id] = data.split(':');
       return adminAction(chat, action, id);
     }
-    const actor = await actorKey(user.id);
+    const baseActor = await actorKey(user.id);
+    const preview = owner && (await storage.get(`preview-mode:${baseActor}`)) === true;
+    const actor = preview ? `preview:${baseActor}` : baseActor;
     if (data.startsWith('role:')) return begin(chat, actor, data.slice(5));
-    if (data === 'home') return menu(chat, owner);
+    if (data === 'home') return menu(chat, owner && !preview, preview);
     const input = message.text?.trim() ?? '';
     const [commandWithBot, arg] = input.split(/\s+/);
     const command = commandWithBot?.split('@')[0];
     if (!callback) {
       if (command === '/start' || command === '/help' || command === '/admin') {
-        if (owner) await storage.put('draft', null);
-        return command === '/start' && arg ? begin(chat, actor, arg) : menu(chat, owner);
+        if (owner) {
+          await storage.put('draft', null);
+          await storage.put(`preview-mode:${baseActor}`, false);
+        }
+        return command === '/start' && arg ? begin(chat, baseActor, arg) : menu(chat, owner);
       }
       if (command === '/cancel') {
         if (owner) await storage.put('draft', null);
         const id = await storage.get(`active:${actor}`);
         const session = id && await storage.get(sessionKey(id, actor));
         if (session && session.stage !== 'done') { session.paused = true; await storage.put(sessionKey(id, actor), session); }
-        return send(chat, 'Tanaffus qilamiz. Javoblaringiz saqlandi. Davom etish uchun /survey yoki dastlabki havolani oching.', owner ? adminKeyboard() : undefined);
+        return send(chat, 'Tanaffus qilamiz. Javoblaringiz saqlandi. Davom etish uchun /survey yoki dastlabki havolani oching.', preview && id ? previewNavigation(id) : owner ? adminKeyboard() : undefined);
       }
       if (owner && ['/report', '/surveyreport', '/export', '/surveys', '/newsurvey'].includes(command)) {
         const action = { '/report': 'report', '/surveyreport': 'report', '/export': 'export', '/surveys': 'list', '/newsurvey': 'new' }[command];
@@ -307,7 +343,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (owner && input && !input.startsWith('/') && await draftInput(chat, input)) return;
       if (command === '/survey') {
         const id = arg ?? await storage.get(`active:${actor}`);
-        return id ? begin(chat, actor, id) : menu(chat);
+        return id ? begin(chat, actor, id) : menu(chat, false, preview);
       }
       if (input.startsWith('/')) return menu(chat, owner);
     }
@@ -315,7 +351,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const survey = surveys.get(id);
     const session = survey && await storage.get(sessionKey(id, actor));
     if (!session) return menu(chat, owner);
-    if (!await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
+    if (!preview && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
     if (Number.isSafeInteger(session.lastUpdate) && update.update_id <= session.lastUpdate) return prompt(chat, survey, session);
     if (callback) {
       const [prefix, , token, revision, action] = data.split(':');
@@ -328,6 +364,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         session.stage = 'done'; session.revision++;
         session.completedAt = new Date().toISOString();
         await persist(chat, actor, survey, session, update.update_id);
+        if (session.preview) return;
         const stats = surveyStats(survey, await sessionList(id));
         await send(ownerId, `Yangi so‘rovnoma yakunlandi ✅\n${survey.title}\n\nJami yakunlagan — ${stats.completed}\nDavom etayotgan — ${stats.unfinished}`, adminKeyboard()).catch(() => {});
         return;

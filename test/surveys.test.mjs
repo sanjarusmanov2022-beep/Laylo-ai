@@ -11,6 +11,7 @@ function harness(defs = definitions, existing) {
   const messages = [];
   const storage = {
     get: async key => structuredClone(data.get(key)),
+    delete: async key => data.delete(key),
     put: async (key, value) => { data.set(key, structuredClone(value)); },
     list: async ({ prefix, limit, startAfter }) => new Map([...data].sort(([a], [b]) => a.localeCompare(b)).filter(([key]) => key.startsWith(prefix) && (!startAfter || key > startAfter)).slice(0, limit)),
   };
@@ -167,4 +168,81 @@ test('Worker rejects unauthenticated access and does not expose stored responses
   const h = harness();
   const obj = new SurveyStore({ storage: h.storage }, { TELEGRAM_OWNER_ID: '1', TELEGRAM_BOT_USERNAME: 'TestBot', TELEGRAM_BOT_TOKEN: 'test' });
   assert.equal((await obj.fetch(new Request('https://internal', { method: 'POST', body: 'invalid' }))).status, 400);
+});
+
+
+test('Owner client mode completes both real questionnaires without entering reports or CSV', async () => {
+  const h = harness();
+  await h.message(1, '/admin');
+  assert.ok(h.buttons(1).some(b => b.text === '🧪 Mijoz rejimi'));
+  await h.press(1, 'Mijoz rejimi');
+  assert.match(h.messages.at(-1).body.text, /SINOV/);
+  for (const survey of definitions) {
+    await h.press(1, survey.id === 'employees' ? 'Xodim' : 'Rahbar');
+    await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz');
+    for (const q of survey.questions) {
+      assert.match(h.messages.at(-1).body.text, /Mijoz rejimi · SINOV/);
+      if (q.type === 'single') await h.press(1, '1.');
+      else if (q.type === 'multi') {
+        for (let n = 0; n < (q.choose ?? 1); n++) await h.press(1, (n + 1) + '.');
+        await h.press(1, 'Davom etish');
+      } else await h.message(1, q.type === 'money' ? '3,5 mln' : q.type === 'number' ? '30' : 'OWNER_PREVIEW_ONLY');
+    }
+    await h.press(1, 'Javoblarni yuborish');
+    assert.match(h.messages.at(-1).body.text, /Sinov yakunlandi/);
+    await h.press(1, 'Xodim / Rahbar');
+  }
+  const previews = [...h.data].filter(([key]) => key.startsWith('preview-session:')).map(([, s]) => s);
+  assert.equal(previews.length, 2);
+  assert.ok(previews.every(s => s.stage === 'done' && s.preview));
+  assert.equal(h.sessions().length, 0);
+  assert.equal(surveyStats(definitions[0], previews).completed, 0);
+  assert.ok(!h.messages.some(m => m.body.text?.startsWith('Yangi so‘rovnoma yakunlandi')));
+  await h.press(1, 'Admin menyusi');
+  await h.message(1, '/report');
+  const reports = h.messages.filter(m => m.body.text?.includes('Foizlar har bir')).map(m => m.body.text).join('\n');
+  assert.match(reports, /Boshlagan — 0/);
+  assert.match(reports, /Yakunlagan — 0/);
+  await h.message(1, '/export');
+  const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
+  assert.equal(csv.trim().split('\r\n').length, 1);
+  assert.ok(!csv.includes('OWNER_PREVIEW_ONLY'));
+});
+
+test('Client preview resets, resumes after restart and leaves real owner responses intact', async () => {
+  const h = harness();
+  await h.message(1, '/start employees'); await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz');
+  await h.press(1, '2–5 oy');
+  const real = structuredClone(h.sessions()[0]);
+  await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi'); await h.press(1, 'Xodim');
+  await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz'); await h.press(1, '1.');
+  await h.press(1, 'Keyinroq'); await h.message(1, '/survey');
+  assert.match(h.messages.at(-1).body.text, /Savol 2[/]57/);
+  const restarted = harness(definitions, h.data);
+  await restarted.message(1, '/survey');
+  assert.match(restarted.messages.at(-1).body.text, /SINOV/);
+  assert.match(restarted.messages.at(-1).body.text, /Savol 2[/]57/);
+  await h.press(1, 'Boshidan boshlash');
+  const preview = [...h.data].find(([key]) => key.startsWith('preview-session:'))[1];
+  assert.equal(preview.stage, 'intro'); assert.deepEqual(preview.answers, {});
+  assert.deepEqual(h.sessions()[0], real);
+  await h.message(1, '/admin'); await h.message(1, '/survey employees');
+  assert.match(h.messages.at(-1).body.text, /Savol 2[/]57/);
+  assert.ok(!h.messages.at(-1).body.text.includes('SINOV'));
+});
+
+test('Preview is owner only, clears survey drafts and can inspect closed questionnaires', async () => {
+  const h = harness();
+  for (const data of ['a:preview', 'a:trypreview:employees', 'a:resetpreview:employees', 'a:exitpreview']) {
+    await h.bot.handle({ update_id: 100, callback_query: { id: 'attack', from: { id: 22 }, message: { chat: { id: 22, type: 'private' } }, data } });
+  }
+  assert.equal([...h.data].filter(([k]) => k.startsWith('preview-')).length, 0);
+  await h.message(1, '/newsurvey');
+  await h.message(1, '/admin'); await h.press(1, 'Mijoz rejimi');
+  assert.equal(await h.storage.get('draft'), null);
+  await h.storage.put('open:employees', false);
+  await h.press(1, 'Xodim'); await h.press(1, 'Boshlash'); await h.press(1, 'Ismsiz');
+  assert.match(h.messages.at(-1).body.text, /Savol 1[/]57/);
+  await h.message(22, '/start employees');
+  assert.match(h.messages.at(-1).body.text, /hozir yopiq/);
 });
