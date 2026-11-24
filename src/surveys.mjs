@@ -1,5 +1,33 @@
 const encoder = new TextEncoder();
 
+const latinLetters = { a:'а', b:'б', d:'д', f:'ф', g:'г', h:'ҳ', i:'и', j:'ж', k:'к', l:'л', m:'м', n:'н', o:'о', p:'п', q:'қ', r:'р', s:'с', t:'т', u:'у', v:'в', x:'х', y:'й', z:'з', c:'с', w:'в' };
+const cyrillicLetters = { а:'a', б:'b', в:'v', г:'g', д:'d', ж:'j', з:'z', и:'i', й:'y', к:'k', л:'l', м:'m', н:'n', о:'o', п:'p', р:'r', с:'s', т:'t', у:'u', ф:'f', х:'x', ц:'ts', ч:'ch', ш:'sh', щ:'shch', ы:'i', э:'e', ю:'yu', я:'ya', ё:'yo', ў:'o‘', қ:'q', ғ:'g‘', ҳ:'h', ъ:'’', ь:'' };
+const apostrophes = "'’‘ʻʼ";
+function letterCase(value, original, word) {
+  if (original === original.toLowerCase()) return value;
+  return word === word.toUpperCase() ? value.toUpperCase() : value.charAt(0).toUpperCase() + value.slice(1);
+}
+export function toScript(text, script = 'latin') {
+  // Keep links, email addresses, bot handles, commands and technical identifiers intact.
+  return String(text).replace(/https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[a-z]{2,}|@[\w]+|\/[a-z][a-z0-9_]*|\b(?:CSV|KPI|UZS|USD|EUR|ID|API|SHA)\b|[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ'’‘ʻʼ]+/gu, word => {
+    if (/^(?:https?:|@|\/)|@/.test(word) || /^(CSV|KPI|UZS|USD|EUR|ID|API|SHA)$/.test(word)) return word;
+    if (script === 'latin') return word.replace(/[А-Яа-яЁёЎўҚқҒғҲҳ]/gu, (char, offset) => {
+      const lower = char.toLowerCase();
+      const value = lower === 'е' ? (offset === 0 || /[аеиоуэюяёъь]/i.test(word[offset - 1]) ? 'ye' : 'e') : (cyrillicLetters[lower] ?? char);
+      return letterCase(value, char, word);
+    });
+    return word.replace(/o['’‘ʻʼ]|g['’‘ʻʼ]|sh|ch|yo(?!['’‘ʻʼ])|yu|ya|ye|[a-z]|['’‘ʻʼ]/giu, (part, offset) => {
+      const lower = part.toLowerCase();
+      let value;
+      if (lower.length === 2 && apostrophes.includes(lower[1])) value = lower[0] === 'o' ? 'ў' : 'ғ';
+      else value = ({ sh:'ш', ch:'ч', yo:'ё', yu:'ю', ya:'я', ye:'е' })[lower]
+        ?? (lower === 'e' ? (offset === 0 || /[aeiou'’‘ʻʼ]/i.test(word[offset - 1]) ? 'э' : 'е') : apostrophes.includes(lower) ? 'ъ' : latinLetters[lower] ?? part);
+      return letterCase(value, part, word);
+    });
+  });
+}
+
+
 export function validateSurvey(survey) {
   if (!/^[a-z][a-z0-9_]{0,19}$/.test(survey.id ?? '') || !survey.title?.trim() || survey.title.length > 200) throw new Error('So‘rovnoma nomi yoki ID noto‘g‘ri');
   if (!Array.isArray(survey.sections) || !survey.sections.length || survey.sections.some(s => typeof s !== 'string' || s.length > 200)) throw new Error('Bo‘limlar noto‘g‘ri');
@@ -14,7 +42,7 @@ export function validateSurvey(survey) {
 }
 
 export function parseAmount(input) {
-  const value = input.trim().toLowerCase().replace(/[’‘ʻ']/g, "'");
+  const value = toScript(input, 'latin').trim().toLowerCase().replace(/[’‘ʻʼ]/g, "'");
   const match = value.match(/^(\d[\d ]*(?:[.,]\d+)?)\s*(mln|million|ming)?\s*(uzs|so'm|som|usd|dollar|eur|yevro|€|\$)?$/u);
   if (!match) return null;
   const multiplier = { mln: 1_000_000, million: 1_000_000, ming: 1000 }[match[2]] ?? 1;
@@ -77,9 +105,47 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (!secret) { secret = crypto.randomUUID(); await storage.put('secret', secret); }
     for (const [, survey] of await listStored(storage, 'custom:')) surveys.set(survey.id, validateSurvey(survey));
   })();
-  const send = (chat, text, keyboard) => api.call('sendMessage', {
-    chat_id: chat, text, link_preview_options: { is_disabled: true }, ...(keyboard ? { reply_markup: { inline_keyboard: keyboard } } : {}),
-  });
+  const scriptCache = new Map();
+  async function getScript(chat) {
+    if (!scriptCache.has(chat)) scriptCache.set(chat, await storage.get(`script:${await actorKey(chat)}`) ?? null);
+    return scriptCache.get(chat);
+  }
+  async function messagePayload(chat, text, keyboard) {
+    const script = await getScript(chat) ?? 'latin';
+    const rows = keyboard?.map(row => row.map(b => ({ ...b, text: b.callback_data?.startsWith('script:') ? b.text : toScript(b.text, script) })));
+    return { chat_id: chat, text: toScript(text, script), link_preview_options: { is_disabled: true }, ...(rows ? { reply_markup: { inline_keyboard: rows } } : {}) };
+  }
+  const send = async (chat, text, keyboard) => api.call('sendMessage', await messagePayload(chat, text, keyboard));
+  const scriptButton = target => [{ text: '🔤 Lotin / Кирилл', callback_data: `script:choose:${target}` }];
+  async function scriptMenu(chat, target = { type: 'menu' }) {
+    await storage.put(`script-next:${await actorKey(chat)}`, target);
+    return api.call('sendMessage', { chat_id: chat, text: 'Qaysi yozuv sizga qulay?\nҚайси ёзув сизга қулай?', reply_markup: { inline_keyboard: [
+      [{ text: 'Lotincha', callback_data: 'script:latin' }, { text: 'Кириллча', callback_data: 'script:cyrillic' }],
+    ] } });
+  }
+  async function scriptAction(chat, data, owner) {
+    const actor = await actorKey(chat);
+    if (data.startsWith('script:choose:')) {
+      const type = data.split(':')[2];
+      if (!['menu', 'resume', 'admin'].includes(type)) return;
+      return scriptMenu(chat, { type });
+    }
+    const script = data.slice(7);
+    if (!['latin', 'cyrillic'].includes(script)) return;
+    await storage.put(`script:${actor}`, script);
+    scriptCache.set(chat, script);
+    const target = await storage.get(`script-next:${actor}`) ?? { type: 'menu' };
+    await storage.delete(`script-next:${actor}`);
+    const preview = owner && await storage.get(`preview-mode:${actor}`) === true;
+    const activeActor = preview ? `preview:${actor}` : actor;
+    if (target.type === 'begin') return begin(chat, activeActor, target.survey);
+    if (target.type === 'resume') {
+      const id = await storage.get(`active:${activeActor}`);
+      if (id) return begin(chat, activeActor, id);
+    }
+    if (target.type === 'admin' && owner) return menu(chat, true);
+    return menu(chat, owner && !preview, preview);
+  }
   const link = id => `https://t.me/${username}?start=${id}`;
   async function actorKey(userId) {
     const bytes = await crypto.subtle.digest('SHA-256', encoder.encode(`${secret}:${userId}`));
@@ -96,6 +162,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     [{ text: '📋 So‘rovnomalar va havolalar', callback_data: 'a:list' }],
     [{ text: '🧪 Mijoz rejimi', callback_data: 'a:preview' }],
     [{ text: '➕ Yangi so‘rovnoma', callback_data: 'a:new' }],
+    scriptButton('admin'),
   ];
 
   const previewNavigation = id => [
@@ -105,14 +172,17 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   ];
 
   async function menu(chat, owner = false, preview = false) {
+    if (!owner && !await getScript(chat)) return scriptMenu(chat);
     if (owner) return send(chat, 'Laylo · Admin menyusi\n\nSo‘rovnomalar, qatnashuvchilar va natijalarni shu yerdan boshqarasiz.', adminKeyboard());
     const rows = [];
     for (const survey of surveys.values()) if (preview || await isOpen(survey.id)) rows.push([{ text: survey.id === 'employees' ? '👤 Xodim' : survey.id === 'employers' ? '👔 Rahbar / ish beruvchi' : survey.title.slice(0, 60), callback_data: preview ? `a:trypreview:${survey.id}` : `role:${survey.id}` }]);
+    const hasSurveys = rows.length > 0;
+    rows.push(scriptButton('menu'));
     if (preview) {
       rows.push([{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }]);
       return send(chat, '🧪 Mijoz rejimi · SINOV\n\nMijozga beriladigan savollarni o‘zingiz sinab ko‘rasiz. Xodim yoki Rahbarni tanlang.\n\nSinov javoblari haqiqiy qatnashuvchilar soni, hisobot va CSV fayliga qo‘shilmaydi. Har ikki rolni alohida tekshirish va boshidan boshlash mumkin.', rows);
     }
-    return send(chat, rows.length ? 'Assalomu alaykum! 👋 Men Laylo, so‘rovnoma botiman.\n\nFikrlaringizni o‘rganib, kelajakda yaxshi ish sharoiti yaratmoqchimiz. Iltimos, chin dildan javob bering.\n\nO‘zingizga mos bo‘limni tanlang.' : 'Hozircha ochiq so‘rovnoma yo‘q. Keyinroq qayta kiring.', rows);
+    return send(chat, hasSurveys ? 'Assalomu alaykum! 👋 Men Laylo, so‘rovnoma botiman.\n\nFikrlaringizni o‘rganib, kelajakda yaxshi ish sharoiti yaratmoqchimiz. Iltimos, chin dildan javob bering.\n\nO‘zingizga mos bo‘limni tanlang.' : 'Hozircha ochiq so‘rovnoma yo‘q. Keyinroq qayta kiring.', rows);
   }
 
   async function prompt(chat, survey, session, editMessageId) {
@@ -133,20 +203,25 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       keyboard = [[button('Javoblarni yuborish ✅', session, 'submit')], [button('⬅️ Oldingi savol', session, 'back')]];
     } else if (session.stage === 'done') {
       return session.preview
-        ? send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', previewNavigation(survey.id))
-        : send(chat, survey.thanks ?? 'Javoblaringiz saqlandi. Rahmat!');
+        ? send(chat, '🧪 Sinov yakunlandi ✅\n\nJavoblaringiz asosiy hisobotga qo‘shilmadi. Boshqa rolni tekshiring yoki qayta boshlang.', [...previewNavigation(survey.id), scriptButton('menu')])
+        : send(chat, survey.thanks ?? 'Javoblaringiz saqlandi. Rahmat!', [scriptButton('menu')]);
     } else {
       const q = survey.questions[session.index];
       const selected = session.pending ?? session.answers[q.id]?.choices ?? [];
       const options = q.options ?? [];
-      const hint = q.type === 'multi' ? (q.choose ? `${q.choose} ta variantni tanlab, «Davom etish»ni bosing.` : 'Bir nechta variant tanlab, «Davom etish»ni bosing.')
+      const hint = q.type === 'multi' ? (q.choose ? `Eng muhim ${q.choose} ta variantni belgilang, so‘ng «Davom etish»ni bosing.` : 'Bir nechta javob tanlash mumkin. Sizga mos barcha variantlarni bittadan bosib belgilang, so‘ng «Davom etish»ni bosing. Belgini olib tashlash uchun yana bosing.')
         : q.type === 'money' ? 'Summa va valyutani yozing. Masalan, 3 500 000 UZS yoki 3,5 mln. Valyuta yozilmasa, so‘m hisoblanadi.'
           : q.type === 'number' ? 'Butun son kiriting. Masalan, 5 yoki 30.' : q.type === 'single' ? 'Variantni tanlang yoki javobingizni yozing.' : 'Javobingizni matnda yozing.';
       text = `${q.section}-bo‘lim · ${survey.sections[q.section - 1]}\nSavol ${q.id}/${survey.questions.length}\n\n${q.text}\n\n${hint}`;
-      if (options.length) text += '\n\n' + options.map((o, i) => `${i + 1}. ${o}`).join('\n');
+      if (q.type === 'multi') text += `\n\n✅ Tanlandi: ${selected.length}${q.choose ? `/${q.choose}` : ''} ta`;
+      if (options.length) text += '\n\n' + options.map((o, i) => `${q.type === 'multi' ? (selected.includes(o) ? '✅ ' : '☐ ') : ''}${i + 1}. ${o}`).join('\n');
       if (session.answers[q.id]) text += `\n\nAvvalgi javobingiz\n${display(session.answers[q.id])}`;
-      keyboard = options.map((o, i) => [button(`${selected.includes(o) ? '☑️ ' : ''}${i + 1}. ${o.slice(0, 46)}`, session, `v${i}`)]);
-      if (q.type === 'multi') keyboard.push([button('Davom etish ➡️', session, 'next'), button('Hech biri', session, 'none')]);
+      keyboard = options.map((o, i) => [button(`${q.type === 'multi' ? (selected.includes(o) ? '✅ ' : '☐ ') : ''}${i + 1}. ${o.slice(0, 46)}`, session, `v${i}`)]);
+      if (q.type === 'multi') {
+        const confirm = [button(`Davom etish ➡️ (${selected.length} ta tanlandi)`, session, 'next')];
+        keyboard.unshift(confirm);
+        keyboard.push(confirm, [button('Hech biri', session, 'none')]);
+      }
       const navigation = [button('O‘tkazib yuborish', session, 'skip')];
       if (session.index > 0) navigation.unshift(button('⬅️ Orqaga', session, 'back'));
       keyboard.push(navigation, [button('⏸ Keyinroq davom etaman', session, 'pause')]);
@@ -155,7 +230,8 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       text = '🧪 Mijoz rejimi · SINOV\n\n' + text;
       keyboard.push(...previewNavigation(survey.id));
     }
-    const payload = { chat_id: chat, text, reply_markup: { inline_keyboard: keyboard } };
+    keyboard.push(scriptButton('resume'));
+    const payload = await messagePayload(chat, text, keyboard);
     if (editMessageId) {
       try { return await api.call('editMessageText', { ...payload, message_id: editMessageId }); }
       catch (error) { if (error.status !== 400) throw error; }
@@ -164,6 +240,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
   }
 
   async function begin(chat, actor, id) {
+    if (!await getScript(chat)) return scriptMenu(chat, { type: 'begin', survey: id });
     const survey = surveys.get(id);
     if (!survey) return send(chat, 'Bu so‘rovnoma topilmadi. /start orqali menyuni oching.');
     if (!isPreviewActor(actor) && !await isOpen(id)) return send(chat, 'Bu so‘rovnoma hozir yopiq. Javoblaringiz saqlangan.');
@@ -311,6 +388,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const owner = user.id === ownerId;
     if (callback) await api.call('answerCallbackQuery', { callback_query_id: callback.id }).catch(() => {});
     const data = callback?.data ?? '';
+    if (data.startsWith('script:')) return scriptAction(chat, data, owner);
     if (data.startsWith('a:')) {
       if (!owner) return;
       const [, action, id] = data.split(':');
@@ -325,7 +403,9 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     const [commandWithBot, arg] = input.split(/\s+/);
     const command = commandWithBot?.split('@')[0];
     if (!callback) {
+      if (command === '/script') return scriptMenu(chat, { type: 'resume' });
       if (command === '/start' || command === '/help' || command === '/admin') {
+        await storage.delete(`script-next:${baseActor}`);
         if (owner) {
           await storage.put('draft', null);
           await storage.put(`preview-mode:${baseActor}`, false);

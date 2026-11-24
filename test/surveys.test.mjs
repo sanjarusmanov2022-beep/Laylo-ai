@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { createSurveyBot, parseAmount, surveyStats, validateSurvey } from '../src/surveys.mjs';
+import { createSurveyBot, parseAmount, surveyStats, validateSurvey, toScript } from '../src/surveys.mjs';
 import worker, { SurveyStore } from '../src/survey-worker.mjs';
 
 const definitions = await Promise.all(['employees', 'employers'].map(async id => JSON.parse(await readFile(new URL(`../config/surveys/${id}.json`, import.meta.url), 'utf8'))));
 
-function harness(defs = definitions, existing) {
+function harness(defs = definitions, existing, autoScript = true) {
   const data = existing ?? new Map();
   const messages = [];
   const storage = {
@@ -21,13 +21,20 @@ function harness(defs = definitions, existing) {
   } };
   const bot = createSurveyBot({ storage, api, ownerId: 1, username: 'SurveyTestBot', definitions: defs });
   let updateId = 0;
-  const message = (user, text) => bot.handle({ update_id: ++updateId, message: { text, from: { id: user, first_name: 'Telegram name never stored' }, chat: { id: user, type: 'private' } } });
+  const chooseDefaultScript = async user => {
+    if (autoScript && messages.findLast(m => m.body.chat_id === user)?.body.reply_markup?.inline_keyboard.flat().some(b => b.callback_data === 'script:latin')) await press(user, 'Lotincha');
+  };
+  const message = async (user, text) => {
+    await bot.handle({ update_id: ++updateId, message: { text, from: { id: user, first_name: 'Telegram name never stored' }, chat: { id: user, type: 'private' } } });
+    await chooseDefaultScript(user);
+  };
   const buttons = user => messages.findLast(m => m.body.chat_id === user && m.body.reply_markup)?.body.reply_markup.inline_keyboard.flat() ?? [];
   const press = async (user, text) => {
     const button = buttons(user).find(b => b.text === text || b.text.includes(text));
     assert.ok(button, `Button not found: ${text}`);
     const update = { update_id: ++updateId, callback_query: { id: `cb${updateId}`, from: { id: user }, message: { message_id: messages.length, chat: { id: user, type: 'private' } }, data: button.callback_data } };
     await bot.handle(update);
+    await chooseDefaultScript(user);
     return update;
   };
   const sessions = () => [...data].filter(([key]) => key.startsWith('session:')).map(([, session]) => session);
@@ -290,4 +297,82 @@ test('Name and age can be skipped independently and age step survives a restart'
   await h.press(88, 'Yoshni o‘tkazib');
   assert.equal(h.sessions()[0].age, undefined);
   assert.match(h.messages.at(-1).body.text, /Savol 1[/]57/);
+});
+
+
+test('Benefits allow four or more selections, show a count, and commit all selected options', async () => {
+  const benefits = { ...definitions[0], questions: [{ ...definitions[0].questions[8], id: 1 }] };
+  const h = harness([benefits]);
+  await h.message(99, '/start employees'); await h.press(99, 'Boshlash'); await h.press(99, 'Ismsiz'); await h.press(99, 'Yoshni o‘tkazib');
+  for (const n of [1, 2, 3, 4]) await h.press(99, n + '.');
+  assert.equal(h.sessions()[0].index, 0);
+  assert.equal(h.sessions()[0].pending.length, 4);
+  assert.match(h.messages.at(-1).body.text, /Tanlandi: 4 ta/);
+  assert.equal(h.buttons(99).filter(b => b.text.startsWith('✅ ')).length, 4);
+  assert.ok(h.buttons(99)[0].text.includes('4 ta tanlandi'));
+  await h.press(99, '2.');
+  assert.equal(h.sessions()[0].pending.length, 3);
+  await h.press(99, '2.'); await h.press(99, 'Davom etish'); await h.press(99, 'Javoblarni yuborish');
+  assert.equal(h.sessions()[0].answers[1].choices.length, 4);
+  assert.equal(surveyStats(benefits, h.sessions()).questions[0].choices.filter(c => c.count === 1).length, 4);
+});
+
+test('Script rendering handles Uzbek letters and preserves links, identifiers and amounts', () => {
+  assert.equal(toScript('So‘rovnoma. Yo‘l, yo‘q, yozuv, o‘qish, g‘oya, choy, shahar, e’lon.', 'cyrillic'), 'Сўровнома. Йўл, йўқ, ёзув, ўқиш, ғоя, чой, шаҳар, эълон.');
+  assert.equal(toScript('Ўзбекистон, Ғоя, Қаҳва, Ёзув, Йўл', 'latin'), 'O‘zbekiston, G‘oya, Qahva, Yozuv, Yo‘l');
+  assert.equal(toScript('CSV KPI UZS USD EUR /start /survey https://t.me/Laylo_asistent_bot?start=employees a@example.com @Laylo_asistent_bot', 'cyrillic'), 'CSV KPI UZS USD EUR /start /survey https://t.me/Laylo_asistent_bot?start=employees a@example.com @Laylo_asistent_bot');
+  assert.deepEqual(parseAmount('3,5 млн сўм'), { amount: 3500000, currency: 'UZS' });
+  assert.deepEqual(parseAmount('7 000 доллар'), { amount: 7000, currency: 'USD' });
+});
+
+test('New participants select a script before a deep-linked survey; display choice does not split report options', async () => {
+  const mini = { ...definitions[0], questions: [
+    { ...definitions[0].questions[8], id: 1 }, { ...definitions[0].questions[5], id: 2 },
+    { id: 3, section: 1, type: 'text', text: 'Qo‘shimcha fikringiz?' },
+  ] };
+  const h = harness([mini], undefined, false);
+  for (const [user, script] of [[64, 'Кириллча'], [65, 'Lotincha']]) {
+    await h.message(user, '/start employees');
+    assert.equal(h.sessions().length, user === 64 ? 0 : 1);
+    assert.match(h.messages.at(-1).body.text, /Qaysi yozuv.*Қайси ёзув/s);
+    await h.press(user, script);
+    assert.ok(h.buttons(user).some(b => b.text.includes(user === 64 ? 'Бошлаш' : 'Boshlash')));
+    await h.press(user, user === 64 ? 'Бошлаш' : 'Boshlash');
+    await h.press(user, user === 64 ? 'Исмсиз' : 'Ismsiz');
+    await h.press(user, user === 64 ? 'Ёшни ўтказиб' : 'Yoshni o‘tkazib');
+    assert.match(h.messages.at(-1).body.text, user === 64 ? /Иш жойингизда/ : /Ish joyingizda/);
+    for (const n of [1, 2, 3, 4]) await h.press(user, n + '.');
+    await h.press(user, user === 64 ? 'Давом этиш' : 'Davom etish');
+    await h.message(user, user === 64 ? '3,5 млн сўм' : '3,5 mln');
+    await h.message(user, user === 64 ? 'Асл фикрим' : 'Asl fikrim');
+    await h.press(user, user === 64 ? 'Жавобларни юбориш' : 'Javoblarni yuborish');
+  }
+  assert.deepEqual(h.sessions()[0].answers[1].choices, h.sessions()[1].answers[1].choices);
+  assert.equal(h.sessions()[0].answers[2].amount, 3500000);
+  assert.equal(h.sessions()[0].answers[3].text, 'Асл фикрим');
+  const stats = surveyStats(mini, h.sessions());
+  assert.equal(stats.completed, 2);
+  assert.equal(stats.questions[0].choices.filter(c => c.count === 2).length, 4);
+  await h.message(1, '/export');
+  const csv = await h.messages.findLast(m => m.method === 'sendDocument').body.get('document').text();
+  assert.match(csv, /Асл фикрим/);
+});
+
+test('Switching script mid-question preserves selections, session and stored preference after restart', async () => {
+  const mini = { ...definitions[0], questions: [{ ...definitions[0].questions[8], id: 1 }] };
+  const h = harness([mini], undefined, false);
+  await h.message(66, '/start'); await h.press(66, 'Lotincha'); await h.press(66, 'Xodim');
+  await h.press(66, 'Boshlash'); await h.press(66, 'Ismsiz'); await h.press(66, 'Yoshni o‘tkazib');
+  await h.press(66, '1.'); await h.press(66, '2.');
+  const before = structuredClone(h.sessions()[0]);
+  await h.press(66, '🔤'); await h.press(66, 'Кириллча');
+  assert.match(h.messages.at(-1).body.text, /Танланди: 2 та/);
+  assert.deepEqual(h.sessions()[0], before);
+  const restarted = harness([mini], h.data, false);
+  await restarted.message(66, '/survey');
+  assert.match(restarted.messages.at(-1).body.text, /Танланди: 2 та/);
+  await h.message(66, '/script'); await h.press(66, 'Lotincha');
+  assert.match(h.messages.at(-1).body.text, /Tanlandi: 2 ta/);
+  assert.deepEqual(h.sessions()[0], before);
+  assert.ok(!h.buttons(66).some(b => b.callback_data.startsWith('a:')));
 });

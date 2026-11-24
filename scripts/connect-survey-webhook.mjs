@@ -17,6 +17,7 @@ await api.call('setWebhook', {
 const commands = [
   { command: 'start', description: 'So‘rovnomalar menyusi' },
   { command: 'survey', description: 'So‘rovnomani davom ettirish' },
+  { command: 'script', description: 'Lotin / Кирилл — yozuvni tanlash' },
   { command: 'cancel', description: 'Tanaffus qilish' },
   { command: 'help', description: 'Yordam' },
 ];
