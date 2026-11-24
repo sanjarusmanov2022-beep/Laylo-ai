@@ -4,7 +4,7 @@ Telegram orqali xodimlar va rahbarlar fikrini yig‘adi. Xodimlar uchun 57 ta, r
 
 ## Ishtirokchi
 
-/start birinchi kirishda yozuvni tanlash tugmalarini ochadi: **Lotincha** yoki **Кириллча**. Tanlov saqlanadi; savollar, variantlar va tugmalar shu yozuvda ko‘rinadi. Menyu va savollardagi **🔤 Lotin / Кирилл** tugmasi yoki `/script` orqali yozuvni almashtirish mumkin; savol va tanlangan javoblar saqlanadi. Bevosita so‘rovnoma havolasida ham avval yozuv so‘raladi, keyin aynan o‘sha so‘rovnoma davom etadi. Kirilcha `3,5 млн сўм` summasi ham qabul qilinadi. Yozma javoblar asl holida, tanlovlar esa umumiy bir xil variantlar bilan saqlanadi.
+/start har safar avval yozuvni tanlash tugmalarini ochadi: **Lotincha** yoki **Кириллча**. Tanlov saqlanadi; savollar, variantlar va tugmalar shu yozuvda ko‘rinadi. Menyu va savollardagi **🔤 Lotin / Кирилл** tugmasi yoki `/script` orqali yozuvni almashtirish mumkin; savol va tanlangan javoblar saqlanadi. Bevosita so‘rovnoma havolasida ham avval yozuv so‘raladi, keyin aynan o‘sha so‘rovnoma davom etadi. Kirilcha `3,5 млн сўм` summasi ham qabul qilinadi. Yozma javoblar asl holida, tanlovlar esa umumiy bir xil variantlar bilan saqlanadi.
 
 Yozuv tanlangach rol tanlash tugmalari ochiladi. Ko‘p tanlovli savolda mos variantlar bittadan belgilanadi: belgi va tanlanganlar soni ko‘rinadi, so‘ng **Davom etish** bosiladi. Imtiyozlar savolida 3–4 ta yoki barcha variantni tanlash mumkin; «eng muhim 3 ta» deb so‘ralgan savollarda 3 ta cheklovi saqlanadi.
 

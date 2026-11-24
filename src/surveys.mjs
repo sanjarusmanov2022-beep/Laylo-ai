@@ -410,7 +410,8 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
           await storage.put('draft', null);
           await storage.put(`preview-mode:${baseActor}`, false);
         }
-        return command === '/start' && arg ? begin(chat, baseActor, arg) : menu(chat, owner);
+        if (command === '/start') return scriptMenu(chat, arg ? { type: 'begin', survey: arg } : { type: 'menu' });
+        return menu(chat, owner);
       }
       if (command === '/cancel') {
         if (owner) await storage.put('draft', null);

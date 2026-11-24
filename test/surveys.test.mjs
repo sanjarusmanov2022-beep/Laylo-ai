@@ -376,3 +376,24 @@ test('Switching script mid-question preserves selections, session and stored pre
   assert.deepEqual(h.sessions()[0], before);
   assert.ok(!h.buttons(66).some(b => b.callback_data.startsWith('a:')));
 });
+
+
+test('Every /start asks for script first, including the owner and returning users', async () => {
+  const h = harness(definitions, undefined, false);
+  await h.message(44, '/start'); await h.press(44, 'Lotincha'); await h.press(44, 'Xodim');
+  await h.press(44, 'Boshlash'); await h.message(44, 'Ali');
+  const before = structuredClone(h.sessions()[0]);
+  await h.message(44, '/start');
+  assert.ok(h.buttons(44).some(b => b.callback_data === 'script:latin'));
+  assert.ok(h.buttons(44).some(b => b.callback_data === 'script:cyrillic'));
+  assert.ok(!h.buttons(44).some(b => b.callback_data.startsWith('role:')));
+  await h.press(44, 'Кириллча'); await h.press(44, 'Ходим');
+  assert.match(h.messages.at(-1).body.text, /Ёшингиз нечада/);
+  assert.deepEqual(h.sessions()[0], before);
+  await h.message(1, '/start');
+  assert.ok(!h.buttons(1).some(b => b.callback_data.startsWith('a:')));
+  await h.press(1, 'Кириллча');
+  assert.ok(h.buttons(1).some(b => b.callback_data === 'a:preview'));
+  await h.message(1, '/start');
+  assert.ok(h.buttons(1).some(b => b.callback_data === 'script:latin'));
+});
