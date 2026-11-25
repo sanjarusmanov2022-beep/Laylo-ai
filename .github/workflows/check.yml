@@ -15,3 +15,6 @@ jobs:
           node-version: '22'
       - run: node --test test/surveys.test.mjs test/russian-localization.test.mjs
       - run: npx --yes wrangler@4.166.0 deploy --dry-run
+      - name: Check public live endpoint (read-only)
+        continue-on-error: true
+        run: node scripts/check-live-health.mjs

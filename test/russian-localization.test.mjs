@@ -111,3 +111,12 @@ test('Russian profile labels use the reviewed HR meaning and working command nam
  const q=definitions[0].questions[82];
  assert.ok(translateRussian('Savol 83/84\n\n'+q.text).includes(translateRussian(q.text)));
 });
+
+test('Reviewed Russian HR wording preserves duration, multiple selection, support direction and evidence limits',()=>{
+ const cases=[["Vaqt ham, sharoit ham mavjud","Есть и выделенное время, и условия для обеда"],["Korxonangiz qancha vaqtdan beri faoliyat yuritadi? Yil va oy bilan yozing.","Как долго работает ваша компания? Укажите продолжительность в годах и месяцах."],["Quyidagi imtiyozlardan qaysilari siz uchun eng muhim?","Какие из следующих льгот для вас наиболее важны?"],["Maosh kechikishi xavfini erta aytish, real reja va muntazam xabar berishni saqlang.","Продолжайте заранее предупреждать о риске задержки зарплаты, предлагать реалистичный план и регулярно сообщать о ходе его выполнения."],["Charchoq haqidagi xabarni erta signal sifatida ko‘rib, ish yukini moslang.","Воспринимайте сообщения сотрудников об усталости как ранний сигнал и корректируйте их рабочую нагрузку."],["Ish hajmi va sifatga xavfni erta aytib, ustuvorlik va kerakli yordamni rahbar bilan kelishing.","Заранее сообщайте руководителю о нагрузке и рисках для качества; согласуйте приоритеты и необходимую вам помощь."],["Bu so‘rovnomada rahbarning javoblari berilgan. Xodimning qoniqishini baholash uchun uning o‘z javoblari ham kerak.","В этом опросе приведены ответы руководителя. Чтобы оценить удовлетворённость сотрудника, нужны также ответы самого сотрудника."],["Bu respondent bildirgan sharoitlar. Korxona haqidagi mustaqil tekshiruv emas.","Условия описаны со слов участника опроса. Независимая проверка компании не проводилась."]];
+ for(const[source,target]of cases){
+  assert.equal(translateRussian(source),target);
+  const withoutPeriod=source.replace(/\.$/u,'');
+  if(Object.hasOwn(russianCatalogue,withoutPeriod))assert.equal(translateRussian(withoutPeriod),target.replace(/\.$/u,''));
+ }
+});
