@@ -100,6 +100,29 @@ async function settings() {
 function storageBinding(value) {
   return value.bindings?.find(b => b.name === 'SURVEYS' && b.type === 'durable_object_namespace');
 }
+export function assertExistingSurveyStorage(value) {
+  const binding = storageBinding(value);
+  if (!binding || binding.class_name !== 'SurveyStore' ||
+      typeof binding.namespace_id !== 'string' || !binding.namespace_id.trim() ||
+      (binding.script_name && binding.script_name !== 'laylo-surveys')) {
+    throw new Error('Existing SURVEYS namespace could not be verified; no deployment attempted');
+  }
+  // /settings may omit migration_tag even when an existing namespace is present.
+  // The verified namespace is authoritative; this update never creates a new one.
+  if (value.migration_tag != null && value.migration_tag !== 'v1') {
+    throw new Error('Unexpected survey migration tag; no deployment attempted');
+  }
+  return binding;
+}
+export function assertRetainedSurveyStorage(before, after) {
+  const oldBinding = assertExistingSurveyStorage(before);
+  const newBinding = assertExistingSurveyStorage(after);
+  if (newBinding.namespace_id !== oldBinding.namespace_id ||
+      newBinding.class_name !== oldBinding.class_name) {
+    throw new Error('Survey storage binding changed; review the deployment');
+  }
+}
+
 async function main() {
   if (basename(root).toLowerCase() !== 'laylo-ai') throw new Error('Open the Laylo-ai project directory first');
   await access(join(root, '.env'));
@@ -107,8 +130,7 @@ async function main() {
   if (cf.account !== accountId || !cf.token || !cf.webhookSecret) throw new Error('Existing Laylo account, token and webhook settings are required');
   if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_OWNER_ID) throw new Error('Run node with --env-file=.env');
   const before = await settings();
-  const oldBinding = storageBinding(before);
-  if (!oldBinding || before.migration_tag !== 'v1') throw new Error('Existing survey storage requires review; no deployment attempted');
+  assertExistingSurveyStorage(before);
   const staging = join(root, '.laylo', 'release-' + revision);
   const backup = join(root, '.laylo', 'backup-' + new Date().toISOString().replace(/[:.]/g, '-'));
   await mkdir(staging, { recursive: true });
@@ -151,10 +173,7 @@ async function main() {
   const liveSource = await (await cloud('')).text();
   if (!liveSource.includes(expected)) throw new Error('Live code did not match the audited release; verify deployment before announcing completion');
   const after = await settings();
-  const newBinding = storageBinding(after);
-  if (after.migration_tag !== before.migration_tag || !newBinding || newBinding.namespace_id !== oldBinding.namespace_id || newBinding.class_name !== oldBinding.class_name) {
-    throw new Error('Survey storage binding changed; review the deployment');
-  }
+  assertRetainedSurveyStorage(before, after);
   run(['scripts/check-live-health.mjs'], root, true);
   const response = await fetch('https://api.telegram.org/bot' + process.env.TELEGRAM_BOT_TOKEN + '/getWebhookInfo', {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(15000),
@@ -166,4 +185,6 @@ async function main() {
   await writeFile(join(root, '.laylo', 'last-audited-deployment.json'), JSON.stringify({ revision, verifiedAt: new Date().toISOString() }, null, 2));
   console.log('LAYLO UPDATE COMPLETE - live source verified, survey storage retained.');
 }
-main().catch(error => { console.error('UPDATE STOPPED: ' + safeError(error)); process.exitCode = 1; });
+if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+  main().catch(error => { console.error('UPDATE STOPPED: ' + safeError(error)); process.exitCode = 1; });
+}
