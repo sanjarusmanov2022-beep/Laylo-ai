@@ -233,7 +233,7 @@ test('Parallel private codes reserve atomically and concurrent report flushes ca
   assert.equal(h.messages.filter(m => m.method === 'sendDocument' && m.body.get('chat_id') === '-100123456').length, 1);
 });
 
-test('1,000 concurrent respondents finish a 100-question survey with isolated answers and replay deduplication', { timeout: 180_000 }, async () => {
+test('1,000 concurrent respondents finish a 100-question survey with isolated answers and replay deduplication', { timeout: 180_000, skip: process.env.LAYLO_SKIP_LOAD === '1' }, async () => {
   const users = 1000, count = 100, started = performance.now();
   const fixture = storageFixture(), latest = new Map();
   let bot, updateId = 0, active = 0, maxActive = 0, sends = 0, runtime;
