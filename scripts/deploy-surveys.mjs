@@ -22,11 +22,11 @@ if (migrationTag && migrationTag !== 'v1') throw new Error('Review the existing 
 const hasSurveyStorage = settings.result.bindings?.some(binding =>
   binding.name === 'SURVEYS' && binding.type === 'durable_object_namespace');
 
-const definitions = await Promise.all(['employees', 'employers'].map(async id => {
+const definitions = await Promise.all(['employees', 'employers', 'business'].map(async id => {
   const survey = validateSurvey(JSON.parse(await readFile(`config/surveys/${id}.json`, 'utf8')));
   return `const ${id} = ${JSON.stringify(survey)};`;
 }));
-const modules = await Promise.all(['src/locale-ru.mjs', 'src/pdf-fonts.mjs', 'src/report-format.mjs', 'src/survey-pdf.mjs', 'src/survey-insights.mjs', 'src/surveys.mjs', 'src/survey-telegram.mjs', 'src/survey-runtime.mjs', 'src/survey-worker.mjs'].map(async path =>
+const modules = await Promise.all(['src/business-insights.mjs', 'src/locale-ru.mjs', 'src/pdf-fonts.mjs', 'src/report-format.mjs', 'src/survey-pdf.mjs', 'src/survey-insights.mjs', 'src/surveys.mjs', 'src/survey-telegram.mjs', 'src/survey-runtime.mjs', 'src/survey-worker.mjs'].map(async path =>
   (await readFile(path, 'utf8')).replace(/^import .*?;\r?\n/gm, '').replace(path === 'src/survey-worker.mjs' ? /$^/ : /^export /gm, '')));
 const values = {
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,

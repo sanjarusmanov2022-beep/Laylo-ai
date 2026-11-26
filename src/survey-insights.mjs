@@ -1,3 +1,4 @@
+import { buildBusinessInsights, renderBusinessText } from './business-insights.mjs';
 // Versioned, deterministic survey indicators. Identity, age and salary amounts never affect scores.
 const answer = (session, id) => session.answers?.[id];
 const choices = (session, id) => answer(session, id)?.choices ?? [];
@@ -205,6 +206,7 @@ export function buildKpiInsights(survey, session) {
 }
 
 export function buildSurveyInsights(survey, session) {
+  if (survey.id === 'business') return buildBusinessInsights(survey, session);
   if (!['employees', 'employers'].includes(survey.id)) return null;
   let metrics;
   let employeeMetrics = [];
@@ -286,6 +288,7 @@ export function buildSurveyInsights(survey, session) {
 }
 const scoreText = data => data.score === null ? 'Ma’lumot yetarli emas' : String(data.score).replace('.', ',') + '/10';
 export function renderSurveyInsights(insights) {
+  if (insights?.business) return renderBusinessText(insights);
   if (!insights) return '';
   const lines = [
     '📊 Xulosa, baho va tavsiyalar',

@@ -173,3 +173,16 @@ Tekshiruv: node --test test/survey-capacity.test.mjs. Unda 1 000 sintetik foydal
 Bepul tarifning kunlik request, yozuv, o‘qish, xotira va davomiylik limitlari amal qiladi. Inbox va kvitansiyalar qo‘shimcha storage operatsiyalarini sarflaydi. 1 000 odamning 100 savolni bir kunda yakunlashi bepul kvotaga sig‘adi degan kafolat yo‘q. Pullik tarifga avtomatik o‘tish yoki to‘lov sozlamalari qo‘shilmagan.
 
 Native queue tekshiruvi GitHub’da LAYLO_NATIVE_RUNTIME_TEST=1 bilan test/survey-worker-integration.test.mjs orqali workerd va SQLite’da 1 000 HTTP yangilanishini sinaydi. Telegram tashqi xizmati bu testga ulanmaydi. Oddiy npm test uchun ushbu alohida runtime dependency majburiy emas.
+
+
+## Alohida korxona va tashkilot tahlili
+
+/start menyusidagi Korxona tahlili uchinchi, alohida so‘rovnomadir. Xodimlar 84 ta va rahbarlar HR 67 ta savol bilan ishlashda davom etadi. business.json foydalanuvchi bergan 100 savolni 10 yo‘nalishda saqlaydi. Korxona nomi yoki maxfiy raqam majburiy, sektor ixtiyoriy oshkor qilinadi; rahbarning shaxsiy yoshi bu so‘rovnomada so‘ralmaydi. Savollar tepasida bo‘lim sarlavhalari chiqarilmaydi.
+
+Aniq bitta variantga A=3, B=2, C=1 ball beriladi. To‘liq javoblarda 100–150, 151–210, 211–260 va 261–300 diapazonlari ishlaydi. Foiz = yig‘ilgan ball / baholangan savollar maksimal balli; bu korxona muvaffaqiyati ehtimoli emas. Propusk, noma’lum variant, erkin matn va bir nechta variantli noto‘g‘ri javob baholanmaydi. 100 savolning hammasiga aniq variant bo‘lmasa umumiy daraja qo‘yilmaydi; qamrov hamda mavjud javoblar natijasi ko‘rsatiladi.
+
+Har yo‘nalishda kamida 5 aniq javob bo‘lsa taqqoslashga olinadi. Ikki pastroq yo‘nalish va past baholi aniq savollardan amaliy choralar tanlanadi; tenglikda savolnoma tartibi qo‘llanadi. Barcha javoblar eng yuqori bo‘lsa mavjud amaliyotlarni sinash tavsiya etiladi. 30/90 kunlik reja individual javobga bog‘liq. 1–3 yillik moliyaviy o‘sish raqamlari savolnoma ballaridan to‘qib chiqarilmaydi; tarixiy moliyaviy ma’lumot zarurligi tushuntiriladi. Bu rahbarning o‘z javoblariga asoslangan moslashtirilgan indeks bo‘lib, mustaqil audit, kasbiy malaka yoki huquqiy xulosa emas.
+
+O‘zbek lotin, kiril va ruscha savollar, tugmalar, hisobotlar va PDFlar qo‘llanadi. Ruscha variantlar ayni kanonik o‘zbekcha javoblarga saqlanadi; pullik tarjima yoki AI xizmati chaqirilmaydi. Kanal posti, PDF izohi va PDFdagi bosiladigan havolalar hisobot kanalini ham, so‘rovnoma boshlash uchun haqiqiy bot username’ini ham ko‘rsatadi. Mijozlarda qayta yuborish tugmasi yo‘q. Preview natijalari kanal va haqiqiy statistikaga qo‘shilmaydi.
+
+node --test test/business-audit.test.mjs ball chegaralari, propusklar, ruscha qamrov, individual tavsiyalar, barcha uch yozuvdagi 100 savollik oqim, preview, HTML xavfsizligi, PDF maketi va ikki Telegram havolasini tekshiradi. Native workerd tekshiruvi uchta savolnoma bilan yig‘ilgan aynan production faylni ham ishga tushiradi.

@@ -1,0 +1,1119 @@
+{
+  "id": "business",
+  "title": "Korxona va tashkilotning biznes tahlili",
+  "introduction": "100 ta savol orqali 10 yo‘nalishdagi boshqaruv amaliyotlarini baholaymiz. Taxminiy vaqt: 20–30 daqiqa; istalgan payt tanaffus qilib davom ettirish mumkin. Har savolda bitta variantni tanlang. Sizga tegishli bo‘lmagan yoki aniq bilmagan savolni o‘tkazing. Xizmat ko‘rsatuvchi tashkilot ta’minot savollarini ofis resurslari va pudratchilarga nisbatan baholashi mumkin. Natija o‘zingiz bergan javoblarga asoslanadi; mustaqil audit yoki kafolatlangan moliyaviy prognoz emas. Korxona nomi yoki o‘zingiz taniydigan maxfiy raqam kiritish shart. Natija va PDF hisobotlar kanaliga yuboriladi.",
+  "sections": [
+    "Boshqaruv va tashkiliy tuzilma",
+    "Moliya va buxgalteriya",
+    "Sotuv va mijozlar bilan ishlash",
+    "Marketing va brending",
+    "HR va jamoa",
+    "Operatsion jarayonlar va sifat",
+    "Ta’minot, logistika va ombor",
+    "IT, avtomatlashtirish va xavfsizlik",
+    "Huquqiy himoya va shartnomalar",
+    "Strategiya va rivojlanish"
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "section": 1,
+      "type": "single",
+      "text": "Korxonaning tashkiliy tuzilmasi (Orgstruktura) qog‘ozga tushirilganmi va xodimlarga tanishtirilganmi?",
+      "options": [
+        "Ha, har bir bo‘lim va lavozim aniq chizilgan, hamma biladi",
+        "Umumiy tasavvur bor, lekin rasmiy hujjat shaklida yo‘q",
+        "Yo‘q, kim kimga bo‘ysunishi vaziyatga qarab o‘zgaradi"
+      ]
+    },
+    {
+      "id": 2,
+      "section": 1,
+      "type": "single",
+      "text": "Har bir xodimning yozma lavozim yo‘riqnomasi (vazifalar ro‘yxati) mavjudmi?",
+      "options": [
+        "Ha, 100% xodimlarda bor va ular bunga amal qiladi",
+        "Faqat ayrim asosiy xodimlar uchun yozilgan",
+        "Yo‘q, barcha topshiriqlar og‘zaki beriladi"
+      ]
+    },
+    {
+      "id": 3,
+      "section": 1,
+      "type": "single",
+      "text": "Korxonadagi asosiy ish jarayonlari uchun reglamentlar (ishlash qoidalari) yozilganmi?",
+      "options": [
+        "Ha, barcha takrorlanuvchi jarayonlar standartlashtirilgan",
+        "Ba’zi bo‘limlarda bor, lekin to‘liq emas",
+        "Yo‘q, har kim o‘z bilganicha ishlaydi"
+      ]
+    },
+    {
+      "id": 4,
+      "section": 1,
+      "type": "single",
+      "text": "Rahbar (siz) ishda 2 hafta bo‘lmasangiz, korxona qanday ishlaydi?",
+      "options": [
+        "Tizim muammosiz va foyda bilan ishlashda davom etadi",
+        "Ishlar biroz sekinlashadi, lekin to‘xtab qolmaydi",
+        "Ish to‘xtab qoladi, hamma mendan qaror kutadi"
+      ]
+    },
+    {
+      "id": 5,
+      "section": 1,
+      "type": "single",
+      "text": "Kompaniyada yig‘ilishlar (majlislar) qanday tartibda o‘tkaziladi?",
+      "options": [
+        "Aniq kun tartibi va vaqt chegarasi bilan muntazam (haftalik/oylik) o‘tkaziladi",
+        "Kerak bo‘lib qolganda yoki muammo chiqqanda yig‘ilamiz",
+        "Yig‘ilishlar o‘tkazilmaydi yoki juda tartibsiz, cho‘zilib ketadi"
+      ]
+    },
+    {
+      "id": 6,
+      "section": 1,
+      "type": "single",
+      "text": "Xodimlarga berilgan topshiriqlarning bajarilishi qanday nazorat qilinadi?",
+      "options": [
+        "Maxsus dasturlar (Bitrix24, Trello, Jira, Asana) orqali",
+        "Telegram guruhlar yoki bloknotga yozib borish orqali",
+        "Og‘zaki aytiladi, ko‘pincha esdan chiqib ketadi"
+      ]
+    },
+    {
+      "id": 7,
+      "section": 1,
+      "type": "single",
+      "text": "Korxonada rahbar o‘rinbosari yoki bo‘lim boshliqlari (o‘rta bo‘g‘in menejerlar) bormi?",
+      "options": [
+        "Ha, mustaqil qaror qabul qila oladigan kuchli menejerlar bor",
+        "Bor, lekin baribir har bir mayda ishni mendan so‘rashadi",
+        "Yo‘q, barcha xodimlar to‘g‘ridan-to‘g‘ri menga bo‘ysunadi"
+      ]
+    },
+    {
+      "id": 8,
+      "section": 1,
+      "type": "single",
+      "text": "Rahbarning kunlik ish vaqtining necha foizi strategik rivojlanishga ketadi?",
+      "options": [
+        "50% dan ko‘prog‘i rivojlanish va yangi loyihalarga",
+        "20–30% atrofida, qolgani kundalik ishlarga",
+        "100% vaqtim kunlik mayda muammolarni (\"yong‘in\"larni) hal qilishga ketadi"
+      ]
+    },
+    {
+      "id": 9,
+      "section": 1,
+      "type": "single",
+      "text": "Kompaniyada ichki hisobot tizimi (kunlik, haftalik, oylik statistika) yo‘lga qo‘yilganmi?",
+      "options": [
+        "Ha, har bir bo‘lim o‘z ko‘rsatkichlarini o‘z vaqtida topshiradi",
+        "Faqat oy oxirida umumiy hisobot qilinadi",
+        "Aniq statistika va hisobotlar yuritilmaydi"
+      ]
+    },
+    {
+      "id": 10,
+      "section": 1,
+      "type": "single",
+      "text": "Korxonadagi muammolarni hal qilishda qanday yondashuv qo‘llaniladi?",
+      "options": [
+        "Muammoning asl sababini topib, tizimni o‘zgartiramiz",
+        "Aybdor xodimni topib, jazolaymiz yoki ogohlantiramiz",
+        "Muammoni vaqtincha yopamiz, keyin yana takrorlanaveradi"
+      ]
+    },
+    {
+      "id": 11,
+      "section": 2,
+      "type": "single",
+      "text": "Korxonaning kirim va chiqimlari qanday hisobga olinadi?",
+      "options": [
+        "Maxsus moliyaviy dasturlarda (1C, Finolog, МойСклад) har kuni",
+        "Excel jadvalda yoki daftarda yuritiladi",
+        "Aniq hisob yo‘q, bank hisob-raqami va kassaga qarab bilamiz"
+      ]
+    },
+    {
+      "id": 12,
+      "section": 2,
+      "type": "single",
+      "text": "Korxonada 3 ta asosiy moliyaviy hisobot (P&L – foyda/zarar, Cash Flow – pul oqimi, Balans) yuritiladimi?",
+      "options": [
+        "Ha, uchalasi ham har oy aniq shakllantiriladi",
+        "Faqat tushum va xarajat (Cash Flow) hisoblanadi",
+        "Bu hisobotlar haqida tushunchamiz yo‘q / yuritilmaydi"
+      ]
+    },
+    {
+      "id": 13,
+      "section": 2,
+      "type": "single",
+      "text": "Rahbarning shaxsiy mablag‘lari korxona pulidan to‘liq ajratilganmi?",
+      "options": [
+        "Ha, rahbar faqat belgilangan oylik yoki dividend oladi",
+        "Qisman, ba’zida kassadan shaxsiy ehtiyojga pul olib turaman",
+        "Yo‘q, hamma pul bitta hamyonda aylanadi"
+      ]
+    },
+    {
+      "id": 14,
+      "section": 2,
+      "type": "single",
+      "text": "Har bir mahsulot yoki xizmatning aniq tannarxi va marjasi (rentabelligi) hisoblanganmi?",
+      "options": [
+        "Ha, har bir pozitsiya bo‘yicha aniq raqamlar bor",
+        "Taxminiy hisoblangan, barcha xarajatlar kiritilmagan",
+        "Aniq hisoblanmagan, bozor narxiga qarab narx qo‘yamiz"
+      ]
+    },
+    {
+      "id": 15,
+      "section": 2,
+      "type": "single",
+      "text": "Korxonada moliyaviy zaxira fondi (kutilmagan vaziyatlar uchun \"xavfsizlik yostiqchasi\") bormi?",
+      "options": [
+        "Ha, kamida 3–6 oylik xarajatlarni qoplaydigan zaxira bor",
+        "Ozroq jamg‘arma bor, lekin 1 oyga ham yetmaydi",
+        "Zaxira umuman yo‘q, topilgan pul darhol sarflanadi"
+      ]
+    },
+    {
+      "id": 16,
+      "section": 2,
+      "type": "single",
+      "text": "Debitorlik qarzdorlik (mijozlarning korxonadan qarzi) qanday nazorat qilinadi?",
+      "options": [
+        "Qat’iy nazoratda, muddati o‘tgan qarzlar deyarli yo‘q",
+        "Qarzlar bor, lekin ularni undirish tizimi sust",
+        "Mijozlarning qarzi ko‘payib ketgan, kim qancha qarzdorligi chalkash"
+      ]
+    },
+    {
+      "id": 17,
+      "section": 2,
+      "type": "single",
+      "text": "Korxonaning oylik xarajatlari oldindan byudjetlashtiriladimi (rejalashtiriladimi)?",
+      "options": [
+        "Ha, har oy uchun xarajatlar limiti va byudjet tasdiqlanadi",
+        "Faqat katta xarajatlarni rejalashtiramiz",
+        "Yo‘q, pul kelishiga qarab xarajat qilaveramiz"
+      ]
+    },
+    {
+      "id": 18,
+      "section": 2,
+      "type": "single",
+      "text": "Soliq va buxgalteriya hisobotlari qanday holatda?",
+      "options": [
+        "Tajribali buxgalter yuritadi, qonuniy va jarimalarsiz ishlaymiz",
+        "Buxgalter bor, lekin ba’zan kechikish yoki jarimalar bo‘lib turadi",
+        "Buxgalteriya ishlari tartibsiz, soliqdan muammolar chiqib turadi"
+      ]
+    },
+    {
+      "id": 19,
+      "section": 2,
+      "type": "single",
+      "text": "Oxirgi 12 oyda korxonaning sof foydasi dinamikasi qanday bo‘ldi?",
+      "options": [
+        "Barqaror o‘sib bormoqda (kamida 15–20% va undan yuqori)",
+        "Bir xil darajada turibdi (stagnatsiya)",
+        "Kamayib bormoqda yoki zararga ishlayapmiz"
+      ]
+    },
+    {
+      "id": 20,
+      "section": 2,
+      "type": "single",
+      "text": "Korxonaga yangi investitsiya yoki kredit jalb qilishda moliyaviy ko‘rsatkichlaringiz shaffofmi?",
+      "options": [
+        "Ha, istalgan vaqtda investor yoki bankka tayyor hisobot bera olamiz",
+        "Hisobotlarni tayyorlash uchun bir necha hafta vaqt kerak bo‘ladi",
+        "Hozirgi holatda shaffof hisobot ko‘rsata olmaymiz"
+      ]
+    },
+    {
+      "id": 21,
+      "section": 3,
+      "type": "single",
+      "text": "Korxonada CRM tizimi (AmoCRM, Bitrix24 va h.k.) joriy qilinganmi?",
+      "options": [
+        "Ha, to‘liq ishlayapti va barcha kanallar (sayt, Instagram, telefon) ulangan",
+        "O‘rnatilgan, lekin menejerlar uni to‘liq to‘ldirmaydi",
+        "Yo‘q, mijozlar daftar, Excel yoki Telegramda yuritiladi"
+      ]
+    },
+    {
+      "id": 22,
+      "section": 3,
+      "type": "single",
+      "text": "Mijoz murojaat qilganda menejerlar qancha vaqt ichida javob beradi?",
+      "options": [
+        "5 daqiqagacha bo‘lgan vaqt ichida tezkor javob beriladi",
+        "30 daqiqadan 2 soatgacha vaqt ketadi",
+        "Bir necha soat yoki ertasi kuni javob beriladi, ba’zan unutiladi"
+      ]
+    },
+    {
+      "id": 23,
+      "section": 3,
+      "type": "single",
+      "text": "Sotuv menejerlari uchun tayyor sotuv skriptlari (muloqot ssenariylari) bormi?",
+      "options": [
+        "Ha, barcha e’tirozlar bilan ishlash uchun skriptlar bor va qo‘llaniladi",
+        "Skriptlar yozilgan, lekin xodimlar o‘z bilganicha gaplashadi",
+        "Skriptlar yo‘q, har kim o‘z tajribasiga qarab sotadi"
+      ]
+    },
+    {
+      "id": 24,
+      "section": 3,
+      "type": "single",
+      "text": "Sotuv voronkasi (mijozning ilk murojaatdan to‘lovgacha bo‘lgan bosqichlari) hisoblanadimi?",
+      "options": [
+        "Ha, har bir bosqichdagi konversiya foizini aniq bilamiz",
+        "Umumiy murojaatlar va sotuvlar sonini bilamiz, lekin bosqichlar tahlil qilinmaydi",
+        "Konversiya va voronka umuman hisoblanmaydi"
+      ]
+    },
+    {
+      "id": 25,
+      "section": 3,
+      "type": "single",
+      "text": "Menejerlarning mijozlar bilan telefon suhbatlari yozib olinadimi va tekshiriladimi?",
+      "options": [
+        "Ha, IP-telefoniya ulangan, suhbatlar muntazam tinglab tahlil qilinadi",
+        "Yozib olinadi, lekin faqat muammo chiqqandagina eshitiladi",
+        "Yo‘q, menejerlar shaxsiy telefonidan gaplashadi"
+      ]
+    },
+    {
+      "id": 26,
+      "section": 3,
+      "type": "single",
+      "text": "Sotuv bo‘limining oylik va kunlik sotuv rejasi (plan) bormi?",
+      "options": [
+        "Ha, har bir menejer uchun aniq reja qo‘yilgan va kunlik nazorat qilinadi",
+        "Umumiy korxona rejasi bor, lekin menejerlarga bo‘linmagan",
+        "Sotuv rejasi yo‘q, qancha sotilsa shunga shukur qilamiz"
+      ]
+    },
+    {
+      "id": 27,
+      "section": 3,
+      "type": "single",
+      "text": "Mijozlarga qo‘shimcha mahsulot/xizmat sotish (Upsell / Cross-sell) tizimi bormi?",
+      "options": [
+        "Ha, menejerlar asosiy mahsulot yonida qo‘shimcha taklif berishga o‘rgatilgan",
+        "Ba’zi menejerlar o‘z tashabbusi bilan taklif qiladi",
+        "Yo‘q, mijoz nima so‘rasa faqat shuni sotamiz"
+      ]
+    },
+    {
+      "id": 28,
+      "section": 3,
+      "type": "single",
+      "text": "Sotilmay qolgan (rad etgan) mijozlarning sabablari tahlil qilinadimi?",
+      "options": [
+        "Ha, CRM da \"otkaz\" sabablari belgilanadi va tahlil qilinadi",
+        "Og‘zaki so‘rab qo‘yamiz, lekin statistika yuritilmaydi",
+        "Rad etgan mijozlar bilan qayta ishlanmaydi"
+      ]
+    },
+    {
+      "id": 29,
+      "section": 3,
+      "type": "single",
+      "text": "Doimiy (qayta sotib oluvchi) mijozlar ulushi necha foizni tashkil qiladi?",
+      "options": [
+        "50% dan yuqori, sodiqlik (loyalty) tizimi ishlaydi",
+        "20–40% atrofida",
+        "20% dan kam, asosan bir martalik mijozlar"
+      ]
+    },
+    {
+      "id": 30,
+      "section": 3,
+      "type": "single",
+      "text": "Mijozlarning mahsulot/xizmatdan qoniqish darajasi (NPS / fikr-mulohazalar) o‘lchanadimi?",
+      "options": [
+        "Ha, har bir sotuvdan keyin mijozdan fikr olinadi va nazorat qilinadi",
+        "Ba’zida so‘rab turamiz",
+        "Faqat mijoz shikoyat qilib kelsagina bilamiz"
+      ]
+    },
+    {
+      "id": 31,
+      "section": 4,
+      "type": "single",
+      "text": "Korxonaning aniq maqsadli auditoriyasi (kimlar sizning mijozingiz ekani) belgilanganmi?",
+      "options": [
+        "Ha, mijozlar portreti (yoshi, daromadi, muammosi) aniq o‘rganilgan",
+        "Umumiy tasavvur bor (\"hamma bizning mijozimiz\" qabilida)",
+        "Yo‘q, marketing tadqiqoti o‘tkazilmagan"
+      ]
+    },
+    {
+      "id": 32,
+      "section": 4,
+      "type": "single",
+      "text": "Korxonaning noyob savdo taklifi (UTP – nega aynan sizdan olishlari kerak?) shakllanganmi?",
+      "options": [
+        "Ha, raqobatchilardan yaqqol ajratib turuvchi kuchli taklifimiz bor",
+        "Taklifimiz bor, lekin raqobatchilarnikidan deyarli farq qilmaydi",
+        "Yo‘q, barcha kabi oddiy reklama qilamiz"
+      ]
+    },
+    {
+      "id": 33,
+      "section": 4,
+      "type": "single",
+      "text": "Reklama uchun sarflangan har bir so‘mning samaradorligi (ROI / Lid narxi) hisoblanadimi?",
+      "options": [
+        "Ha, qaysi reklama kanalidan nechta mijoz kelgani va narxi aniq hisoblanadi",
+        "Umumiy reklama byudjetini bilamiz, lekin kanallar kesimida tahlil yo‘q",
+        "Yo‘q, reklamaga pul tikamiz, natijasini taxminan baholaymiz"
+      ]
+    },
+    {
+      "id": 34,
+      "section": 4,
+      "type": "single",
+      "text": "Ijtimoiy tarmoqlar (Instagram, Telegram, YouTube) va veb-saytingiz holati qanday?",
+      "options": [
+        "Professional tarzda muntazam yuritiladi, kontent-reja va dizayn bor",
+        "Vaqti-vaqti bilan post qo‘yiladi, tizimli emas",
+        "Sahifalarimiz deyarli ishlamaydi yoki umuman yo‘q"
+      ]
+    },
+    {
+      "id": 35,
+      "section": 4,
+      "type": "single",
+      "text": "Yangi mijozlarni jalb qilish uchun nechta reklama kanalidan foydalanasiz?",
+      "options": [
+        "3 ta va undan ko‘p faol kanallar (target, kontekst, blogerlar, SEO va h.k.)",
+        "1–2 ta kanalga bog‘lanib qolganmiz",
+        "Reklama bermaymiz, faqat \"sarafan radiosi\"ga tayanamiz"
+      ]
+    },
+    {
+      "id": 36,
+      "section": 4,
+      "type": "single",
+      "text": "Kompaniyaning firmenniy stili (logotip, ranglar, brendbuk, qadoqlash) bormi?",
+      "options": [
+        "Ha, yagona va taniladigan professional brend uslubimiz bor",
+        "Logotip bor, lekin qolgan materiallar har xil uslubda",
+        "Yo‘q, dizayn masalasiga e’tibor berilmagan"
+      ]
+    },
+    {
+      "id": 37,
+      "section": 4,
+      "type": "single",
+      "text": "Mijozlar bazasi bilan qayta aloqa (email, SMS, Telegram-rassilka, retargeting) qilinadimi?",
+      "options": [
+        "Ha, bazadagi mijozlarga muntazam foydali takliflar yuboriladi",
+        "Faqat bayramlarda tabrik yuboriladi",
+        "Yo‘q, baza bilan umuman ishlanmaydi"
+      ]
+    },
+    {
+      "id": 38,
+      "section": 4,
+      "type": "single",
+      "text": "Bozorda kompaniyangizning obro‘si va mijozlarning sharhlari (otzivlar) qanday?",
+      "options": [
+        "Ijobiy sharhlar ko‘p, ularni yig‘ib reklamalarda ishlatamiz",
+        "Sharhlar bor, lekin ularni yig‘ish tizimi yo‘q",
+        "Internetda kompaniyamiz haqida deyarli ma’lumot/sharh yo‘q"
+      ]
+    },
+    {
+      "id": 39,
+      "section": 4,
+      "type": "single",
+      "text": "Marketing bo‘limi yoki mutaxassisi (marketolog/SMM) bilan ishlash qanday yo‘lga qo‘yilgan?",
+      "options": [
+        "Kuchli ichki mutaxassis yoki natijaga ishlaydigan agentlik bor",
+        "Bitta SMM mutaxassis bor, u hamma ishni qilishga urinadi",
+        "Marketing bilan rahbarning o‘zi shug‘ullanadi yoki hech kim qilmaydi"
+      ]
+    },
+    {
+      "id": 40,
+      "section": 4,
+      "type": "single",
+      "text": "Yillik marketing strategiyasi va reklama byudjeti oldindan rejalashtiriladimi?",
+      "options": [
+        "Ha, mavsumiylik hisobga olingan holda yillik reja tuziladi",
+        "Har oyda vaziyatga qarab byudjet ajratiladi",
+        "Reja yo‘q, sotuv tushib ketsagina reklama yoqamiz"
+      ]
+    },
+    {
+      "id": 41,
+      "section": 5,
+      "type": "single",
+      "text": "Yangi xodimlarni ishga qabul qilish jarayoni (voronka) qanday tashkil etilgan?",
+      "options": [
+        "Tanlov asosida (anketa, suhbat, sinov vazifasi) eng kuchlilar tanlanadi",
+        "1 ta suhbat o‘tkazib, ma’qul kelsa ishga olamiz",
+        "Kim kelsa ishga olaveramiz, kadrlar tanqisligi bor"
+      ]
+    },
+    {
+      "id": 42,
+      "section": 5,
+      "type": "single",
+      "text": "Yangi kelgan xodimni ishga moslashtirish (adaptatsiya va o‘qitish) tizimi bormi?",
+      "options": [
+        "Ha, tayyor o‘quv qo‘llanmalari, video-darslar va mentor (ustoz) biriktiriladi",
+        "Eski xodimlardan biri og‘zaki tushuntirib qo‘yadi",
+        "Yo‘q, yangi xodim o‘zi suvga tashlangandek o‘rganib ketishi kerak"
+      ]
+    },
+    {
+      "id": 43,
+      "section": 5,
+      "type": "single",
+      "text": "Xodimlarning oylik maoshi qanday tizimda hisoblanadi?",
+      "options": [
+        "O‘zgarmas oklad + KPI (natija) + bonuslar tizimi",
+        "Faqat qat’iy belgilangan oylik (oklad)",
+        "Aniq formula yo‘q, rahbarning kayfiyati yoki tushumga qarab beriladi"
+      ]
+    },
+    {
+      "id": 44,
+      "section": 5,
+      "type": "single",
+      "text": "Kompaniyada kadrlar almashinuvi (ishdan bo‘shab ketish) darajasi qanday?",
+      "options": [
+        "Past, asosiy jamoa yillar davomida barqaror ishlaydi",
+        "O‘rtacha, ba’zan kerakli mutaxassislarni yo‘qotamiz",
+        "Juda yuqori, xodimlar 1–3 oyda almashib turadi"
+      ]
+    },
+    {
+      "id": 45,
+      "section": 5,
+      "type": "single",
+      "text": "Xodimlarning malakasini oshirish va o‘qitishga sarmoya kiritiladimi?",
+      "options": [
+        "Ha, muntazam treninglar, kurslar va kitoblar bilan ta’minlanadi",
+        "Ba’zan, yilda 1 marta biror treningga yuboramiz",
+        "Yo‘q, xodim o‘z hisobidan o‘qishi kerak deb hisoblaymiz"
+      ]
+    },
+    {
+      "id": 46,
+      "section": 5,
+      "type": "single",
+      "text": "Korxonada korporativ madaniyat va jamoaviy muhit qanday?",
+      "options": [
+        "Do‘stona, umumiy qadriyatlar bor, jamoaviy tadbirlar o‘tkaziladi",
+        "Oddiy ishchi muhit, hamma o‘z ishini qilib ketadi",
+        "Jamoada g‘iybat, kelishmovchilik va salbiy muhit mavjud"
+      ]
+    },
+    {
+      "id": 47,
+      "section": 5,
+      "type": "single",
+      "text": "Xodimlarning ish unumdorligi va samaradorligi qanday baholanadi?",
+      "options": [
+        "Aniq raqamli KPI ko‘rsatkichlari orqali har oy baholanadi",
+        "Rahbarning shaxsiy kuzatuvi asosida taxminan baholanadi",
+        "Samaradorlik o‘lchanmaydi, hamma bir xil munosabat ko‘radi"
+      ]
+    },
+    {
+      "id": 48,
+      "section": 5,
+      "type": "single",
+      "text": "Kompaniyada eng kuchli 1–2 ta xodimga bog‘lanib qolish xavfi bormi?",
+      "options": [
+        "Yo‘q, tizim shunday qurilganki, har qanday xodim o‘rnini bosish mumkin",
+        "Ha, 1–2 ta asosiy xodim ketsa, ish ancha qiyinlashadi",
+        "Ha, butun savdo yoki ishlab chiqarish bitta odamga bog‘lanib qolgan"
+      ]
+    },
+    {
+      "id": 49,
+      "section": 5,
+      "type": "single",
+      "text": "Xodimlar bilan rasmiy mehnat shartnomalari va hujjatlar qanday yuritiladi?",
+      "options": [
+        "To‘liq qonuniy (mehnat shartnomasi, tijorat siri – NDA, moddiy javobgarlik)",
+        "Faqat asosiy xodimlar rasmiylashtirilgan",
+        "Ko‘pchilik norasmiy, og‘zaki kelishuv asosida ishlaydi"
+      ]
+    },
+    {
+      "id": 50,
+      "section": 5,
+      "type": "single",
+      "text": "Jamoani nomoddiy rag‘batlantirish (maqtov, martaba o‘sishi, mukofotlar) tizimi bormi?",
+      "options": [
+        "Ha, eng yaxshi xodimlar e’tirof etiladi va o‘sish imkoniyati beriladi",
+        "Ba’zida og‘zaki rahmat aytib qo‘yamiz",
+        "Faqat xato qilganda tanbeh beriladi, yaxshi ish oddiy hol deb qaraladi"
+      ]
+    },
+    {
+      "id": 51,
+      "section": 6,
+      "type": "single",
+      "text": "Mahsulot yoki xizmat sifatini nazorat qilish (OTK / Quality Control) tizimi bormi?",
+      "options": [
+        "Ha, mijozga yetib borishidan oldin qat’iy sifat tekshiruvidan o‘tadi",
+        "Vaqti-vaqti bilan tanlab tekshiramiz",
+        "Sifat nazorati yo‘q, mijoz shikoyat qilsagina xato borligini bilamiz"
+      ]
+    },
+    {
+      "id": 52,
+      "section": 6,
+      "type": "single",
+      "text": "Buyurtmalarni bajarish va mijozga yetkazib berish muddatlariga qay darajada amal qilinadi?",
+      "options": [
+        "95–100% holatlarda kelishilgan vaqtda topshiriladi",
+        "Ba’zan kechikishlar bo‘lib turadi (10–20% holatlarda)",
+        "Kechikishlar va muddat buzilishi odatiy holga aylangan"
+      ]
+    },
+    {
+      "id": 53,
+      "section": 6,
+      "type": "single",
+      "text": "Ishlab chiqarish yoki xizmat ko‘rsatish jarayonida \"brak\" (yaroqsiz mahsulot/xato xizmat) ulushi qancha?",
+      "options": [
+        "Minimal darajada (1–2% dan kam) va har bir xato sababi o‘rganiladi",
+        "O‘rtacha (5–10%), bu tabiiy hol deb qaraladi",
+        "Yuqori, xatolarni tuzatishga ko‘p pul va vaqt ketadi"
+      ]
+    },
+    {
+      "id": 54,
+      "section": 6,
+      "type": "single",
+      "text": "Korxonadagi eng sekin ishlaydigan (\"tor bo‘g‘in\" / bottleneck) jarayon aniqlanganmi?",
+      "options": [
+        "Ha, qayerda to‘xtalish bo‘layotganini aniq bilamiz va uni kengaytirish ustida ishlaymiz",
+        "Taxminan bilamiz, lekin hal qilishga qo‘l tegmayapti",
+        "Ishlar nega sekinlashayotganini tahlil qilmaymiz"
+      ]
+    },
+    {
+      "id": 55,
+      "section": 6,
+      "type": "single",
+      "text": "Xodimlarning ish vaqtidan foydalanish samaradorligi nazorat qilinadimi?",
+      "options": [
+        "Ha, ish vaqti va unumdorlik aniq o‘lchanadi",
+        "Faqat ishga kelish-ketish vaqti (Turniket/FaceID) nazorat qilinadi",
+        "Nazorat sust, xodimlar ish vaqtida shaxsiy ishlari bilan ko‘p chalg‘iydi"
+      ]
+    },
+    {
+      "id": 56,
+      "section": 6,
+      "type": "single",
+      "text": "Uskunalar, texnika va ish qurollarining texnik holati qanday nazorat qilinadi?",
+      "options": [
+        "Rejali profilaktika (texnik ko‘rik) jadvali bor, buzilishlar oldi olinadi",
+        "Faqat biror narsa buzilib to‘xtab qolgandagina ta’mirlaymiz",
+        "Texnikalar eskirgan va tez-tez ishdan chiqib, ishni to‘xtatib qo‘yadi"
+      ]
+    },
+    {
+      "id": 57,
+      "section": 6,
+      "type": "single",
+      "text": "Ish joylarida tartib va tozalik (5S tizimi kabi) standartlari joriy qilinganmi?",
+      "options": [
+        "Ha, hamma narsa o‘z joyida, toza va xavfsiz ish muhiti yaratilgan",
+        "Umumiy tozalik bor, lekin aniq standart yo‘q",
+        "Ish joylarida tartibsizlik, kerakli narsani topishga ko‘p vaqt ketadi"
+      ]
+    },
+    {
+      "id": 58,
+      "section": 6,
+      "type": "single",
+      "text": "Korxonada xarajatlarni (svet, gaz, xomashyo, qog‘oz va h.k.) tejash tizimi bormi?",
+      "options": [
+        "Ha, resurslar sarfi qat’iy hisoblanadi va isrofgarchilikka yo‘l qo‘yilmaydi",
+        "Ba’zan tejamkorlik haqida aytib turamiz, lekin nazorat yo‘q",
+        "Isrofgarchilik va ortiqcha xarajatlar juda ko‘p"
+      ]
+    },
+    {
+      "id": 59,
+      "section": 6,
+      "type": "single",
+      "text": "Mijozlardan tushgan shikoyat va e’tirozlar bilan ishlash reglamenti bormi?",
+      "options": [
+        "Ha, har bir shikoyat ro‘yxatga olinadi, hal qilinadi va mijoz rozi qilinadi",
+        "Shikoyat bo‘lsa rahbar aralashib hal qiladi",
+        "Shikoyatlarga ko‘pincha e’tibor berilmaydi yoki mijoz aybdor qilinadi"
+      ]
+    },
+    {
+      "id": 60,
+      "section": 6,
+      "type": "single",
+      "text": "Korxona hajmi 2 barobar oshsa, hozirgi operatsion tizim bunga dosh bera oladimi?",
+      "options": [
+        "Ha, tizim tayyor, ortiqcha muammosiz 2x o‘sa olamiz",
+        "Qiynalamiz, lekin tezda moslashishga harakat qilamiz",
+        "Yo‘q, hozirgi tizim 2x yuklamada butunlay ishdan chiqadi"
+      ]
+    },
+    {
+      "id": 61,
+      "section": 7,
+      "type": "single",
+      "text": "Ombordagi tovarlar va xomashyo qoldiqlari qanday hisobga olinadi?",
+      "options": [
+        "Maxsus dasturlarda (1C, МойСклад) real vaqt rejimida aniq ko‘rinib turadi",
+        "Excel yoki daftarda yuritiladi, ba’zan real qoldiq bilan farq chiqadi",
+        "Aniq hisob yo‘q, omborga kirib ko‘rib bilamiz"
+      ]
+    },
+    {
+      "id": 62,
+      "section": 7,
+      "type": "single",
+      "text": "Omborda inventarizatsiya (sanoq) qanchalik tez-tez o‘tkaziladi?",
+      "options": [
+        "Har oy yoki har chorakda muntazam o‘tkaziladi, kamomadlar yo‘q",
+        "Yilda 1 marta o‘tkaziladi, ko‘pincha kamomad (nedostacha) chiqadi",
+        "Inventarizatsiya deyarli o‘tkazilmaydi"
+      ]
+    },
+    {
+      "id": 63,
+      "section": 7,
+      "type": "single",
+      "text": "Yetkazib beruvchilar (postavshiklar) bilan ishlash qanday tashkil etilgan?",
+      "options": [
+        "Har bir mahsulot/xizmat uchun kamida 2–3 ta muqobil yetkazib beruvchimiz bor",
+        "Asosan 1 ta yetkazib beruvchiga bog‘lanib qolganmiz",
+        "Yetkazib beruvchilar tez-tez kechiktiradi yoki narxni oshirib muammo tug‘diradi"
+      ]
+    },
+    {
+      "id": 64,
+      "section": 7,
+      "type": "single",
+      "text": "Xaridlar (zakupka) jarayoni qanday nazorat qilinadi?",
+      "options": [
+        "Eng yaxshi narx va sifatni solishtirish (tender/analiz) orqali xarid qilinadi",
+        "Doimiy tanish joylardan narxni solishtirmay olaveramiz",
+        "Xaridlarda tartib yo‘q, kim nima so‘rasa shoshilinch sotib olinadi"
+      ]
+    },
+    {
+      "id": 65,
+      "section": 7,
+      "type": "single",
+      "text": "Omborda \"o‘lik tovarlar\" (sotilmay yotgan, muzlab qolgan pul) muammosi bormi?",
+      "options": [
+        "Yo‘q, tovar aylanmasi (oborachivaemost) doimiy tahlil qilinadi",
+        "Ozroq bor, lekin ularni sotish bo‘yicha rejalarimiz yo‘q",
+        "Omborda sotilmay yotgan tovarlar juda ko‘p, pulimiz tovarda muzlab qolgan"
+      ]
+    },
+    {
+      "id": 66,
+      "section": 7,
+      "type": "single",
+      "text": "Xomashyo yoki tovar tugab qolishi sababli ish to‘xtab qolish holatlari bo‘ladimi?",
+      "options": [
+        "Yo‘q, minimal qoldiq chegarasi belgilangan, tugashidan oldin buyurtma beriladi",
+        "Ba’zan kutilmaganda tugab qolib, shoshilinch qimmat narxda olishga to‘g‘ri keladi",
+        "Tez-tez tovar/xomashyo yetishmay, mijozlarni qaytarib yuboramiz"
+      ]
+    },
+    {
+      "id": 67,
+      "section": 7,
+      "type": "single",
+      "text": "Logistika va yetkazib berish (dostavka) tizimi qanday ishlaydi?",
+      "options": [
+        "Aniq marshrut va vaqt jadvali asosida, xarajatlari hisoblangan holda",
+        "Vaziyatga qarab taksi yoki kuryer chaqiramiz",
+        "Yetkazib berishda doim muammo, manzillar adashadi yoki kechikadi"
+      ]
+    },
+    {
+      "id": 68,
+      "section": 7,
+      "type": "single",
+      "text": "Omborda tovarlarni saqlash sharoiti va xavfsizligi qanday?",
+      "options": [
+        "Zamonaviy talablarga javob beradi, yong‘in va o‘g‘irlikdan himoyalangan",
+        "Qoniqarli, lekin joy torlik qiladi",
+        "Saqlash sharoiti yomon, tovarlar buzilishi yoki yo‘qolishi holatlari bor"
+      ]
+    },
+    {
+      "id": 69,
+      "section": 7,
+      "type": "single",
+      "text": "Ta’minotchilar bilan to‘lov shartlari (nasiya / kechiktirib to‘lash) qanday?",
+      "options": [
+        "Biznesimiz uchun qulay shartlar (bo‘lib to‘lash, chegirmalar) kelishilgan",
+        "100% oldindan to‘lov asosida ishlaymiz",
+        "Ta’minotchilardan muddati o‘tgan qarzlarimiz ko‘p"
+      ]
+    },
+    {
+      "id": 70,
+      "section": 7,
+      "type": "single",
+      "text": "Tovar/xomashyo qabul qilishda sifat va sonini tekshirish tartibi bormi?",
+      "options": [
+        "Ha, maxsus akt va chek-list asosida qabul qilinadi",
+        "Ishonch asosida ko‘z yugurtirib qabul qilamiz",
+        "Tekshirilmaydi, keyin kamomad yoki brak chiqsa isbotlay olmaymiz"
+      ]
+    },
+    {
+      "id": 71,
+      "section": 8,
+      "type": "single",
+      "text": "Korxonadagi asosiy dasturlar (CRM, 1C, ombor, sayt) o‘zaro integratsiya qilinganmi?",
+      "options": [
+        "Ha, ma’lumotlar bir dasturdan ikkinchisiga avtomatik o‘tadi",
+        "Alohida-alohida ishlaydi, xodimlar ma’lumotni qo‘lda ko‘chiradi",
+        "Hech qanday zamonaviy dasturlardan foydalanmaymiz"
+      ]
+    },
+    {
+      "id": 72,
+      "section": 8,
+      "type": "single",
+      "text": "Rahbar o‘z telefonidan turib korxonaning asosiy raqamlarini (kassa, sotuv, qoldiq) ko‘ra oladimi?",
+      "options": [
+        "Ha, istalgan joydan online tarzda barcha raqamlarni ko‘ra olaman",
+        "Faqat xodimlar hisobot yuborsagina bilaman",
+        "Yo‘q, buning uchun albatta ofisga borib hujjatlarni ko‘rishim kerak"
+      ]
+    },
+    {
+      "id": 73,
+      "section": 8,
+      "type": "single",
+      "text": "Kompaniyaning mijozlar bazasi va tijorat sirlari xavfsizligi ta’minlanganmi?",
+      "options": [
+        "Ha, har bir xodimning kirish huquqi (dostup) cheklangan, bazani ko‘chirib ololmaydi",
+        "Qisman himoyalangan, lekin xodim xohlasa bazani olib ketishi mumkin",
+        "Hech qanday himoya yo‘q, barcha ma’lumotlar ochiq yoki xodimlarning shaxsiy telefonida"
+      ]
+    },
+    {
+      "id": 74,
+      "section": 8,
+      "type": "single",
+      "text": "Muhim ma’lumotlarning zaxira nusxasi (Backup) olinadimi?",
+      "options": [
+        "Ha, bulutli (Cloud) serverlarda avtomatik zaxira nusxalar saqlanadi",
+        "Ba’zida fleshka yoki kompyuterga saqlab qo‘yamiz",
+        "Yo‘q, kompyuter buzilsa yoki yo‘qolsa hamma ma’lumot kuyib ketadi"
+      ]
+    },
+    {
+      "id": 75,
+      "section": 8,
+      "type": "single",
+      "text": "Xodimlarning ishchi akkauntlari (Telegram, Instagram, Pochta) korxona raqamiga ochilganmi?",
+      "options": [
+        "Ha, barcha akkaunt va SIM-kartalar korxona nomida va rahbar nazoratida",
+        "Ba’zilari korxona nomida, ba’zilari xodimlarning shaxsiy raqamida",
+        "Xodimlar o‘z shaxsiy raqami va akkauntidan ishlaydi (ketsa mijozlarni olib ketadi)"
+      ]
+    },
+    {
+      "id": 76,
+      "section": 8,
+      "type": "single",
+      "text": "To‘lov tizimlari (Click, Payme, Uzum, terminal, onlayn kassa) qay darajada qulay?",
+      "options": [
+        "Mijozlar uchun barcha zamonaviy to‘lov usullari avtomatlashgan",
+        "Asosan naqd yoki karta o‘tkazma (P2P) orqali ishlaymiz",
+        "To‘lov qabul qilishda mijozlarga noqulayliklar bor"
+      ]
+    },
+    {
+      "id": 77,
+      "section": 8,
+      "type": "single",
+      "text": "Zamonaviy sun’iy intellekt (AI) yoki chat-botlardan ish jarayonida foydalanasizmi?",
+      "options": [
+        "Ha, mijozlarga javob berish, kontent yoki tahlilda faol ishlatamiz",
+        "Endi o‘rganib, sinab ko‘ryapmiz",
+        "Umuman foydalanmaymiz"
+      ]
+    },
+    {
+      "id": 78,
+      "section": 8,
+      "type": "single",
+      "text": "Korxonaning ichki aloqa va hujjat almashinuvi qanday tashkil etilgan?",
+      "options": [
+        "Yagona korporativ messenjer va bulutli disk (Google Drive / Yandex Disk) bor",
+        "Oddiy Telegram guruhlarda hujjat tashlanadi, keyin topish qiyin",
+        "Qog‘oz shaklida yoki og‘zaki"
+      ]
+    },
+    {
+      "id": 79,
+      "section": 8,
+      "type": "single",
+      "text": "Ofis yoki ishlab chiqarish hududida videokuzatuv va xavfsizlik tizimi bormi?",
+      "options": [
+        "Ha, kameralar o‘rnatilgan va telefondan kuzatish mumkin",
+        "Kameralar bor, lekin ba’zilari ishlamaydi yoki yozib olmaydi",
+        "Videokuzatuv umuman yo‘q"
+      ]
+    },
+    {
+      "id": 80,
+      "section": 8,
+      "type": "single",
+      "text": "Kompaniyada IT-mutaxassis yoki texnik qo‘llab-quvvatlash xizmati bormi?",
+      "options": [
+        "Ha, doimiy IT mutaxassis yoki autsorsing kompaniya bilan ishlaymiz",
+        "Muammo chiqsa tanish ustalarni chaqiramiz",
+        "Kompyuter va dasturlar muammosi oylar davomida hal bo‘lmay yotadi"
+      ]
+    },
+    {
+      "id": 81,
+      "section": 9,
+      "type": "single",
+      "text": "Mijozlar va hamkorlar bilan ishlashda yozma shartnomalar tuziladimi?",
+      "options": [
+        "Ha, 100% holatlarda professional yurist tuzgan shartnomalar imzolanadi",
+        "Faqat yirik mijozlar bilan shartnoma qilamiz, qolgani og‘zaki",
+        "Deyarli barcha ishlar og‘zaki ishonch asosida qilinadi"
+      ]
+    },
+    {
+      "id": 82,
+      "section": 9,
+      "type": "single",
+      "text": "Shartnomalarda korxonaning manfaatlari (kechikish jarimalari, fors-major, to‘lov kafolati) himoyalanganmi?",
+      "options": [
+        "Ha, barcha xavf-xatarlar yurist tomonidan ko‘rib chiqilgan",
+        "Internetdan olingan oddiy shablon shartnomalardan foydalanamiz",
+        "Shartnomalarni o‘qimasdan imzolaymiz"
+      ]
+    },
+    {
+      "id": 83,
+      "section": 9,
+      "type": "single",
+      "text": "Kompaniyaning savdo belgisi (brend nomi va logotipi) rasman ro‘yxatdan o‘tkazilganmi?",
+      "options": [
+        "Ha, intellektual mulk agentligidan ro‘yxatdan o‘tkazilganlik guvohnomasi olingan",
+        "Hujjat topshirilgan, jarayonda",
+        "Yo‘q, brendimizni istalgan odam ko‘chirib olishi mumkin"
+      ]
+    },
+    {
+      "id": 84,
+      "section": 9,
+      "type": "single",
+      "text": "Faoliyat uchun zarur bo‘lgan barcha litsenziya, ruxsatnoma va sertifikatlar joyidami?",
+      "options": [
+        "Ha, barcha hujjatlar qonuniy va muddati nazoratda",
+        "Asosiylari bor, ba’zi qo‘shimcha hujjatlar chala",
+        "Hujjatlarda kamchiliklar bor, tekshiruv kelsa jarima xavfi yuqori"
+      ]
+    },
+    {
+      "id": 85,
+      "section": 9,
+      "type": "single",
+      "text": "Ta’sischilar (hamkorlar) o‘rtasida kelishuv (Partnerlik shartnomasi) yozma ravishda bormi?",
+      "options": [
+        "Ha (yoki yagona ta’sischiman), foyda taqsimoti va chiqish shartlari aniq yozilgan",
+        "Hamkorlar bor, lekin hamma kelishuvlar og‘zaki (\"aka-ukachilik\" asosida)",
+        "Hamkorlar o‘rtasida tushunmovchilik va kelishmovchiliklar bor"
+      ]
+    },
+    {
+      "id": 86,
+      "section": 9,
+      "type": "single",
+      "text": "Korxonada doimiy yurist yoki yuridik maslahatchi xizmatidan foydalaniladimi?",
+      "options": [
+        "Ha, shtatda yurist bor yoki yuridik kompaniya bilan shartnoma qilingan",
+        "Faqat sud yoki jiddiy muammo chiqqandagina advokat qidiramiz",
+        "Yuridik xizmatdan umuman foydalanmaymiz"
+      ]
+    },
+    {
+      "id": 87,
+      "section": 9,
+      "type": "single",
+      "text": "Xodimlar bilan tijorat sirini saqlash (NDA) va moddiy javobgarlik shartnomalari tuzilganmi?",
+      "options": [
+        "Ha, barcha mas’ul xodimlar imzolagan",
+        "Faqat kassir yoki omborchi bilan tuzilgan",
+        "Yo‘q, bunday shartnomalar umuman yo‘q"
+      ]
+    },
+    {
+      "id": 88,
+      "section": 9,
+      "type": "single",
+      "text": "Mijozlarning shaxsiy ma’lumotlarini himoya qilish va reklama qonunchiligiga amal qilinadimi?",
+      "options": [
+        "Ha, barcha qonun talablariga (ofertalarga) rioya qilamiz",
+        "Qisman xabardormiz",
+        "Bu qonunlar haqida o‘ylab ko‘rmaganmiz"
+      ]
+    },
+    {
+      "id": 89,
+      "section": 9,
+      "type": "single",
+      "text": "Korxonaning mol-mulki va ko‘chmas mulk hujjatlari yuridik jihatdan to‘liq rasmiylashtirilganmi?",
+      "options": [
+        "Ha, barcha mulk huquqlari va ijara shartnomalari qonuniy",
+        "Ba’zi ijara shartnomalari og‘zaki yoki muddati o‘tgan",
+        "Hujjatlarda jiddiy muammolar bor"
+      ]
+    },
+    {
+      "id": 90,
+      "section": 9,
+      "type": "single",
+      "text": "Qarzdor mijozlardan pulni sud orqali undirish uchun yetarli dalillar (akt, nakladnoy, shartnoma) yig‘iladimi?",
+      "options": [
+        "Ha, har bir ish yakunida dalolatnoma (akt) imzolatib olinadi",
+        "Ba’zan aktlarni imzolatish esdan chiqib qoladi",
+        "Hujjatlar yuritilmaydi, qarzni sud orqali isbotlab bo‘lmaydi"
+      ]
+    },
+    {
+      "id": 91,
+      "section": 10,
+      "type": "single",
+      "text": "Korxonaning 3–5 yillik uzoq muddatli rivojlanish strategiyasi (Vizyon) bormi?",
+      "options": [
+        "Ha, kompaniya 5 yildan keyin qayerda bo‘lishi aniq yozilgan va jamoaga yetkazilgan",
+        "Rahbarning xayolida bor, lekin qog‘ozga tushirilmagan",
+        "Uzoq muddatli reja yo‘q, faqat bugungi kun bilan yashaymiz"
+      ]
+    },
+    {
+      "id": 92,
+      "section": 10,
+      "type": "single",
+      "text": "Bozor tendensiyalari va mijozlarning o‘zgarayotgan ehtiyojlari tahlil qilinadimi?",
+      "options": [
+        "Ha, muntazam bozor tahlili o‘tkazamiz va yangiliklarni birinchi bo‘lib kiritamiz",
+        "Raqobatchilar biror yangilik qilsa, keyin biz ham qilamiz",
+        "Eskicha uslubda ishlashda davom etyapmiz"
+      ]
+    },
+    {
+      "id": 93,
+      "section": 10,
+      "type": "single",
+      "text": "Korxonada yangi mahsulot yoki xizmat turlarini yaratish (R&D / Innovatsiya) ustida ishlanadimi?",
+      "options": [
+        "Ha, doimiy ravishda yangi takliflar sinovdan o‘tkaziladi",
+        "Yilda 1 marta biror yangilik kiritishimiz mumkin",
+        "Bir necha yildan beri bir xil mahsulot/xizmat sotamiz"
+      ]
+    },
+    {
+      "id": 94,
+      "section": 10,
+      "type": "single",
+      "text": "Bozordagi ulushingiz va raqobatchilarga nisbatan o‘rningizni bilasizmi?",
+      "options": [
+        "Ha, asosiy 5–10 ta raqobatchining kuchli va zaif tomonlarini aniq bilamiz",
+        "Umumiy tasavvurimiz bor",
+        "Raqobatchilarni tahlil qilmaymiz"
+      ]
+    },
+    {
+      "id": 95,
+      "section": 10,
+      "type": "single",
+      "text": "Biznesingiz bir nechta yirik mijozga bog‘lanib qolganmi?",
+      "options": [
+        "Yo‘q, mijozlar bazasi keng, 1–2 ta mijoz ketsa biznesga ta’sir qilmaydi",
+        "Daromadning 30–50% qismi 2–3 ta yirik mijozdan keladi",
+        "Daromadning asosiy qismi bitta mijozga bog‘liq (juda xavfli holat)"
+      ]
+    },
+    {
+      "id": 96,
+      "section": 10,
+      "type": "single",
+      "text": "Korxonaning biznes modeli masshtablashishga (filiallar ochish, franshiza, eksport) tayyormi?",
+      "options": [
+        "Ha, barcha jarayonlar qadoqlangan, istalgan hududda nusxalash mumkin",
+        "Hozirgi tizim bilan filial ochsak, nazoratni yo‘qotib qo‘yamiz",
+        "Bitta nuqtani ham zo‘rg‘a boshqaryapmiz"
+      ]
+    },
+    {
+      "id": 97,
+      "section": 10,
+      "type": "single",
+      "text": "Rahbar shaxsiy rivojlanish va biznes bilimlarni oshirishga vaqt ajratadimi?",
+      "options": [
+        "Ha, muntazam o‘qiyman, biznes-klublar va mentorlar bilan ishlayman",
+        "Vaqti-vaqti bilan kitob yoki video ko‘rib turaman",
+        "O‘qish va rivojlanishga umuman vaqt yo‘q"
+      ]
+    },
+    {
+      "id": 98,
+      "section": 10,
+      "type": "single",
+      "text": "Korxonada inqirozga qarshi reja (Plan B) ishlab chiqilganmi?",
+      "options": [
+        "Ha, sotuv keskin tushsa yoki bozor o‘zgarsa nima qilish rejasi bor",
+        "Muammo bo‘lsa o‘shanda o‘ylab ko‘ramiz",
+        "Hech qanday zaxira reja yo‘q"
+      ]
+    },
+    {
+      "id": 99,
+      "section": 10,
+      "type": "single",
+      "text": "Biznesingizni bugun sotmoqchi bo‘lsangiz, u tayyor tizim sifatida qimmatga sotiladimi?",
+      "options": [
+        "Ha, mensiz ham ishlaydigan tayyor aktiv sifatida yuqori baholanadi",
+        "Faqat jihozlar va tovarlar narxiga sotilishi mumkin",
+        "Mensiz bu biznesning hech qanday qiymati qolmaydi"
+      ]
+    },
+    {
+      "id": 100,
+      "section": 10,
+      "type": "single",
+      "text": "Korxonaning asosiy missiyasi (pul topishdan tashqari jamiyatga beradigan foydasi) aniqmi?",
+      "options": [
+        "Ha, kompaniyamizning katta missiyasi va qadriyatlari bor",
+        "Umumiy shiorimiz bor, lekin amalda unchalik sezilmaydi",
+        "Maqsad faqat pul topish"
+      ]
+    }
+  ]
+}

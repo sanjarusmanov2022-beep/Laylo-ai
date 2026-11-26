@@ -1,7 +1,7 @@
 import { translateRussian } from './locale-ru.mjs';
 import { buildSurveyInsights, renderSurveyInsights } from './survey-insights.mjs';
 import { createSurveyPdf } from './survey-pdf.mjs';
-import { renderChannelReport, reportChannelLink, reportPdfName } from './report-format.mjs';
+import { renderChannelReport, reportChannelLink, reportPdfName, reportBotLink } from './report-format.mjs';
 const encoder = new TextEncoder();
 
 const latinLetters = { a:'а', b:'б', d:'д', f:'ф', g:'г', h:'ҳ', i:'и', j:'ж', k:'к', l:'л', m:'м', n:'н', o:'о', p:'п', q:'қ', r:'р', s:'с', t:'т', u:'у', v:'в', x:'х', y:'й', z:'з', c:'с', w:'в' };
@@ -73,18 +73,18 @@ export function parsePublicIdentity(input) {
 function publicIdentity(session) { return session.publicIdentity ?? parsePublicIdentity(session.name) ?? { kind: 'unknown', value: 'Ko‘rsatilmagan' }; }
 function identityHeading(survey, session) {
   const identity = publicIdentity(session);
-  return identity.kind === 'code' ? '🔢 ' + identity.value + ' raqami hisoboti' : (survey.id === 'employers' ? '🏢 ' : '👤 ') + identity.value + ' hisoboti';
+  return identity.kind === 'code' ? '🔢 ' + identity.value + ' raqami hisoboti' : (['employers', 'business'].includes(survey.id) ? '🏢 ' : '👤 ') + identity.value + ' hisoboti';
 }
 
 
 const sectorLabels = Object.freeze({ public: 'Davlat tashkiloti', private: 'Xususiy sektor', mixed: 'Davlat-xususiy / aralash', nonprofit: 'Nodavlat notijorat tashkiloti', other: 'Boshqa / aniq bilmayman', undisclosed: 'Ko‘rsatishni istamayman' });
 function missingProfile(survey, session) {
   if (survey.id === 'employees' && !['named', 'private'].includes(session.workplace?.visibility)) return 'workplace';
-  if (['employees', 'employers'].includes(survey.id) && !Object.hasOwn(sectorLabels, session.sector ?? '')) return 'sector';
+  if (['employees', 'employers', 'business'].includes(survey.id) && !Object.hasOwn(sectorLabels, session.sector ?? '')) return 'sector';
   return null;
 }
 function publicWorkplace(survey, session) {
-  if (survey.id === 'employers') return publicIdentity(session).kind === 'name' ? publicIdentity(session).value : 'Maxfiy raqam bilan';
+  if (['employers', 'business'].includes(survey.id)) return publicIdentity(session).kind === 'name' ? publicIdentity(session).value : 'Maxfiy raqam bilan';
   if (session.workplace?.visibility === 'named') return session.workplace.name;
   return session.workplace?.visibility === 'private' ? 'Sir saqlangan' : 'Ko‘rsatilmagan';
 }
@@ -143,9 +143,9 @@ function applicableQuestionCount(survey, session) {
 }
 
 
-function surveyReportModel(survey, session, insights, channel) {
+function surveyReportModel(survey, session, insights, channel, botUsername) {
   const date = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tashkent', dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.completedAt));
-  return { survey, session, insights, channel, date, questionCount: applicableQuestionCount(survey, session), identity: publicIdentity(session).value, workplace: publicWorkplace(survey, session), sector: sectorLabels[session.sector] ?? 'Ko‘rsatilmagan' };
+  return { survey, session, insights, channel, botUsername, date, questionCount: applicableQuestionCount(survey, session), identity: publicIdentity(session).value, workplace: publicWorkplace(survey, session), sector: sectorLabels[session.sector] ?? 'Ko‘rsatilmagan' };
 }
 
 export function surveyStats(survey, sessions) {
@@ -248,7 +248,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
 
   const previewNavigation = id => [
     [{ text: '🔄 Boshidan boshlash', callback_data: `a:resetpreview:${id}` }],
-    [{ text: '👥 Xodim / Rahbar tanlash', callback_data: 'a:preview' }],
+    [{ text: '👥 Xodim / Rahbar / Korxona tanlash', callback_data: 'a:preview' }],
     [{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }],
   ];
 
@@ -256,12 +256,12 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
     if (!owner && !await getScript(chat)) return scriptMenu(chat);
     if (owner) return send(chat, 'Laylo · Admin menyusi\n\nSo‘rovnomalar, qatnashuvchilar va natijalarni shu yerdan boshqarasiz.', adminKeyboard());
     const rows = [];
-    for (const survey of surveys.values()) if (preview || await isOpen(survey.id)) rows.push([{ text: survey.id === 'employees' ? '👤 Xodim' : survey.id === 'employers' ? '👔 Rahbar / ish beruvchi' : survey.title.slice(0, 60), callback_data: preview ? `a:trypreview:${survey.id}` : `role:${survey.id}` }]);
+    for (const survey of surveys.values()) if (preview || await isOpen(survey.id)) rows.push([{ text: survey.id === 'employees' ? '👤 Xodim' : survey.id === 'employers' ? '👔 Rahbar / ish beruvchi' : survey.id === 'business' ? '🏢 Korxona tahlili' : survey.title.slice(0, 60), callback_data: preview ? `a:trypreview:${survey.id}` : `role:${survey.id}` }]);
     const hasSurveys = rows.length > 0;
     rows.push(scriptButton('menu'));
     if (preview) {
       rows.push([{ text: '⬅️ Admin menyusi', callback_data: 'a:exitpreview' }]);
-      return send(chat, '🧪 Mijoz rejimi · SINOV\n\nMijozga beriladigan savollarni o‘zingiz sinab ko‘rasiz. Xodim yoki Rahbarni tanlang.\n\nSinov javoblari haqiqiy qatnashuvchilar soni, hisobot va CSV fayliga qo‘shilmaydi. Har ikki rolni alohida tekshirish va boshidan boshlash mumkin.', rows);
+      return send(chat, '🧪 Mijoz rejimi · SINOV\n\nMijozga beriladigan savollarni o‘zingiz sinab ko‘rasiz. Korxona tahlili yoki HR savolnomasini tanlang.\n\nSinov javoblari haqiqiy qatnashuvchilar soni, hisobot va CSV fayliga qo‘shilmaydi. Har bir so‘rovnomani alohida tekshirish va boshidan boshlash mumkin.', rows);
     }
     return send(chat, hasSurveys ? 'Assalomu alaykum! 👋 Men Laylo, so‘rovnoma botiman.\n\nFikrlaringizni o‘rganib, kelajakda yaxshi ish sharoiti yaratmoqchimiz. Iltimos, chin dildan javob bering.\n\nO‘zingizga mos bo‘limni tanlang.' : 'Hozircha ochiq so‘rovnoma yo‘q. Keyinroq qayta kiring.', rows);
   }
@@ -286,7 +286,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
       text = `${survey.title}\n\n${survey.introduction ?? ''}\n\n${survey.questions.length} ta savol. Har bir javob saqlanadi. Tanaffusdan keyin shu havola orqali davom etishingiz mumkin. Istalgan savolni o‘tkazib yuborish mumkin.\n\nHisobotni tanishingiz uchun ism, korxona nomi yoki o‘zingiz tanlagan maxfiy raqam kiritish shart. Yoshingizni ko‘rsatish ixtiyoriy. Xodimdan ishxona nomi alohida so‘raladi: uni yozish yoki sir saqlash mumkin. Tashkilot sektori ham alohida tanlanadi. Oshkor yozgan nomlaringiz va javoblaringiz so‘rovnoma egasiga hamda hisobotlar kanaliga yuboriladi. Maxfiy qolishini istagan ismlarni boshqa yozma javoblarga ham kiritmang.\n\n«Boshlash» javoblaringizni shu maqsadda saqlashga roziligingizni bildiradi.`;
       keyboard = [[button('Boshlash ✅', session, 'begin')], [{ text: 'Bosh menyu', callback_data: 'home' }]];
     } else if (session.stage === 'name') {
-      text = survey.id === 'employers'
+      text = ['employers', 'business'].includes(survey.id)
         ? '🏢 Korxonangizni hisobotda qanday ko‘rsatamiz?\n\nKorxona nomini YOKI o‘zingiz tanlagan maxfiy raqamni yozing.\nMasalan: KORA GROUP yoki 789-456-85.\n\nKanalda aynan shu nom yoki raqam ko‘rinadi. Nom yoki raqam kiritish shart.'
         : '👤 Hisobotda qanday nom yoki raqam bilan ko‘rinasiz?\n\nIsm-familiyangizni YOKI o‘zingiz tanlagan maxfiy raqamni yozing.\nMasalan: Ali Valiyev yoki 789-856-78.\n\nKanalda aynan shu nom yoki raqam ko‘rinadi. Nom yoki raqam kiritish shart.';
       keyboard = [];
@@ -297,11 +297,11 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
       text = '🏢 Qaysi korxona yoki tashkilotda ishlaysiz?\n\nIshxonangiz nomini yozishingiz mumkin. Ko‘rsatsangiz, hisobotda va kanalda chiqadi.\n\nNomini oshkor qilish ixtiyoriy. Istamasangiz, «Ishxonam nomi sir qolsin»ni bosing.';
       keyboard = [[button('🔒 Ishxonam nomi sir qolsin', session, 'workplace_private')], [button('⬅️ Yoshga qaytish', session, 'profile_back')]];
     } else if (session.stage === 'sector') {
-      text = survey.id === 'employers'
+      text = ['employers', 'business'].includes(survey.id)
         ? '🏛 Korxonangiz qaysi sektorga kiradi?\n\nMos variantni tanlang. Oshkor qilishni istamasangiz, oxirgi variantni bosing.'
         : '🏛 Ishxonangiz qaysi sektorga kiradi?\n\nMos variantni tanlang. Oshkor qilishni istamasangiz, oxirgi variantni bosing.';
       keyboard = Object.entries(sectorLabels).map(([value, label]) => [button(label, session, 'sector_' + value)]);
-      keyboard.push([button(survey.id === 'employees' ? '⬅️ Ishxona nomiga qaytish' : '⬅️ Yoshga qaytish', session, 'profile_back')]);
+      keyboard.push([button(survey.id === 'employees' ? '⬅️ Ishxona nomiga qaytish' : survey.id === 'business' ? '⬅️ Nom yoki raqamga qaytish' : '⬅️ Yoshga qaytish', session, 'profile_back')]);
     } else if (session.stage === 'review') {
       const answered = Object.values(session.answers).filter(Boolean).length;
       text = `Savollar tugadi ✅\n\nJavob berilgan — ${answered}\nO‘tkazilgan — ${survey.questions.length - answered}\n\n«Yuborish»ni bosing. Savollarni ko‘rib chiqish uchun orqaga qaytishingiz mumkin.`;
@@ -309,7 +309,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
     } else if (session.stage === 'done') {
       if (session.preview) {
         const channel = await storage.get('report-channel');
-        const model = surveyReportModel(survey, session, buildSurveyInsights(survey, session), channel);
+        const model = surveyReportModel(survey, session, buildSurveyInsights(survey, session), channel, username);
         const script = await getScript(chat) ?? 'latin';
         await api.call('sendMessage', { chat_id: chat, text: '🧪 ' + toScript('SINOV', script) + '\n\n' + renderChannelReport(model, text => toScript(text, script)), parse_mode: 'HTML', link_preview_options: { is_disabled: true } });
         const pdf = createSurveyPdf(model, text => toScript(text, script));
@@ -544,7 +544,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
       const { survey, session } = job;
       const script = session.script ?? 'latin';
       const insights = job.insights ?? buildSurveyInsights(survey, session);
-      const model = surveyReportModel(survey, session, insights, channel);
+      const model = surveyReportModel(survey, session, insights, channel, username);
       const channelLink = reportChannelLink(channel);
       try {
         if (!job.summaryChunks) {
@@ -558,7 +558,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
           const summary = await api.call('sendMessage', {
             chat_id: channel.id, text: job.summaryChunks[i],
             ...(job.summaryFormat === 'HTML' ? { parse_mode: 'HTML' } : {}),
-            ...(channelLink ? { reply_markup: { inline_keyboard: [[{ text: toScript('📊 Kanalga obuna bo‘lish', script), url: channelLink.url }]] } } : {}),
+            reply_markup: { inline_keyboard: [...(channelLink ? [[{ text: toScript('📊 Kanalga obuna bo‘lish', script), url: channelLink.url }]] : []), [{ text: toScript('📝 So‘rovnomani boshlash', script), url: reportBotLink(username).url }]] },
             link_preview_options: { is_disabled: true },
           });
           job.summaryMessageIds.push(summary.message_id);
@@ -568,7 +568,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
         const pdf = createSurveyPdf(model, text => toScript(text, script));
         const form = new FormData(); form.set('chat_id', String(channel.id));
         form.set('document', new Blob([pdf.bytes], { type: 'application/pdf' }), reportPdfName(channel, session.token));
-        form.set('caption', toScript('📑 ' + model.identity + ' — diagrammali PDF tahlil\nHisobot ID: ' + session.token + (channelLink ? '\n\n📊 Yangi tahlillar uchun obuna bo‘ling: ' + channelLink.username + '\n' + channelLink.url : ''), script));
+        form.set('caption', toScript('📑 ' + model.identity + ' — diagrammali PDF tahlil\nHisobot ID: ' + session.token + (channelLink ? '\n\n📊 Yangi tahlillar uchun obuna bo‘ling: ' + channelLink.username + '\n' + channelLink.url : '') + '\n\n📝 So‘rovnomani boshlash:\n' + reportBotLink(username).url, script));
         const sent = await api.call('sendDocument', form);
         await storage.put('report-sent:' + (job.deliveryKey ?? session.token), { chatId: channel.id, messageId: sent.message_id, sentAt: new Date().toISOString() });
         await storage.delete(key);
@@ -593,7 +593,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
   async function pdfList(chat, offset = 0) {
     offset = Number.isSafeInteger(Number(offset)) && Number(offset) >= 0 ? Number(offset) : 0;
     const entries = await completedPdfEntries();
-    const rows = entries.slice(offset,offset+10).map(({survey,session}) => [{ text: '📑 ' + publicIdentity(session).value.slice(0,35) + ' · ' + (survey.id === 'employers' ? 'Rahbar' : 'Xodim'), callback_data: 'a:pdf:' + survey.id + ':' + session.token }]);
+    const rows = entries.slice(offset,offset+10).map(({survey,session}) => [{ text: '📑 ' + publicIdentity(session).value.slice(0,35) + ' · ' + (survey.id === 'employers' ? 'Rahbar' : survey.id === 'business' ? 'Korxona biznes tahlili' : 'Xodim'), callback_data: 'a:pdf:' + survey.id + ':' + session.token }]);
     if (offset+10<entries.length) rows.push([{text:'Keyingi hisobotlar ➡️',callback_data:'a:pdfs:all:'+(offset+10)}]);
     rows.push([{text:'⬅️ Admin menyusi',callback_data:'a:exitpreview'}]);
     return send(chat, entries.length ? '📑 Saqlangan PDF hisobotlar\n\nIshtirokchini tanlang. PDF shaxsiy chatingizga keladi. Kanalga qayta yuborish uchun keyingi tugmani bosing.\nJami: ' + entries.length : 'Hozircha yakunlangan haqiqiy so‘rovnoma yo‘q. Sinov hisobotlari bu ro‘yxatga kirmaydi.',rows);
@@ -615,11 +615,12 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
       await flushChannelReports(true);
       return send(chat,await storage.get('report-sent:' + deliveryKey) ? '✅ PDF hisobot va yangi uslubdagi post kanalga qayta yuborildi. Ishtirokchilar soni o‘zgarmadi.' : 'Hisobot qayta yuborish navbatiga saqlandi. Vaqtinchalik xatoda avtomatik yana uriniladi.',adminKeyboard());
     }
-    const model = surveyReportModel(survey,session,insights,channel), script = session.script ?? 'latin';
+    const model = surveyReportModel(survey,session,insights,channel,username), script = session.script ?? 'latin';
     const pdf = createSurveyPdf(model,text=>toScript(text,script));
     const form = new FormData();form.set('chat_id',String(chat));
     form.set('document',new Blob([pdf.bytes],{type:'application/pdf'}),reportPdfName(channel, token));
-    form.set('caption',toScript('📑 '+model.identity+' — PDF tahlil\nHisobot ID: '+token,script));
+    const channelLink = reportChannelLink(channel);
+    form.set('caption',toScript('📑 '+model.identity+' — PDF tahlil\nHisobot ID: '+token+(channelLink?'\n\n📊 '+channelLink.username+'\n'+channelLink.url:'')+'\n\n📝 So‘rovnomani boshlash:\n'+reportBotLink(username).url,script));
     await api.call('sendDocument',form);
     return send(chat,'PDF tayyor. Kanalga ham qayta yuborish kerak bo‘lsa, quyidagi tugmani bosing.',[
       ...(channel?[[{text:'📨 Kanalga qayta yuborish',callback_data:'a:pdfchannel:'+id+':'+token}]]:[]),
@@ -837,7 +838,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
         return persist(chat, actor, survey, session, update.update_id);
       }
       if (action === 'profile_back' && ['workplace', 'sector'].includes(session.stage)) {
-        session.stage = session.stage === 'sector' && survey.id === 'employees' ? 'workplace' : 'age';
+        session.stage = session.stage === 'sector' && survey.id === 'employees' ? 'workplace' : survey.id === 'business' ? 'name' : 'age';
         session.revision++;
         return persist(chat, actor, survey, session, update.update_id);
       }
@@ -909,7 +910,7 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
       }
       session.publicIdentity = identity;
       delete session.name;
-      session.stage = session.identityReturnStage ?? 'age';
+      session.stage = session.identityReturnStage ?? (survey.id === 'business' ? profileContinuation(survey, session) : 'age');
       delete session.identityReturnStage;
       session.revision++;
       return persist(chat, actor, survey, session, update.update_id);

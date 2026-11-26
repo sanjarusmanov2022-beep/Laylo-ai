@@ -30,7 +30,7 @@ const api = surveyTelegram(process.env.TELEGRAM_BOT_TOKEN);
 const me = await api.call('getMe', {});
 const webhook = await api.call('getWebhookInfo', {});
 if (webhook.url) throw new Error('Webhook is active. Run the configured serverless deployment.');
-const definitions = await Promise.all(['employees', 'employers'].map(async id => JSON.parse(await readFile(new URL(`../config/surveys/${id}.json`, import.meta.url), 'utf8'))));
+const definitions = await Promise.all(['employees', 'employers', 'business'].map(async id => JSON.parse(await readFile(new URL(`../config/surveys/${id}.json`, import.meta.url), 'utf8'))));
 const bot = createSurveyBot({ storage, api, ownerId, username: me.username, definitions });
 await bot.ready;
 console.log('Laylo surveys started.');

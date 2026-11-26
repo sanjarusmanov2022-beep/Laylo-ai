@@ -83,10 +83,10 @@ test('The exact production bundle starts in workerd and keeps webhook authentica
   skip: process.env.LAYLO_NATIVE_RUNTIME_TEST !== '1' }, async () => {
   const { Miniflare, convertV4MiniflareOptions } = await import('miniflare');
   const { validateSurvey } = await import('../src/surveys.mjs');
-  const ids = ['employees', 'employers'];
+  const ids = ['employees', 'employers', 'business'];
   const definitions = await Promise.all(ids.map(async id => 'const ' + id + ' = ' +
     JSON.stringify(validateSurvey(JSON.parse(await readFile(new URL('../config/surveys/' + id + '.json', import.meta.url), 'utf8')))) + ';'));
-  const paths = ['src/locale-ru.mjs', 'src/pdf-fonts.mjs', 'src/report-format.mjs', 'src/survey-pdf.mjs',
+  const paths = ['src/business-insights.mjs', 'src/locale-ru.mjs', 'src/pdf-fonts.mjs', 'src/report-format.mjs', 'src/survey-pdf.mjs',
     'src/survey-insights.mjs', 'src/surveys.mjs', 'src/survey-telegram.mjs', 'src/survey-runtime.mjs', 'src/survey-worker.mjs'];
   const modules = await Promise.all(paths.map(async path => (await readFile(new URL('../' + path, import.meta.url), 'utf8'))
     .replace(/^import .*?;\r?\n/gm, '').replace(path === 'src/survey-worker.mjs' ? /$^/ : /^export /gm, '')));

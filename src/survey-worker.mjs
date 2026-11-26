@@ -1,5 +1,6 @@
 import employees from '../config/surveys/employees.json' with { type: 'json' };
 import employers from '../config/surveys/employers.json' with { type: 'json' };
+import business from '../config/surveys/business.json' with { type: 'json' };
 import { createSurveyBot } from './surveys.mjs';
 import { surveyTelegram, pacedSurveyTelegram } from './survey-telegram.mjs';
 import { SurveyRuntime } from './survey-runtime.mjs';
@@ -29,7 +30,7 @@ export class SurveyStore {
       storage: this.runtime.reportStorage(),
       api: pacedSurveyTelegram(surveyTelegram(env.TELEGRAM_BOT_TOKEN)),
       ownerId: Number(env.TELEGRAM_OWNER_ID), username: env.TELEGRAM_BOT_USERNAME,
-      definitions: [employees, employers],
+      definitions: [employees, employers, business],
       deferChannelReports: true,
       queueCompletion: id => this.runtime.noteCompletion(id),
     });

@@ -1,5 +1,5 @@
 import { pdfFonts } from './pdf-fonts.mjs';
-import { reportPercent, reportProfile, reportChannelLink } from './report-format.mjs';
+import { reportPercent, reportProfile, reportChannelLink, reportBotLink } from './report-format.mjs';
 
 // A small, dependency-free vector PDF writer. Fonts are bundled and pre-compressed at build time.
 // No browser, external conversion API, Node API, paid service or network request is needed at runtime.
@@ -107,29 +107,65 @@ export function createSurveyPdf(model, transform = value => String(value)) {
     } while(pending.some(items=>items.length));
   }
 
-  function bars(title,rows,subtitle) {
+  function bars(title,rows,subtitle,businessMode=false) {
     const groups=[]; for(let i=0;i<rows.length;i+=6) groups.push(rows.slice(i,i+6));
     if(!groups.length) groups.push([]);
     for(const group of groups) {
       fresh(title); text(subtitle,40,105,13,false,palette.muted,880,2);
-      for(let n=0;n<=10;n+=2) { const x=348+n/10*420; line(x,153,x,457,palette.line,0.6); text(n+'',x-4,137,10,false,palette.muted,25); }
+      for(let n=0;n<=10;n+=2) { const x=348+n/10*420; line(x,153,x,457,palette.line,0.6); text(businessMode?n*10+'%':n+'',x-4,137,9,false,palette.muted,35); }
       group.forEach((row,i)=>{
         const y=173+i*47, pct=reportPercent(row.score), c=pct===null?palette.muted:pct>=80?palette.teal:pct>=60?palette.navy:palette.amber;
         text(row.title,44,y-3,14,true,palette.ink,285,2);
         rect(348,y+3,420,12,palette.line,5); if(pct!==null && pct>0) rect(348,y+3,420*pct/100,12,c,Math.min(5,420*pct/100/2));
-        text(pct===null?'Ma’lumot yetarli emas':pct+'%  /  '+String(row.score).replace('.',',')+'/10',790,y-5,pct===null?11:14,true,c,135,2);
+        text(pct===null?'Ma’lumot yetarli emas':businessMode?pct+'% / '+row.points+'/'+row.max:pct+'%  /  '+String(row.score).replace('.',',')+'/10',790,y-5,pct===null?11:14,true,c,135,2);
         if(row.measured!==undefined) text('Asos: '+row.measured+'/'+row.total+' javob',348,y+18,10,false,palette.muted,420);
       });
       if(!group.length) text('Baholanadigan javoblar hali yetarli emas.',44,190,20,false,palette.muted,840);
-      text('0–100% — 0–10 ballik indeks ko‘rinishi. Noma’lum javoblar 0 emas.',40,475,11,false,palette.muted,880);
+      text(businessMode?'Ballar ulushi. O‘tkazilgan va noma’lum javoblar 0 ball hisoblanmaydi. Har yo‘nalishda qamrov alohida ko‘rsatiladi.':'0–100% — 0–10 ballik indeks ko‘rinishi. Noma’lum javoblar 0 emas.',40,475,11,false,palette.muted,880);
     }
   }
+  let profile;
+  if (insights?.business) {
+    const audit=insights.business;
+    profile={key:audit.band??'unknown',title:audit.status,percent:audit.percent,note:audit.methodNote};
+    fresh('');rect(0,0,PW,PH,palette.navy);rect(0,0,12,PH,palette.teal);
+    text('HR HISOBOT',44,30,13,true,'#81d9cc');
+    text('Korxona biznes tahlili',44,78,34,true,palette.white,860,2);
+    text(identity,44,170,27,true,palette.white,860,2);
+    text(audit.status,44,254,20,true,'#81d9cc',860,2);
+    text('Javoblar: '+audit.measured+'/100 · '+date+' (Toshkent)',44,311,13,false,'#c5d3e3',860,2);
+    const cards=[['Ball',audit.points+'/'+audit.max],['Ballar ulushi',(audit.percent??'—')+'%'],['Javoblar qamrovi',audit.measured+'/100']];
+    cards.forEach(([label,value],i)=>{const x=44+i*294;rect(x,370,278,116,'#203b55',10);text(label,x+17,383,15,true,palette.white,244,2);text(value,x+17,426,29,true,'#81d9cc',244,1);});
+    columns('Ma’lumotlar va asosiy xulosalar',[
+      {title:'Nom yoki maxfiy raqam',body:identity},{title:'Ishxona va sektor',body:workplace+' · '+sector},
+      {title:'Javoblar qamrovi',body:audit.measured+'/100'},
+    ],[{title:audit.status,body:audit.conclusion},{title:'Natijani qanday o‘qiymiz?',body:'A = 3, B = 2, C = 1 ball. Foiz — berilgan aniq javoblar ballining mumkin bo‘lgan maksimal ballga nisbati. Bu korxona muvaffaqiyati ehtimoli emas.'}]);
+    bars('Yo‘nalishlar bo‘yicha natijalar',audit.domains,'Kamida 5 ta aniq javobli yo‘nalishlar taqqoslanadi.',true);
+    columns('Kuchli tomonlar va o‘sish nuqtalari',
+      audit.strongest.filter(d=>d.percent>=80).map(d=>({title:d.title,body:d.points+'/'+d.max+' · '+d.percent+'% · Javob: '+d.measured+'/10'})),
+      audit.weakest.map(d=>({title:d.title,body:d.tip,accent:palette.amber})));
+    flow('Javoblar bo‘yicha aniqlashtiriladigan holatlar',audit.observations.map(r=>({
+      title:'Savol '+r.id,body:r.question+' '+ 'Tanlangan javob'+': «'+t(r.selected)+'». '+ 'Amaliy chora'+': '+r.action,
+    })));
+    columns('Keyingi 30 kun uchun qadamlar',audit.plan30.map((body,i)=>({title:'Amaliy qadam '+(i+1),body})),[
+      {title:'Reja',body:'Har bir qadam uchun mas’ul, muddat va boshlang‘ich ko‘rsatkichni yozing. Natijani 30 kundan keyin tekshiring.'},
+      {title:'Saqlash va tekshirish',body:'Eng past foizlar teng bo‘lishi mumkin. Teng natijada yo‘nalishlar savolnomadagi tartibda ko‘rsatiladi.'},
+    ]);
+    flow('Keyingi 90 kun uchun yo‘nalish',[
+      ...audit.plan90.map((body,i)=>({title:'Amaliy qadam '+(i+1),body})),
+      {title:'Reja',body:'Amalda joriy qilingan o‘zgarishlarni tekshirib, shu savolnomani bir xil sharoitda qayta baholang.'},
+    ]);
+    flow('Istiqbol va shartli reja',[
+      {title:'Natijani qanday o‘qiymiz?',body:audit.forecast},
+      {title:'Reja',body:'Past natijali jarayonlarni yaxshilash va natijani o‘lchash boshqaruvning takrorlanuvchanligini oshirishga yordam berishi mumkin. Bu daromad yoki o‘sish kafolati emas.'},
+    ]);
+  } else {
   // Cover, with large text and generous separation between the three independent indices.
   fresh(''); rect(0,0,PW,PH,palette.navy); rect(0,0,12,PH,palette.teal);
   text('LAYLO  /  HR HISOBOT',44,30,13,true,'#81d9cc');
   text(survey.id==='employers'?'Rahbarlik va korxona profili':'Xodim rivojlanish profili',44,78,34,true,palette.white,720,2);
   text(identity,44,170,27,true,palette.white,860,2);
-  const profile=reportProfile(insights);
+  profile=reportProfile(insights);
   text(profile.title,44,254,20,true,'#81d9cc',860,2);
   text('Javoblar: '+answered+'/'+count+'  ·  '+date+' (Toshkent)',44,311,13,false,'#c5d3e3',860,2);
   const cards=[['Korxona sharoitlari',insights?.company],['Ish tajribasi',insights?.employee],[survey.id==='employers'?'Rahbarlik yondashuvi':'Vaziyatli yondashuv',insights?.situational]];
@@ -175,15 +211,18 @@ export function createSurveyPdf(model, transform = value => String(value)) {
     ],ideas.filter(i=>i.category!=='experience').map(i=>({title:i.title,body:'«'+(session.answers?.[i.question]?.text??i.text)+'»'})));
     if(insights.kpi) columns('KPI: amaldagi holat va takliflar',insights.kpi.records.map(r=>({title:r.title,body:[...r.choices,r.text].filter(Boolean).join('; ')})),insights.kpi.recommendations.map((s,i)=>({title:'KPI tavsiyasi '+(i+1),body:s})));
   }
+  }
   // Optional complete appendix for archival exports; channel PDFs focus on the visual analysis.
   if(model.includeAnswers) flow('Ilova: barcha savollar va javoblar',survey.questions.slice(0,count).map(q=>{const a=session.answers?.[q.id];return {title:'Savol '+q.id,body:q.text+' Javob: '+(a?[...(a.choices??[]),a.text].filter(Boolean).join(' / ')||'Hech biri':'O‘tkazib yuborilgan')};}),'LAYLO / TO‘LIQ JAVOBLAR');
   fresh('Natijadan qanday foydalanamiz?');
-  text('Xulosa → suhbat → amaliy o‘zgarish',44,134,25,true,palette.navy,860,2);
-  text('Baholar berilgan javoblarga asoslangan rivojlanish indeksidir. Ular kasbiy malaka, klinik tashxis yoki ishga olish bo‘yicha yakuniy hukm emas. O‘tkazilgan va noma’lum javoblar past baho hisoblanmaydi.',44,195,18,false,palette.ink,860);
-  text('Tavsiyalarni haqiqiy ish misollari va suhbat bilan tekshiring. Bitta o‘zgarishni tanlab, kelishilgan muddatdan so‘ng natijani qayta ko‘rib chiqing.',44,309,18,false,palette.ink,860);
-  const channelLink=reportChannelLink(channel);
-  if(channelLink) { rect(40,405,880,73,palette.teal,10);text('Yangi tahlillar uchun obuna bo‘ling',59,416,17,true,palette.white,820);text(channelLink.username,59,446,19,true,palette.white,820);link(channelLink.url,40,405,880,73); }
-  pages.forEach((p,i)=>{page=p;line(40,499,920,499,palette.line,0.8);text('LAYLO · '+session.token,40,510,9,false,i===0?'#d2ddeb':palette.muted,400,1);text((i+1)+' / '+pages.length,858,510,9,true,i===0?'#d2ddeb':palette.muted,62,1);if(channelLink){text(channelLink.username,575,510,9,true,i===0?'#81d9cc':palette.teal,250,1);link(channelLink.url,575,506,230,20);}});
+  text(insights?.business?'Natijani qanday o‘qiymiz?':'Xulosa → suhbat → amaliy o‘zgarish',44,134,25,true,palette.navy,860,2);
+  text(insights?.business?insights.business.methodNote:'Baholar berilgan javoblarga asoslangan rivojlanish indeksidir. Ular kasbiy malaka, klinik tashxis yoki ishga olish bo‘yicha yakuniy hukm emas. O‘tkazilgan va noma’lum javoblar past baho hisoblanmaydi.',44,195,18,false,palette.ink,860);
+  text(insights?.business?'O‘tkazilgan va noma’lum javoblar 0 ball hisoblanmaydi. Har yo‘nalishda qamrov alohida ko‘rsatiladi.':'Tavsiyalarni haqiqiy ish misollari va suhbat bilan tekshiring. Bitta o‘zgarishni tanlab, kelishilgan muddatdan so‘ng natijani qayta ko‘rib chiqing.',44,309,18,false,palette.ink,860);
+  const channelLink=reportChannelLink(channel), botLink=reportBotLink(model.botUsername);
+  if(channelLink) { rect(40,405,428,73,palette.teal,10);text('Yangi tahlillar uchun obuna bo‘ling',59,416,15,true,palette.white,390,1);text(channelLink.username,59,446,18,true,palette.white,390,1);link(channelLink.url,40,405,428,73); }
+  const botX=channelLink?492:40, botW=channelLink?428:880;
+  rect(botX,405,botW,73,palette.navy,10);text('So‘rovnomani boshlash',botX+19,416,16,true,palette.white,botW-38,1);text(botLink.username,botX+19,446,18,true,palette.white,botW-38,1);link(botLink.url,botX,405,botW,73);
+  pages.forEach((p,i)=>{page=p;line(40,499,920,499,palette.line,0.8);text('LAYLO · '+session.token,40,510,9,false,i===0?'#d2ddeb':palette.muted,240,1);text(botLink.username,315,510,9,true,i===0?'#81d9cc':palette.teal,240,1);link(botLink.url,315,506,240,20);text((i+1)+' / '+pages.length,858,510,9,true,i===0?'#d2ddeb':palette.muted,62,1);if(channelLink){text(channelLink.username,575,510,9,true,i===0?'#81d9cc':palette.teal,250,1);link(channelLink.url,575,506,230,20);}});
   // Construct standards-based PDF objects with exact byte offsets and Unicode text maps.
   const objects=[null,'',''];
   const add=value=>{objects.push(typeof value==='string'?pdfEncoder.encode(value):value);return objects.length-1;};

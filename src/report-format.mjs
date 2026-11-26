@@ -1,3 +1,4 @@
+import { renderBusinessChannel } from './business-insights.mjs';
 // Public report formatting; raw answers and identities are always escaped for Telegram HTML.
 const brief = (text, size = 170) => { const chars = Array.from(String(text ?? '').replace(/\s+/g, ' ').trim()); return chars.length > size ? chars.slice(0, size - 1).join('') + '…' : chars.join(''); };
 export const reportPercent = score => Number.isFinite(score) ? Math.round(Math.max(0, Math.min(10, score)) * 10) : null;
@@ -15,7 +16,8 @@ export function reportProfile(insights) {
 export function reportChannelLink(channel) {
   return /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(channel?.username ?? '') ? { username: '@' + channel.username, url: 'https://t.me/' + channel.username } : null;
 }
-export function renderChannelReport({ survey, session, insights, identity, workplace, sector, date, channel, questionCount }, transform = text => String(text)) {
+export function renderChannelReport({ survey, session, insights, identity, workplace, sector, date, channel, questionCount, botUsername }, transform = text => String(text)) {
+  if (insights?.business) return renderBusinessChannel({ survey, session, insights, identity, sector, date }, transform) + reportLinksHtml(channel, botUsername, transform);
   const e = text => transform(String(text ?? '')).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   const bold = text => '<b>' + e(text) + '</b>';
   const profile = reportProfile(insights);
@@ -44,8 +46,7 @@ export function renderChannelReport({ survey, session, insights, identity, workp
     parts.push('\n' + bold('🌱 Xodim uchun tavsiyalar'), e(brief(transform(insights.employee.recommendations[0]), 180)));
   }
   parts.push('\n📑 ' + bold('To‘liq tahlil, diagrammalar va tavsiyalar — PDFda.'), 'ℹ️ ' + e('Foizlar 10 ballik indeksning ko‘rinishi; bu malaka sinovi emas.'), e('Hisobot ID: ' + session.token));
-  const link = reportChannelLink(channel);
-  if (link) parts.push('\n📊 ' + bold('Yangi tahlillar uchun obuna bo‘ling:') + '\n<a href="' + link.url + '">' + e(link.username) + '</a>');
+  parts.push(reportLinksHtml(channel, botUsername, transform));
   return parts.join('\n');
 }
 
@@ -53,4 +54,15 @@ export function reportPdfName(channel, token, preview = false) {
   const brand = String(channel?.title || 'HR hisobot').normalize('NFKC').replace(/[\u0000-\u001f\u007f/\\:*?"<>|]/gu, '').trim().replace(/\s+/gu, '_').slice(0,60).replace(/[ ._]+$/gu,'') || 'HR_hisobot';
   const id = String(token ?? '').replace(/[^A-Za-z0-9_-]/g,'').slice(0,40) || 'hisobot';
   return brand + '_' + (preview ? 'SINOV_' : '') + id + '.pdf';
+}
+
+export function reportBotLink(username = 'Laylo_asistent_bot') {
+  const valid = /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(username ?? '') ? username : 'Laylo_asistent_bot';
+  return { username: '@' + valid, url: 'https://t.me/' + valid };
+}
+function reportLinksHtml(channel, botUsername, transform) {
+  const link = reportChannelLink(channel), bot = reportBotLink(botUsername);
+  const e = s => transform(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  return (link ? '\n\n📊 <b>' + e('Yangi tahlillar uchun obuna bo‘ling:') + '</b>\n<a href="'+link.url+'">'+e(link.username)+'</a>' : '') +
+    '\n\n📝 <b>'+e('So‘rovnomani boshlash:')+'</b>\n<a href="'+bot.url+'">'+e(bot.username)+'</a>';
 }
