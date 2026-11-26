@@ -6,7 +6,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-const revision = '7e8f9b3a59d0279314015958517c059402aec7f4';
+const revision = '17e64fd7ad7dcd73ca3e2cd779233b678b4d07cf';
 const manifest = [
   {
     "path": "config/surveys/employees.json",
@@ -26,7 +26,7 @@ const manifest = [
   },
   {
     "path": "src/locale-ru.mjs",
-    "sha": "158a8da02c21ca6375c4ff895c868b9e7e7f5af9"
+    "sha": "09d3f1262d9fb01bb8800682d27b353cf5d0e76f"
   },
   {
     "path": "src/pdf-fonts.mjs",
@@ -42,7 +42,7 @@ const manifest = [
   },
   {
     "path": "src/survey-pdf.mjs",
-    "sha": "cd11a0a95a7245daa7b968a92fc5ed39f1c7a763"
+    "sha": "4685151e6dfa84f83271d7f1e4d144b5eef3cae5"
   },
   {
     "path": "src/survey-telegram.mjs",
@@ -86,7 +86,7 @@ const manifest = [
   },
   {
     "path": "test/business-audit.test.mjs",
-    "sha": "1591ef0ba33517e6d2f76c5cccacffc97d122480"
+    "sha": "3c06dce8ee43ee5ebd1eb62717efcae61055c403"
   },
   {
     "path": "src/survey-bot.mjs",
