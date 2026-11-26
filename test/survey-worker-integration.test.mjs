@@ -6,7 +6,7 @@ import { readFile } from 'node:fs/promises';
 test('Native SQLite Durable Object commits inbox+alarm and processes a 1,000-request ingress burst', { timeout: 120_000, skip: process.env.LAYLO_NATIVE_RUNTIME_TEST !== '1' }, async () => {
   const { Miniflare, convertV4MiniflareOptions } = await import('miniflare');
   const runtime = await readFile(new URL('../src/survey-runtime.mjs', import.meta.url), 'utf8');
-  const script = runtime + `
+  const script = runtime.replace(/^export /gm, '') + `
 export class ProbeStore {
   constructor(ctx) {
     this.ctx = ctx;
@@ -76,5 +76,32 @@ export default { fetch(request, env) {
     assert.equal(state.processed, 1000); assert.equal(state.inbox, 0);
     console.log('LAYLO_WORKERD_RESULT ' + JSON.stringify({ ingressUpdates: 1000, processedExactlyOnce: 1000,
       nativeSQLite: true, liveTelegram: false, productionCloudflare: false }));
+  } finally { await mf.dispose(); }
+});
+
+test('The exact production bundle starts in workerd and keeps webhook authentication', { timeout: 30_000,
+  skip: process.env.LAYLO_NATIVE_RUNTIME_TEST !== '1' }, async () => {
+  const { Miniflare, convertV4MiniflareOptions } = await import('miniflare');
+  const { validateSurvey } = await import('../src/surveys.mjs');
+  const ids = ['employees', 'employers'];
+  const definitions = await Promise.all(ids.map(async id => 'const ' + id + ' = ' +
+    JSON.stringify(validateSurvey(JSON.parse(await readFile(new URL('../config/surveys/' + id + '.json', import.meta.url), 'utf8')))) + ';'));
+  const paths = ['src/locale-ru.mjs', 'src/pdf-fonts.mjs', 'src/report-format.mjs', 'src/survey-pdf.mjs',
+    'src/survey-insights.mjs', 'src/surveys.mjs', 'src/survey-telegram.mjs', 'src/survey-runtime.mjs', 'src/survey-worker.mjs'];
+  const modules = await Promise.all(paths.map(async path => (await readFile(new URL('../' + path, import.meta.url), 'utf8'))
+    .replace(/^import .*?;\r?\n/gm, '').replace(path === 'src/survey-worker.mjs' ? /$^/ : /^export /gm, '')));
+  const options = { modules: true, script: [...definitions, ...modules].join('\n'), compatibilityDate: '2026-11-01',
+    durableObjects: { SURVEYS: { className: 'SurveyStore', useSQLite: true } },
+    bindings: { TELEGRAM_BOT_TOKEN: 'fake-token-never-sent', TELEGRAM_BOT_USERNAME: 'UnitTestBot',
+      TELEGRAM_OWNER_ID: '1', TELEGRAM_WEBHOOK_SECRET: 'test-secret' } };
+  const mf = new Miniflare(convertV4MiniflareOptions ? convertV4MiniflareOptions(options) : options);
+  try {
+    assert.equal((await mf.dispatchFetch('http://test/health')).status, 200);
+    assert.equal((await mf.dispatchFetch('http://test/telegram', { method: 'POST', body: '{}' })).status, 403);
+    // Unsupported updates enter the real DO constructor/storage but never call Telegram.
+    const response = await mf.dispatchFetch('http://test/telegram', { method: 'POST',
+      headers: { 'X-Telegram-Bot-Api-Secret-Token': 'test-secret' }, body: JSON.stringify({ update_id: 5, message: {
+        from: { id: 3 }, chat: { id: -100, type: 'group' }, text: '/start' } }) });
+    assert.equal(response.status, 200, await response.text());
   } finally { await mf.dispose(); }
 });

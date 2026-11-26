@@ -27,7 +27,7 @@ const definitions = await Promise.all(['employees', 'employers'].map(async id =>
   return `const ${id} = ${JSON.stringify(survey)};`;
 }));
 const modules = await Promise.all(['src/locale-ru.mjs', 'src/pdf-fonts.mjs', 'src/report-format.mjs', 'src/survey-pdf.mjs', 'src/survey-insights.mjs', 'src/surveys.mjs', 'src/survey-telegram.mjs', 'src/survey-runtime.mjs', 'src/survey-worker.mjs'].map(async path =>
-  (await readFile(path, 'utf8')).replace(/^import .*?;\r?\n/gm, '')));
+  (await readFile(path, 'utf8')).replace(/^import .*?;\r?\n/gm, '').replace(path === 'src/survey-worker.mjs' ? /$^/ : /^export /gm, '')));
 const values = {
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
   TELEGRAM_OWNER_ID: process.env.TELEGRAM_OWNER_ID,
