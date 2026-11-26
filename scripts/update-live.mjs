@@ -6,7 +6,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-const revision = '503aea62aeb7fb43f7e2e12ef1d5c113ac1bfe65';
+const revision = '7e8f9b3a59d0279314015958517c059402aec7f4';
 const manifest = [
   {
     "path": "config/surveys/employees.json",
@@ -22,11 +22,11 @@ const manifest = [
   },
   {
     "path": "scripts/deploy-surveys.mjs",
-    "sha": "d57a7ae21fd42b01394f1fd2be395af0d1998b2c"
+    "sha": "50eef834b0a885ca931d43ddc1c952a80f6a8728"
   },
   {
     "path": "src/locale-ru.mjs",
-    "sha": "35df5ff7e47875775813d7671111ac057b6d996c"
+    "sha": "158a8da02c21ca6375c4ff895c868b9e7e7f5af9"
   },
   {
     "path": "src/pdf-fonts.mjs",
@@ -34,15 +34,15 @@ const manifest = [
   },
   {
     "path": "src/report-format.mjs",
-    "sha": "afba3b2e1bb99975843b9f9ec3a4041de9ef2e93"
+    "sha": "c4c37a7ecf4b41ff5e350cac3a93369b288df8a6"
   },
   {
     "path": "src/survey-insights.mjs",
-    "sha": "0bb0e812313e78cf80a7f58edc6c9e54d2fc5811"
+    "sha": "1b6193d228bd0c52615905d56f85a427262fb9c9"
   },
   {
     "path": "src/survey-pdf.mjs",
-    "sha": "6a191cfdab695c32d65c1b877b53376956b1ec4a"
+    "sha": "cd11a0a95a7245daa7b968a92fc5ed39f1c7a763"
   },
   {
     "path": "src/survey-telegram.mjs",
@@ -50,11 +50,11 @@ const manifest = [
   },
   {
     "path": "src/survey-worker.mjs",
-    "sha": "c8dab4aeb05e8094fc71673f6b0d74b274ac58ab"
+    "sha": "7a0fa1ce402e8fbf66b2521776cd8575648aa4e3"
   },
   {
     "path": "src/surveys.mjs",
-    "sha": "4494347a1825b380a95ec9343f822fb95d343c38"
+    "sha": "bc067e41c55e422f554b1929a633ff5a4be960f7"
   },
   {
     "path": "test/helpers/survey-harness.mjs",
@@ -75,6 +75,26 @@ const manifest = [
   {
     "path": "test/survey-capacity.test.mjs",
     "sha": "9299e3705cd085ac07a703f951b2256aed64622f"
+  },
+  {
+    "path": "config/surveys/business.json",
+    "sha": "cfc6db1cc93ec002887bed5a2e9984e33439768a"
+  },
+  {
+    "path": "src/business-insights.mjs",
+    "sha": "b9fc16418060fa88a4090ea6cfe410b41ac5c2e5"
+  },
+  {
+    "path": "test/business-audit.test.mjs",
+    "sha": "1591ef0ba33517e6d2f76c5cccacffc97d122480"
+  },
+  {
+    "path": "src/survey-bot.mjs",
+    "sha": "aa098d6fe141c256425df7142610535103e438a0"
+  },
+  {
+    "path": "README.md",
+    "sha": "e9060a358d6120dd188f7e7db8cb4ce537b05291"
   }
 ];
 const root = resolve(process.cwd());
@@ -156,8 +176,8 @@ async function main() {
     await mkdir(dirname(target), { recursive: true });
     await writeFile(target, bytes);
   }
-  console.log('2/5 Running survey, localization and queue regression checks (full load already checked in GitHub)...');
-  const output = run(['--test', 'test/surveys.test.mjs', 'test/russian-localization.test.mjs', 'test/survey-capacity.test.mjs'], staging);
+  console.log('2/5 Running business audit, HR, localization and queue regression checks (full load already checked in GitHub)...');
+  const output = run(['--test', 'test/surveys.test.mjs', 'test/russian-localization.test.mjs', 'test/survey-capacity.test.mjs', 'test/business-audit.test.mjs'], staging);
   console.log(output.split(/\r?\n/).filter(line => /^# (tests|pass|fail|skipped) /.test(line)).join('\n'));
   console.log('3/5 Saving a source backup and installing verified files...');
   for (const item of manifest) {
@@ -171,11 +191,11 @@ async function main() {
   run(['--env-file=.env', 'scripts/deploy-surveys.mjs'], root, true);
   console.log('5/5 Verifying live source, survey storage and Telegram webhook...');
   const { validateSurvey } = await import(pathToFileURL(join(staging, 'src/surveys.mjs')).href);
-  const definitions = await Promise.all(['employees', 'employers'].map(async id => {
+  const definitions = await Promise.all(['employees', 'employers', 'business'].map(async id => {
     const survey = validateSurvey(JSON.parse(await readFile(join(staging, 'config/surveys/' + id + '.json'), 'utf8')));
     return 'const ' + id + ' = ' + JSON.stringify(survey) + ';';
   }));
-  const paths = ['src/locale-ru.mjs', 'src/pdf-fonts.mjs', 'src/report-format.mjs', 'src/survey-pdf.mjs', 'src/survey-insights.mjs', 'src/surveys.mjs', 'src/survey-telegram.mjs', 'src/survey-runtime.mjs', 'src/survey-worker.mjs'];
+  const paths = ['src/business-insights.mjs', 'src/locale-ru.mjs', 'src/pdf-fonts.mjs', 'src/report-format.mjs', 'src/survey-pdf.mjs', 'src/survey-insights.mjs', 'src/surveys.mjs', 'src/survey-telegram.mjs', 'src/survey-runtime.mjs', 'src/survey-worker.mjs'];
   const modules = await Promise.all(paths.map(async path => (await readFile(join(staging, path), 'utf8')).replace(/^import .*?;\r?\n/gm, '').replace(path === 'src/survey-worker.mjs' ? /$^/ : /^export /gm, '')));
   const expected = [...definitions, ...modules].join('\n');
   const liveSource = await (await cloud('')).text();
