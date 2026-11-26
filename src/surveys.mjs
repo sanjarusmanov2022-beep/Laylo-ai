@@ -172,7 +172,7 @@ export function surveyStats(survey, sessions) {
   };
 }
 
-export function createSurveyBot({ storage, api, ownerId, username, definitions }) {
+export function createSurveyBot({ storage, api, ownerId, username, definitions, deferChannelReports = false, queueCompletion = null }) {
   const surveys = new Map(definitions.map(s => [s.id, validateSurvey(s)]));
   let secret;
   const ready = (async () => {
@@ -518,11 +518,17 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     if (pending.count && await storage.get('report-channel')) await storage.setAlarm(Math.max(Date.now() + 1000, pending.nextAttemptAt));
     else if (storage.deleteAlarm) await storage.deleteAlarm();
   }
-  async function flushChannelReports(force = false) {
+  let channelFlush = null;
+  function flushChannelReports(force = false) {
+    if (channelFlush) return channelFlush;
+    channelFlush = deliverChannelReports(force).finally(() => { channelFlush = null; });
+    return channelFlush;
+  }
+  async function deliverChannelReports(force = false) {
     await ready;
     const channel = await storage.get('report-channel');
     if (!channel) return;
-    const { jobs } = await scanChannelReports(force);
+    const { jobs } = await scanChannelReports(force, deferChannelReports ? 2 : 10);
     for (const [key, job] of jobs) {
       if (job.deliveryKey?.startsWith('participant:') || key.startsWith('channel-report:participant:')) { await storage.delete(key); continue; }
       if (!force && (job.nextAttemptAt ?? 0) > Date.now()) continue;
@@ -848,10 +854,10 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
         await storage.put(record);
         await scheduleChannelReports();
         if (session.preview) { await prompt(chat, survey, session); return; }
-        await flushChannelReports();
+        if (!deferChannelReports) await flushChannelReports();
         await prompt(chat, survey, session);
-        const stats = surveyStats(survey, await sessionList(id));
-        await send(ownerId, `Yangi so‘rovnoma yakunlandi ✅\n${survey.title}\n\nJami yakunlagan — ${stats.completed}\nDavom etayotgan — ${stats.unfinished}`, adminKeyboard()).catch(() => {});
+        if (queueCompletion) await queueCompletion(id);
+        else await notifyCompletion(id).catch(() => {});
         return;
       }
       if (action === 'back' && ['questions', 'review'].includes(session.stage) && session.index > 0) {
@@ -888,9 +894,13 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
       if (!identity) return send(chat, 'Nom yoki maxfiy raqam kiriting. Nom 2–80 belgidan, raqam esa ko‘pi bilan 40 ta raqam, bo‘shliq yoki tiredan iborat bo‘lsin. Masalan: 789-856-78.');
       const codeKey = value => `public-code:${survey.id}:${value.replace(/[ -]/g, '')}`;
       if (identity.kind === 'code' && !preview) {
-        const reserved = await storage.get(codeKey(identity.value));
-        if (reserved && reserved !== session.token) return send(chat, 'Bu maxfiy raqam allaqachon band. O‘zingiz taniydigan boshqa raqam kiriting.');
-        await storage.put(codeKey(identity.value), session.token);
+        const reserve = async tx => {
+          const reserved = await tx.get(codeKey(identity.value));
+          if (reserved && reserved !== session.token) return false;
+          await tx.put(codeKey(identity.value), session.token); return true;
+        };
+        const accepted = storage.transaction ? await storage.transaction(reserve) : await reserve(storage);
+        if (!accepted) return send(chat, 'Bu maxfiy raqam allaqachon band. O‘zingiz taniydigan boshqa raqam kiriting.');
       }
       if (session.publicIdentity?.kind === 'code' && !preview && (identity.kind !== 'code' || codeKey(session.publicIdentity.value) !== codeKey(identity.value))) {
         const oldKey = codeKey(session.publicIdentity.value);
@@ -939,5 +949,12 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions }
     }
     return accept(chat, actor, survey, session, { text: input, ...extra }, update.update_id);
   }
-  return { handle, ready, flushChannelReports };
+  async function notifyCompletion(id) {
+    await ready;
+    const survey = surveys.get(id);
+    if (!survey) return;
+    const stats = surveyStats(survey, await sessionList(id));
+    await send(ownerId, `Yangi so‘rovnoma yakunlandi ✅\n${survey.title}\n\nJami yakunlagan — ${stats.completed}\nDavom etayotgan — ${stats.unfinished}`, adminKeyboard());
+  }
+  return { handle, ready, flushChannelReports, notifyCompletion };
 }

@@ -9,14 +9,20 @@ export function harness(defs = definitions, existing, autoScript = true, autoPro
   const messages = [];
   const storage = {
     get: async key => structuredClone(data.get(key)),
-    delete: async key => data.delete(key),
+    delete: async key => Array.isArray(key) ? key.reduce((n, k) => n + Number(data.delete(k)), 0) : data.delete(key),
     put: async (key, value) => {
       if (typeof key === 'object') for (const [k, v] of Object.entries(key)) data.set(k, structuredClone(v));
       else data.set(key, structuredClone(value));
     },
+    getAlarm: async () => data.get('alarmAt') ?? null,
     setAlarm: async time => data.set('alarmAt', time),
     deleteAlarm: async () => data.delete('alarmAt'),
     list: async ({ prefix, limit, startAfter }) => new Map([...data].sort(([a], [b]) => a.localeCompare(b)).filter(([key]) => key.startsWith(prefix) && (!startAfter || key > startAfter)).slice(0, limit)),
+  };
+  let transactionTail = Promise.resolve();
+  storage.transaction = work => {
+    const result = transactionTail.then(() => work(storage));
+    transactionTail = result.catch(() => {}); return result;
   };
   const api = { call: async (method, body) => {
     messages.push({ method, body: body instanceof FormData ? body : structuredClone(body) });

@@ -158,3 +158,16 @@ Ruscha sektor savollari rol nomi bilan parcha-parcha yig‘ilmaydi: har bir rol 
 test/russian-localization.test.mjs o‘nta turli sharoitda ikki rolni to‘liq tekshiradi: 20 ta sintetik so‘rovnoma, 1 510 ta savol, 2 500 dan ortiq ekran/xabar va 20 ta PDF. Ism/kod, ixtiyoriy yosh, ochiq/maxfiy ishxona, barcha sektorlar, xato kiritish, ko‘p tanlov cheklovi, tanaffus, orqaga qaytish, til almashtirish, barcha savollar, kanal posti, PDF va admin eksportlari qamrab olinadi. Ruscha ekranlarda lotincha yoki o‘zbek kiril harflarida qolgan UI so‘zlari tekshiriladi; brend, texnik belgi, URL va test foydalanuvchisi kiritgan kompaniya nomi bundan ajratiladi. Sektor ekranining to‘liq ruscha matni va til tugmasi uchun alohida regressiya tekshiruvi bor.
 
 GitHub tekshiruvi odatiy testlar bilan ushbu auditni ham bajaradi. Testlar Telegram va saqlash uchun maketlardan foydalanadi; haqiqiy qatnashuvchilar va kanalga sinov posti qo‘shilmaydi. Yangi UI matni yoki savol kiritilganda ruscha katalog va audit ham yangilanishi kerak.
+
+
+## Bir vaqtdagi yuklama va saqlanadigan kirish navbati
+
+Cloudflare yo‘li har bir Telegram yangilanishini SQLite-backed SURVEYS ichidagi inbox va recovery alarm bilan bir tranzaksiyada saqlagach HTTP 200 qaytaradi. Shu paytda jarayon uzilsa, alarm navbatni tiklaydi. Qo‘llab-quvvatlanmaydigan chat yoki media yangilanishlari navbatga kirmaydi. Inbox Telegram ismi va username’ini saqlamaydi; javobni yuborish uchun chat ID vaqtincha inboxda turadi va ish tugagach o‘chiriladi. Yakunlangan update ID kvitansiyalari 24 soatdan so‘ng cheklangan hajmda tozalanadi.
+
+Bir foydalanuvchining yangilanishlari tartib bilan ishlanadi, turli foydalanuvchilar uchun bir vaqtda ko‘pi bilan 24 handler ishlaydi. Bu alohida serverlar yoki cheksiz horizontal masshtablash emas; avvalgi bitta Durable Object, namespace, secret va sessiya kalitlari saqlanadi. Xabarlar taxminan 22/sekund umumiy, shaxsiy chatga 1,1 soniya, kanalga 3,1 soniya oralig‘ida yuboriladi. Telegramning 429 retry_after ko‘rsatmasi navbatda saqlanadi; 403 bloklangan foydalanuvchi qayta-qayta yuborilmaydi. Tarmoq javoblari boshqa chatlarga yuborishni ushlab turmaydi.
+
+Kanal PDF navbati alohida alarm orqali ko‘pi bilan ikkita ish bilan ishlanadi; takroriy parallel flush bitta yuborishga birlashadi. Javobni yuborgan qatnashuvchi hisobot tayyorlanayotganini va kanal havolasini oladi. Adminning yakunlanish bildirishnomalari har bir so‘rovnoma bo‘yicha bir daqiqaga jamlanadi, jami statistika saqlanadi. Maxfiy raqam band qilish tranzaksiyali bo‘lib, ikki odam bir raqamni parallel band qila olmaydi.
+
+Tekshiruv: node --test test/survey-capacity.test.mjs. Unda 1 000 sintetik foydalanuvchi 100 savolga parallel raundlarda javob beradi; 100 000 javob, sessiyalar ajratilishi, duplicate update, restart tiklanishi, foydalanuvchi tartibi, navbat xatolari va yuborish tezligi tekshiriladi. LAYLO_LOAD_RESULT natijasi maket Telegram va xotiradagi storage bilan o‘lchanadi. Bu haqiqiy Cloudflare/Telegram yuklama sinovi yoki ishlab turgan botning SLA kafolati emas.
+
+Bepul tarifning kunlik request, yozuv, o‘qish, xotira va davomiylik limitlari amal qiladi. Inbox va kvitansiyalar qo‘shimcha storage operatsiyalarini sarflaydi. 1 000 odamning 100 savolni bir kunda yakunlashi bepul kvotaga sig‘adi degan kafolat yo‘q. Pullik tarifga avtomatik o‘tish yoki to‘lov sozlamalari qo‘shilmagan.
