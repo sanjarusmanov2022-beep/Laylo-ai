@@ -852,7 +852,8 @@ export function createSurveyBot({ storage, api, ownerId, username, definitions, 
         const reportChannel = !session.preview && await storage.get('report-channel');
         if (reportChannel) record[`channel-report:${id}:${session.token}`] = { survey, session: structuredClone(session), insights: session.insights, deliveryChatId: reportChannel.id, attempts: 0, nextAttemptAt: Date.now() };
         await storage.put(record);
-        await scheduleChannelReports();
+        if (deferChannelReports && reportChannel && storage.setAlarm) await storage.setAlarm(Date.now() + 1000);
+        else await scheduleChannelReports();
         if (session.preview) { await prompt(chat, survey, session); return; }
         if (!deferChannelReports) await flushChannelReports();
         await prompt(chat, survey, session);

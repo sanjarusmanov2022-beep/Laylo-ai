@@ -148,6 +148,10 @@ test('Report alarm changes cannot erase pending updates, and old channel outboxe
   await f.runtime.reportStorage().deleteAlarm();
   assert.equal(f.alarm(), before);
   await f.runtime.arm(); assert.equal(f.alarm(), now + 1000);
+  await f.storage.put('report-channel', { id: -100123 });
+  await f.storage.put('channel-report:late', { nextAttemptAt: now });
+  await f.runtime.reportStorage().deleteAlarm();
+  assert.equal(await f.storage.get(prefix + 'reports-at'), now + 1000, 'late outbox writes must retain a report alarm');
   const legacy = runtimeFixture(async () => {}, storageFixture(), { flushReports: async () => { reports++; } });
   await legacy.runtime.alarm(); assert.equal(reports, 1);
 });

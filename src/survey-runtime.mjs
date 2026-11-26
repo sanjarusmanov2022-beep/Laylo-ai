@@ -49,7 +49,14 @@ export class SurveyRuntime {
       setAlarm: async at => this.atomic(async tx => {
         await tx.put(runtimeReportAt, Number(at)); await this.wakeSoon(tx, Number(at));
       }),
-      deleteAlarm: async () => { await storage.delete(runtimeReportAt); },
+      deleteAlarm: async () => this.atomic(async tx => {
+        // A completion can arrive between the outbox scan and this call. Recheck atomically.
+        const channel = await tx.get('report-channel');
+        const pending = await tx.list({ prefix: 'channel-report:', limit: 1 });
+        if (channel && pending.size) {
+          await tx.put(runtimeReportAt, this.now() + 1000); await this.wakeSoon(tx);
+        } else await tx.delete(runtimeReportAt);
+      }),
     };
   }
   async noteCompletion(id) {
