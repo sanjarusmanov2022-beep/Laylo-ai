@@ -205,3 +205,13 @@ test('The existing employee channel summary and PDF also advertise the survey bo
   assert.match(Buffer.from(createSurveyPdf(model).bytes).toString('latin1'),/https:\/\/t.me\/SurveyTestBot/);
   assert.match(model.insights.method,/laylo-survey-indicators-v4/);
 });
+
+test('Full high-score PDFs recommend verifying strengths instead of claiming that answers are missing',()=>{
+  for(const script of ['latin','russian']) {
+    const pdf=createSurveyPdf(modelFor(sessionFor(300)),text=>toScript(text,script));
+    const text=pdf.layout.map(x=>x.text).join(' ').replace(/\\s+/g,' ');
+    assert.ok(!text.includes(toScript('Bu yo‘nalish uchun yetarli javob olinmagan.',script)));
+    assert.ok(text.includes(toScript('Saqlash va tekshirish',script)));
+    if(script==='russian')assertRussian(text);
+  }
+});

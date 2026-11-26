@@ -142,11 +142,12 @@ export function createSurveyPdf(model, transform = value => String(value)) {
     ],[{title:audit.status,body:audit.conclusion},{title:'Natijani qanday o‘qiymiz?',body:'A = 3, B = 2, C = 1 ball. Foiz — berilgan aniq javoblar ballining mumkin bo‘lgan maksimal ballga nisbati. Bu korxona muvaffaqiyati ehtimoli emas.'}]);
     bars('Yo‘nalishlar bo‘yicha natijalar',audit.domains,'Kamida 5 ta aniq javobli yo‘nalishlar taqqoslanadi.',true);
     columns('Kuchli tomonlar va o‘sish nuqtalari',
-      audit.strongest.filter(d=>d.percent>=80).map(d=>({title:d.title,body:d.points+'/'+d.max+' · '+d.percent+'% · Javob: '+d.measured+'/10'})),
-      audit.weakest.map(d=>({title:d.title,body:d.tip,accent:palette.amber})));
-    flow('Javoblar bo‘yicha aniqlashtiriladigan holatlar',audit.observations.map(r=>({
+      audit.strongest.some(d=>d.percent>=80)?audit.strongest.filter(d=>d.percent>=80).map(d=>({title:d.title,body:d.points+'/'+d.max+' · '+d.percent+'% · Javob: '+d.measured+'/10'})):[{title:'Kuchli ko‘ringan yo‘nalishlar',body:audit.measured?'Baholangan yo‘nalishlarda 80% va undan yuqori natija yo‘q. Pastroq yo‘nalishlar bo‘yicha amaliy choralarni ko‘rib chiqing.':'Baholash uchun aniq variantli javob olinmagan. Savollarni to‘ldirib, natijani qayta ko‘ring.'}],
+      audit.weakest.length?audit.weakest.map(d=>({title:d.title,body:d.tip,accent:palette.amber})):[{title:'Ustuvor e’tibor yo‘nalishlari',body:'Taqqoslashga olingan yo‘nalishlarda pastroq natija aniqlanmadi. Qamrov va amaliy dalillarni tekshiring.'}]);
+    if(audit.observations.length) flow('Javoblar bo‘yicha aniqlashtiriladigan holatlar',audit.observations.map(r=>({
       title:'Savol '+r.id,body:r.question+' '+ 'Tanlangan javob'+': «'+t(r.selected)+'». '+ 'Amaliy chora'+': '+r.action,
     })));
+    else if(audit.measured) flow('Javoblar bo‘yicha aniqlashtiriladigan holatlar',[{title:'Saqlash va tekshirish',body:'Baholangan javoblar eng yuqori variantga mos. Mustaqil ish, zaxiradan tiklash va inqiroz rejalarini amaliy sinovda tekshiring.'}]);
     columns('Keyingi 30 kun uchun qadamlar',audit.plan30.map((body,i)=>({title:'Amaliy qadam '+(i+1),body})),[
       {title:'Reja',body:'Har bir qadam uchun mas’ul, muddat va boshlang‘ich ko‘rsatkichni yozing. Natijani 30 kundan keyin tekshiring.'},
       {title:'Saqlash va tekshirish',body:'Eng past foizlar teng bo‘lishi mumkin. Teng natijada yo‘nalishlar savolnomadagi tartibda ko‘rsatiladi.'},
