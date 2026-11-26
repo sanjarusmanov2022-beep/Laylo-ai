@@ -120,7 +120,7 @@ test('429 cooldown is durable, preserves actor order, and does not block other u
     seen.push(update.update_id);
   }, storageFixture(), { now: () => now });
   await Promise.all([f.runtime.accept(message(1, 10)), f.runtime.accept(message(2, 10)), f.runtime.accept(message(3, 20))]);
-  await f.runtime.drain();
+  await settle(f.runtime);
   assert.deepEqual(seen, [3]);
   assert.equal((await f.storage.list({ prefix: prefix + 'inbox:' })).size, 2);
   now += 30_001; await f.runtime.alarm(); await settle(f.runtime);
@@ -222,7 +222,7 @@ test('Parallel private codes reserve atomically and concurrent report flushes ca
   const first = h.sessions().find(s => s.publicIdentity);
   await h.storage.put('report-channel', { id: -100123456, title: 'Test', username: 'reports_test' });
   await h.storage.put('channel-report:mini:' + first.token, { survey: mini,
-    session: { ...first, stage: 'done', answers: { 1: { choices: ['A'] } }, script: 'latin' }, attempts: 0, nextAttemptAt: 0 });
+    session: { ...first, stage: 'done', completedAt: '2026-11-26T00:00:00.000Z', answers: { 1: { choices: ['A'] } }, script: 'latin' }, attempts: 0, nextAttemptAt: 0 });
   await Promise.all([h.bot.flushChannelReports(), h.bot.flushChannelReports(), h.bot.flushChannelReports()]);
   assert.equal(h.messages.filter(m => m.method === 'sendDocument' && m.body.get('chat_id') === '-100123456').length, 1);
 });
