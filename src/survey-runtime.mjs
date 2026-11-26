@@ -34,7 +34,8 @@ export class SurveyRuntime {
     this.concurrency = concurrency; this.batchSize = batchSize; this.budgetMs = budgetMs;
     this.processing = null; this.ingressVersion = 0; this.wakeDrain = null; this.queued = new Map();
   }
-  atomic(work) { return this.storage.transaction(work); }
+  // SQLite storage participates in the transaction directly, including native alarm APIs.
+  atomic(work) { return this.storage.transaction(() => work(this.storage)); }
   async wakeSoon(tx, at = this.now() + 1000) {
     const current = await tx.getAlarm();
     if (current === null || current > at) await tx.setAlarm(at);

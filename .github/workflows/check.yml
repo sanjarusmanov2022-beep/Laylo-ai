@@ -15,7 +15,9 @@ jobs:
           node-version: '22'
       - run: node --check scripts/update-live.mjs
       - run: node --test test/surveys.test.mjs test/russian-localization.test.mjs test/update-live.test.mjs test/survey-capacity.test.mjs
-      - run: npx --yes wrangler@4.166.0 deploy --dry-run
+      - run: npm install --no-save --package-lock=false wrangler@4.166.0
+      - run: node --test test/survey-worker-integration.test.mjs
+      - run: npx wrangler deploy --dry-run
       - name: Check public live endpoint (read-only)
         continue-on-error: true
         run: node scripts/check-live-health.mjs
