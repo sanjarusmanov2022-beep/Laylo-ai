@@ -171,3 +171,5 @@ Kanal PDF navbati alohida alarm orqali ko‘pi bilan ikkita ish bilan ishlanadi;
 Tekshiruv: node --test test/survey-capacity.test.mjs. Unda 1 000 sintetik foydalanuvchi 100 savolga parallel raundlarda javob beradi; 100 000 javob, sessiyalar ajratilishi, duplicate update, restart tiklanishi, foydalanuvchi tartibi, navbat xatolari va yuborish tezligi tekshiriladi. LAYLO_LOAD_RESULT natijasi maket Telegram va xotiradagi storage bilan o‘lchanadi. Bu haqiqiy Cloudflare/Telegram yuklama sinovi yoki ishlab turgan botning SLA kafolati emas.
 
 Bepul tarifning kunlik request, yozuv, o‘qish, xotira va davomiylik limitlari amal qiladi. Inbox va kvitansiyalar qo‘shimcha storage operatsiyalarini sarflaydi. 1 000 odamning 100 savolni bir kunda yakunlashi bepul kvotaga sig‘adi degan kafolat yo‘q. Pullik tarifga avtomatik o‘tish yoki to‘lov sozlamalari qo‘shilmagan.
+
+Native queue tekshiruvi GitHub’da LAYLO_NATIVE_RUNTIME_TEST=1 bilan test/survey-worker-integration.test.mjs orqali workerd va SQLite’da 1 000 HTTP yangilanishini sinaydi. Telegram tashqi xizmati bu testga ulanmaydi. Oddiy npm test uchun ushbu alohida runtime dependency majburiy emas.

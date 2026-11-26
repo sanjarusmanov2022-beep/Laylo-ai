@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 test('Native SQLite Durable Object commits inbox+alarm and processes a 1,000-request ingress burst', { timeout: 120_000, skip: process.env.LAYLO_NATIVE_RUNTIME_TEST !== '1' }, async () => {
-  const { Miniflare } = await import('miniflare');
+  const { Miniflare, convertV4MiniflareOptions } = await import('miniflare');
   const runtime = await readFile(new URL('../src/survey-runtime.mjs', import.meta.url), 'utf8');
   const script = runtime + `
 export class ProbeStore {
@@ -44,8 +44,9 @@ export default { fetch(request, env) {
   return env.PROBE.get(env.PROBE.idFromName('burst')).fetch(request);
 } };
 `;
-  const mf = new Miniflare({ modules: true, script, compatibilityDate: '2026-11-01',
-    durableObjects: { PROBE: { className: 'ProbeStore', useSQLite: true } } });
+  const options = { modules: true, script, compatibilityDate: '2026-11-01',
+    durableObjects: { PROBE: { className: 'ProbeStore', useSQLite: true } } };
+  const mf = new Miniflare(convertV4MiniflareOptions ? convertV4MiniflareOptions(options) : options);
   try {
     const updates = Array.from({ length: 1000 }, (_, i) => ({
       update_id: i + 1, message: { message_id: i + 1, text: 'Answer ' + i,
