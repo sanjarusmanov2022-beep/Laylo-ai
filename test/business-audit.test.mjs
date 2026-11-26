@@ -56,7 +56,7 @@ test('Business audit is a separate complete 100-question definition and preserve
     assert.equal(q.type,'single'); assert.equal(q.options.length,3);
   }
   assert.match(business.questions[38].text,/Marketing/);
-  assert.match(business.questions[46].text,/KPI/);
+  assert.match(business.questions[46].options.join(' '),/KPI/);
   assert.match(business.questions[73].text,/Backup/);
   assert.match(business.questions[90].text,/3–5 yillik/);
 });
@@ -137,7 +137,7 @@ test('Business PDFs have ten charts, complete recommendations, valid layout and 
   for(const script of['latin','cyrillic','russian']) {
     const model=modelFor(sessionFor(172)),pdf=createSurveyPdf(model,text=>toScript(text,script));
     assert.ok(pdf.pages>=7);
-    const text=pdf.layout.map(x=>x.text).join('\n'),raw=Buffer.from(pdf.bytes).toString('latin1');
+    const text=pdf.layout.map(x=>x.text).join(' ').replace(/\s+/g,' '),raw=Buffer.from(pdf.bytes).toString('latin1');
     assert.match(raw,/^%PDF-1.7/); assert.match(raw,/https:\/\/t.me\/hr_hisobot/);
     assert.match(raw,/https:\/\/t.me\/SurveyTestBot/);
     for(const domain of model.insights.business.domains)
@@ -158,7 +158,9 @@ for(const script of['latin','cyrillic','russian'])test('A respondent completes a
   const h=harness([...definitions,business],undefined,false,false),d=driver(h,40);
   await h.storage.put('report-channel',{id:-100123456,title:'HR hisobot',username:'hr_hisobot'});
   await d.say('/start business');
-  await d.press('script:'+script);await d.press('begin');
+  await d.press('script:'+script);
+  if(script==='russian')assertRussian(h.messages.findLast(m=>m.body.chat_id===40)?.body.text);
+  await d.press('begin');
   await d.say('789-456-85');
   assert.equal(h.sessions()[0].stage,'sector','Business profile must not ask the owner age');
   await d.press('sector_private');

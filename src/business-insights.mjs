@@ -8,7 +8,7 @@ const businessBands = [
  { max: 300, key: 'systematic', title: 'Tizimlashuv kuchli', conclusion: 'Javoblar ko‘p amaliyotlar muntazam ishlashini ko‘rsatadi. Barqarorlikni dalillar va yuklama sinovlari bilan tekshirish keyingi qadamdir.' },
 ];
 export const businessMethodNote = 'Bu rahbarning o‘z javoblari bo‘yicha moslashtirilgan indeks. Mustaqil audit, yuridik xulosa yoki moliyaviy kafolat emas. Katta qaror oldidan raqamlar va amaliy dalillarni tekshiring.';
-export const businessForecastNote = '1–3 yil uchun raqamli foyda yoki o‘sish prognozi chiqarilmadi. Buning uchun tushum, xarajat, marja, pul oqimi, mavsumiylik va quvvatning tarixiy raqamlari kerak.';
+export const businessForecastNote = 'Moliyaviy istiqbol: 1–3 yil uchun raqamli foyda yoki o‘sish prognozi chiqarilmadi. Buning uchun tushum, xarajat, marja, pul oqimi, mavsumiylik va quvvatning tarixiy raqamlari kerak.';
 export function buildBusinessInsights(survey, session) {
   if (survey.id !== 'business' || survey.questions.length !== 100) return null;
   const records = survey.questions.map(q => {
@@ -33,7 +33,7 @@ export function buildBusinessInsights(survey, session) {
     (weakest.some(d=>d.id===b.section)?1:0)-(weakest.some(d=>d.id===a.section)?1:0) || a.id-b.id).slice(0,6);
   const complete = measured.length === 100, band = complete ? businessBands.find(b => points <= b.max) : null;
   const conclusion = band?.conclusion ?? (measured.length
-    ? '100 savolning barchasi bo‘yicha aniq variant olinmagani uchun umumiy daraja qo‘yilmadi. Mavjud javoblar bo‘yicha natija ko‘rsatilgan.'
+    ? 'Qisman javoblar: 100 savolning barchasi bo‘yicha aniq variant olinmagani uchun umumiy daraja qo‘yilmadi. Mavjud javoblar bo‘yicha natija ko‘rsatilgan.'
     : 'Baholash uchun aniq variantli javob olinmagan. Savollarni to‘ldirib, natijani qayta ko‘ring.');
   const plan30 = priorities.length ? priorities.slice(0,3).map(r=>r.action)
     : measured.length ? [businessActions[3], businessActions[73], businessActions[97]] : [];
