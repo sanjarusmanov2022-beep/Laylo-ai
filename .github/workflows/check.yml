@@ -17,7 +17,7 @@ jobs:
       - run: node --test test/surveys.test.mjs test/russian-localization.test.mjs test/update-live.test.mjs
       - run: node --test --test-name-pattern='^(?!1,000 concurrent)' test/survey-capacity.test.mjs
       - run: npm install --no-save --package-lock=false wrangler@4.166.0
-      - run: node --test test/survey-worker-integration.test.mjs
+      - run: LAYLO_NATIVE_RUNTIME_TEST=1 node --test test/survey-worker-integration.test.mjs
       - run: node --test --test-name-pattern='1,000 concurrent' test/survey-capacity.test.mjs
       - run: npx wrangler deploy --dry-run
       - name: Check public live endpoint (read-only)

@@ -55,9 +55,11 @@ async function settle(runtime) {
   // A bounded batch deliberately leaves excess work for a later alarm.
   for (let i = 0; i < 20; i++) {
     await runtime.drain();
-    const pending = await runtime.storage.list({ prefix: prefix + 'inbox:', limit: 1 });
+    const pending = await runtime.storage.list({ prefix: prefix + 'inbox:', limit: 1000 });
     if (!pending.size) return;
-    if ([...pending.values()].every(job => job.due > runtime.now())) return;
+    const heads = new Map();
+    for (const [, job] of pending) if (!heads.has(job.actor)) heads.set(job.actor, job);
+    if ([...heads.values()].every(job => job.due > runtime.now())) return;
   }
   assert.fail('Inbox did not drain within 20 batches');
 }

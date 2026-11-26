@@ -2,9 +2,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { Miniflare } from 'miniflare';
 
-test('Native SQLite Durable Object commits inbox+alarm and processes a 1,000-request ingress burst', { timeout: 120_000 }, async () => {
+test('Native SQLite Durable Object commits inbox+alarm and processes a 1,000-request ingress burst', { timeout: 120_000, skip: process.env.LAYLO_NATIVE_RUNTIME_TEST !== '1' }, async () => {
+  const { Miniflare } = await import('miniflare');
   const runtime = await readFile(new URL('../src/survey-runtime.mjs', import.meta.url), 'utf8');
   const script = runtime + `
 export class ProbeStore {
